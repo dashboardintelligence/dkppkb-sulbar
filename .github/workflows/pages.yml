@@ -24,7 +24,7 @@ jobs:
         with: { node-version: 20 }
       - name: Rakit situs statis
         env:
-          API_URL: https://script.google.com/macros/s/AKfycbzIUZil3pxedXOo4v3L3jahccyfZqf8tVrd_7FGnKxmntdn7PFYZE066dnQs3udXVunCg/exec
+          API_URL: https://script.google.com/macros/s/AKfycbzNJE9RViq4OUMs4YwhGZC0xEwoJrBozqO9ZBReJ7o0F3wMh0CDq_cIUKBvvgSBWVUvmg/exec
         run: node web/build.js
       - uses: actions/upload-pages-artifact@v3
         with: { path: web/dist }
