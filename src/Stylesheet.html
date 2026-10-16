@@ -683,17 +683,18 @@ button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;bac
 .tn-sub:hover{background:var(--rail)}
 .tn-sub.active{background:var(--p-l);color:var(--chip-info-tx)}.tn-sub.active .ic{color:var(--p-d)}
 /* Lebar konten mengikuti layar (maks. 1760px) agar sisi kiri-kanan tidak banyak ruang kosong */
-.content{max-width:1760px}
+.content{max-width:1920px}
 .backbar{display:flex}
 .backbar .back-btn{margin:0 0 14px}
 @media(min-width:1024px){
   .sidebar{display:none}
   .shell{margin-left:0}
   /* Menu mengisi kiri dan boleh turun baris sendiri; periode, lonceng, dan akun selalu satu kelompok di kanan */
-  .topbar{flex-wrap:nowrap;gap:8px;padding:12px max(32px,calc((100% - 1760px)/2 + 32px))}
+  .topbar{flex-wrap:nowrap;gap:8px;padding:12px max(24px,calc((100% - 1920px)/2 + 24px))}
+  .content{padding:24px}
   .topnav{display:flex;gap:4px;flex-wrap:wrap;flex:1 1 auto;min-width:0}
   .topbar-spacer{display:none}
-  .topbar .period,#btn-notif,#btn-user{flex:none}
+  .topbar .period,#btn-notif,#btn-user,.a-logo{flex:none}
 }
 @media(min-width:1024px) and (max-width:1499px){.user-txt{display:none!important}.user-pill{padding:2px}}
 @media(min-width:1024px) and (max-width:1279px){.tn-item{padding:0 12px}}
@@ -703,6 +704,14 @@ button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;bac
 .a-top-l{display:flex;flex-direction:column;gap:24px;min-width:0}
 .a-top .a-banner,.a-top .a-comply,.a-top .grid{margin-bottom:0}
 @media(min-width:1440px){.a-top{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}.a-top .a-comply{height:100%;align-content:flex-start}}
+/* Logo di kanan atas (gambar ada di file GambarHeader) */
+.a-logo{display:inline-block;flex:none;width:40px;height:40px;border-radius:11px;background-color:var(--card);background-size:104%;background-position:center;background-repeat:no-repeat;box-shadow:0 0 0 1px var(--bd)}
+@media(min-width:1024px){.a-logo{width:44px;height:44px;border-radius:12px;margin-left:4px}}
+/* Tombol akun: avatar hijau, nama oranye */
+.user-pill .avatar{background:#15803d;color:#fff}
+.user-txt b{color:#c2410c}
+:root[data-theme="dark"] .user-pill .avatar{background:#22c55e;color:#0b1720}
+:root[data-theme="dark"] .user-txt b{color:#fb923c}
 /* Header gambar Beranda (gambar ada di file GambarHeader) */
 .a-banner{display:block;width:100%;aspect-ratio:1380/459;background-color:#f8fafc;background-position:center;background-size:cover;background-repeat:no-repeat;border:1px solid var(--bd);border-radius:2rem;margin-bottom:24px}
 .a-card{background:var(--card);border:1px solid var(--bd);border-radius:2rem}
@@ -753,8 +762,8 @@ button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;bac
 .a-foot{margin-top:24px;background:var(--card);border-top:1px solid var(--bd)}
 .a-motif{display:block}.a-motif-fill{opacity:.16}
 :root[data-theme="dark"] .a-motif-fill{opacity:.24}
-.a-foot-in{max-width:1760px;margin:0 auto;padding:20px 16px 28px;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;justify-content:space-between}
-@media(min-width:1024px){.a-foot-in{padding:24px 32px 32px}}
+.a-foot-in{max-width:1920px;margin:0 auto;padding:20px 16px 28px;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;justify-content:space-between}
+@media(min-width:1024px){.a-foot-in{padding:24px 24px 32px}}
 .a-foot-brand{display:flex;align-items:center;gap:14px;flex:1 1 380px;min-width:0}
 .a-foot-brand div{display:flex;flex-direction:column;min-width:0}
 .a-foot-brand b{font-family:var(--fh);font-weight:600;font-size:15px}
