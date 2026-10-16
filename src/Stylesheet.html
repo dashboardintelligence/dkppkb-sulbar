@@ -705,11 +705,24 @@ button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;bac
 .a-top{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;margin-bottom:24px;align-items:start}
 .a-top-l{display:flex;flex-direction:column;gap:24px;min-width:0}
 .a-top .a-banner,.a-top .a-comply,.a-top .grid{margin-bottom:0}
+@media(min-width:640px){.a-top .grid:has(> .kpi){grid-template-columns:repeat(4,minmax(0,1fr))}.a-top .grid > .kpi{padding:18px 20px}}
 @media(min-width:1440px){.a-top{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}.a-top .a-comply{height:100%;align-content:flex-start}}
 /* Logo — titik fokus di kiri atas (gambar ada di file GambarHeader) */
 .a-logo{display:inline-block;flex:none;width:48px;height:48px;padding:0;border:0;cursor:pointer;border-radius:14px;background-color:var(--card);background-size:104%;background-position:center;background-repeat:no-repeat;box-shadow:0 0 0 1px var(--bd),0 6px 16px -6px rgba(2,132,199,.35);transition:transform .15s}
 .a-logo:hover{transform:scale(1.04)}
 :root:not(.di-beranda) .a-logo{display:none}
+/* Beranda (desktop): kolom kosong di kiri berisi logo yang menempel saat di-scroll */
+.a-rail{display:none}
+@media(min-width:1024px){
+  .a-logo-top{display:none!important}
+  :root.di-beranda .content{display:grid;grid-template-columns:72px minmax(0,1fr);column-gap:24px;align-items:start}
+  :root.di-beranda .a-rail{display:flex;justify-content:center;position:sticky;top:104px}
+  :root.di-beranda .a-logo-rail{width:64px;height:64px;border-radius:18px}
+}
+@media(min-width:1440px){
+  :root.di-beranda .content{grid-template-columns:88px minmax(0,1fr);column-gap:32px}
+  :root.di-beranda .a-logo-rail{width:76px;height:76px;border-radius:20px}
+}
 @media(min-width:1024px){.a-logo{width:56px;height:56px;border-radius:16px}}
 /* Tombol akun: avatar hijau, nama oranye */
 .user-pill .avatar{background:#15803d;color:#fff}
