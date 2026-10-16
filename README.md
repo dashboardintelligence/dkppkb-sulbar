@@ -1,6 +1,6 @@
 # DKPPKB Sulbar Intelligence — Tampilan Web
 
-Repo **publik** berisi tampilan statis (HTML/CSS/JS) untuk GitHub Pages. Tidak ada data, sandi, atau kode server di sini.
+Repo **publik** berisi tampilan statis (HTML/CSS/JS), diterbitkan di **Vercel**: https://dkppkbsulbar-intelligence.vercel.app/ (GitHub Pages sudah dimatikan). Tidak ada data, sandi, atau kode server di sini.
 Data dan logika tetap di Google Apps Script (repo private `akun-dkppkb-intelligence`); tampilan ini memanggilnya lewat API JSON.
 
 ## Memasang
@@ -20,3 +20,6 @@ Setelah tampilan diubah di repo private, salin keempat berkas itu ke sini lalu p
 ## Vercel
 `vercel.json` sudah berisi pengaturan build (`node web/build.js` → `web/dist`). Di Vercel cukup **Add New → Project → Import** repo ini lalu **Deploy**.
 Opsional: Settings → Environment Variables → `API_URL` = URL web app Apps Script (`/exec`); tanpa itu dipakai URL di `web/config.js`.
+
+## Blogger
+Tempel isi `blogger-embed.html` di Halaman/Entri Blogger (tampilan HTML) untuk menampilkan aplikasi satu layar penuh.
