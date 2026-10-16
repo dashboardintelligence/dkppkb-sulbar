@@ -16,3 +16,7 @@ Setelah tampilan diubah di repo private, salin keempat berkas itu ke sini lalu p
 
 ## Uji lokal
 `API_URL=https://script.google.com/macros/s/XXXX/exec node web/build.js && npx serve web/dist`
+
+## Vercel
+`vercel.json` sudah berisi pengaturan build (`node web/build.js` → `web/dist`). Di Vercel cukup **Add New → Project → Import** repo ini lalu **Deploy**.
+Opsional: Settings → Environment Variables → `API_URL` = URL web app Apps Script (`/exec`); tanpa itu dipakai URL di `web/config.js`.
