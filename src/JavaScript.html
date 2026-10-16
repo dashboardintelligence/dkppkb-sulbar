@@ -325,6 +325,7 @@
   /* ---------- login / sesi ---------- */
   function landShow(w) {
     ['pilih', 'login', 'minta'].forEach(function (k) { show($('#land-' + k), k === w); });
+    $$('.lp-link[data-land]').forEach(function (l) { if (l.getAttribute('data-land') === w) l.setAttribute('aria-current', 'page'); else l.removeAttribute('aria-current'); });
     if (w === 'login') setTimeout(function () { $('#login-user').focus(); }, 50);
     if (w === 'minta') { show($('#minta-form-wrap'), true); show($('#minta-ok'), false); $('#minta-msg').textContent = ''; }
     window.scrollTo(0, 0);

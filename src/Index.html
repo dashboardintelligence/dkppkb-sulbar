@@ -53,28 +53,37 @@
 
   <!-- ================= LOGIN ================= -->
   <main id="view-login" class="login-wrap" hidden>
-  <button type="button" class="icon-btn theme-btn theme-fab" id="btn-theme-login"><span class="ic" aria-hidden="true">brightness_auto</span></button>
+  <header class="lp-top">
+    <nav class="lp-menu" aria-label="Menu halaman awal">
+      <button type="button" class="lp-link" data-land="login"><span class="ic" aria-hidden="true">login</span>Login</button>
+      <button type="button" class="lp-link" data-land="minta"><span class="ic" aria-hidden="true">upload_file</span>Minta Data</button>
+      <button type="button" class="icon-btn theme-btn lp-theme" id="btn-theme-login"><span class="ic" aria-hidden="true">brightness_auto</span></button>
+    </nav>
+  </header>
   <div class="land">
-    <header class="land-head">
-      <span class="emblem emblem-xl"><svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="13.2" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#fff"/></svg></span>
-      <h1 id="login-title" class="land-title" data-brand="full">DKPPKB Sulbar Intelligence</h1>
-      <p class="land-sub">Dasbor eksekutif indikator kesehatan, pengendalian penduduk &amp; KB Provinsi Sulawesi Barat</p>
-    </header>
+    <!-- Kiri: desain header Beranda, disusun tegak (pita warna di kiri, titik capaian di bawah) -->
+    <section class="lp-hero" aria-labelledby="login-title">
+      <span class="lh-blue" aria-hidden="true"></span>
+      <span class="lh-pill" aria-hidden="true"></span>
+      <div class="lh-text">
+        <span class="a-logo lh-logo" role="img" aria-label="Logo DKPPKB Sulbar Intelligence"></span>
+        <h1 id="login-title" class="lh-title" data-brand="full">DKPPKB Sulbar Intelligence</h1>
+        <p class="lh-sub">Dasbor eksekutif indikator kesehatan, pengendalian penduduk &amp; KB Provinsi Sulawesi Barat</p>
+      </div>
+      <div class="lh-navy" aria-hidden="true"><span class="ab-dots"><i class="bd-ok"></i><i class="bd-ok"></i><i class="bd-ok"></i><i class="bd-ok"></i><i class="bd-ok"></i><i class="bd-ok"></i><i class="bd-ok"></i><i class="bd-ok"></i><i class="bd-now"></i><i class="bd-next"></i><i class="bd-next"></i><i class="bd-next"></i></span><span class="lh-cap">Capaian pengisian data bulanan</span></div>
+    </section>
 
+    <div class="lp-main">
     <div id="land-pilih" class="land-panel">
-      <div class="land-grid">
-        <button type="button" class="land-card" data-land="login">
-          <span class="land-ic"><span class="ic" aria-hidden="true">login</span></span>
-          <b>Login</b>
-          <span class="muted">Masuk untuk mengisi, memantau, dan menganalisis data kinerja.</span>
-          <span class="land-go">Masuk <span class="ic" aria-hidden="true">arrow_forward</span></span>
-        </button>
-        <button type="button" class="land-card land-card-alt" data-land="minta">
-          <span class="land-ic"><span class="ic" aria-hidden="true">upload_file</span></span>
-          <b>Minta Data</b>
-          <span class="muted">Ajukan permintaan data tanpa perlu akun. Admin akan menindaklanjuti.</span>
-          <span class="land-go">Ajukan <span class="ic" aria-hidden="true">arrow_forward</span></span>
-        </button>
+      <div class="lp-welcome">
+        <h2 class="lp-welcome-h">Selamat datang</h2>
+        <p class="muted">Masuk untuk mengisi, memantau, dan menganalisis data kinerja. Tanpa akun, Anda tetap bisa mengajukan permintaan data lewat menu <b>Minta Data</b> di kanan atas.</p>
+        <ul class="lp-feat">
+          <li><span class="ic" aria-hidden="true">monitor_heart</span><div><b>Indikator kesehatan</b><span>Capaian terhadap target, per bidang dan per periode.</span></div></li>
+          <li><span class="ic" aria-hidden="true">fact_check</span><div><b>Monitoring pengisian</b><span>Kelengkapan data bulanan dan pengingat tenggat.</span></div></li>
+          <li><span class="ic" aria-hidden="true">lan</span><div><b>Monev SPBE &amp; kinerja</b><span>Pemantauan dan evaluasi program dinas.</span></div></li>
+          <li><span class="ic" aria-hidden="true">upload_file</span><div><b>Permintaan data</b><span>Ajukan kebutuhan data tanpa perlu akun.</span></div></li>
+        </ul>
       </div>
       <section id="gal-card" class="gal" aria-roledescription="carousel" aria-label="Galeri kegiatan" hidden>
         <div class="gal-stage" id="gal-stage"><img id="gal-img" alt=""><div class="gal-cap" id="gal-cap"></div>
@@ -135,6 +144,7 @@
         <button type="button" class="btn btn-primary" data-land="pilih">Kembali ke halaman awal</button>
       </div>
     </section>
+    </div>
   </div>
   </main>
 

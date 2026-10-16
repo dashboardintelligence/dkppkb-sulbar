@@ -831,4 +831,63 @@ button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;bac
 .a-foot-links button:hover{color:var(--p-d)}
 .a-foot-base{flex:1 1 100%;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 24px;padding-top:14px;border-top:1px solid var(--rail);font-size:12px;color:var(--gtx)}
 @media print{.a-foot,.topnav{display:none!important}}
+/* =================== Halaman login (Desain A) ===================
+ * Kiri: desain header Beranda disusun tegak. Kanan atas: menu Login & Minta Data (ikon + teks).
+ * #view-login dipakai agar menimpa latar foto lama di file Latar. */
+#view-login.login-wrap{display:block;min-height:100vh;padding:0;background:var(--bg)}
+#view-login .login-card{background:var(--card);-webkit-backdrop-filter:none;backdrop-filter:none;border:1px solid var(--bd);box-shadow:none}
+.lp-top{display:flex;justify-content:flex-end;align-items:center;max-width:1440px;margin:0 auto;padding:14px 24px}
+.lp-menu{display:flex;align-items:center;gap:4px}
+.lp-link{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:0;border-radius:9999px;background:transparent;color:var(--tx);font:600 15px var(--fb);cursor:pointer;transition:background .2s,color .2s}
+.lp-link .ic{font-size:21px;color:var(--p-d)}
+.lp-link:hover{background:var(--rail)}
+.lp-link[aria-current="page"]{background:var(--p-l);color:var(--chip-info-tx)}
+.lp-theme{margin-left:4px}
+#view-login .land{max-width:1440px;margin:0 auto;padding:4px 24px 40px;display:grid;grid-template-columns:minmax(0,1fr);gap:24px;align-items:start}
+.lp-main{min-width:0;display:flex;flex-direction:column;gap:20px}
+#view-login .lp-main .login-card{max-width:none;margin:0}
+.lp-welcome{padding:4px 2px 0}
+.lp-welcome-h{margin:0 0 6px;font-family:var(--fh);font-weight:600;font-size:24px;line-height:30px}
+.lp-welcome .muted{max-width:62ch}
+.lp-feat{list-style:none;margin:20px 0 0;padding:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.lp-feat li{display:flex;gap:14px;align-items:flex-start;padding:18px;background:var(--card);border:1px solid var(--bd);border-radius:20px}
+.lp-feat .ic{flex:none;width:40px;height:40px;border-radius:12px;display:inline-flex;align-items:center;justify-content:center;background:var(--p-l);color:var(--p-d);font-size:22px}
+.lp-feat div{display:flex;flex-direction:column;gap:2px;min-width:0}
+.lp-feat b{font-family:var(--fh);font-weight:600;font-size:15px}
+.lp-feat span:not(.ic){font-size:13px;line-height:19px;color:var(--tx2)}
+#view-login .land-foot{text-align:left;margin-top:8px}
+/* Panel kiri */
+.lp-hero{position:relative;display:grid;grid-template-columns:clamp(40px,14%,110px) minmax(0,1fr);grid-template-rows:auto 1fr auto;min-height:clamp(420px,calc(100vh - 120px),760px);background:#f8fafc;border:1px solid var(--bd);border-radius:2rem;overflow:hidden}
+.lh-blue{grid-column:1;grid-row:1 / 4;background:#63baf2;border-bottom-right-radius:clamp(24px,3vw,48px)}
+.lh-pill{grid-column:2;grid-row:1;justify-self:end;width:min(42%,240px);height:clamp(40px,4.4vw,64px);margin:clamp(20px,2.6vw,36px) clamp(20px,2.6vw,36px) 0 0;background:#ec7e36;border-radius:9999px}
+.lh-text{grid-column:2;grid-row:2;align-self:center;padding:clamp(24px,3vw,48px) clamp(22px,3.2vw,56px);display:flex;flex-direction:column;align-items:flex-start;gap:14px}
+.lh-logo{width:clamp(64px,6vw,88px);height:clamp(64px,6vw,88px);border-radius:22px}
+#view-login .a-logo{display:inline-block}
+.lh-title{margin:0;font-family:'Space Grotesk',var(--fh);font-weight:700;font-size:clamp(32px,3.6vw,60px);line-height:1.04;letter-spacing:-.02em;color:#0f172a;max-width:12ch}
+.lh-sub{margin:0;font-size:clamp(14px,1.1vw,17px);line-height:1.5;color:#475569;max-width:40ch}
+.lh-navy{grid-column:2;grid-row:3;margin-left:clamp(12px,2vw,28px);background:#111827;border-top-left-radius:clamp(24px,3vw,48px);padding:clamp(20px,2.4vw,32px) clamp(20px,2.6vw,36px);display:flex;flex-direction:column;gap:12px}
+.lh-navy .ab-dots{display:flex;flex-wrap:wrap;gap:clamp(6px,.8vw,12px)}
+.lh-navy .ab-dots i{width:clamp(16px,1.7vw,26px);height:clamp(16px,1.7vw,26px)}
+.lh-cap{font-size:12px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:rgba(226,232,240,.75)}
+:root[data-theme="dark"] .lp-hero{background:var(--card)}
+:root[data-theme="dark"] .lh-title{color:var(--tx)}
+:root[data-theme="dark"] .lh-sub{color:var(--tx2)}
+:root[data-theme="dark"] .lh-navy{background:#0b1218}
+@media(min-width:1024px){
+  #view-login .land{grid-template-columns:minmax(0,5fr) minmax(0,6fr);gap:32px;padding-bottom:48px}
+  .lp-hero{position:sticky;top:16px}
+}
+@media(max-width:1023px){
+  .lp-hero{min-height:0}
+  .lh-text{padding:20px 22px}
+}
+@media(max-width:480px){
+  .lp-top{padding:10px 12px}
+  .lp-link{padding:0 10px;font-size:14px}
+  #view-login .land{padding:0 12px 28px}
+  .lh-pill{height:32px;margin:16px 16px 0 0}
+  .lh-navy{padding:16px 16px}
+  .lh-navy .ab-dots{gap:5px;flex-wrap:nowrap}
+  .lh-navy .ab-dots i{width:15px;height:15px;min-width:0;min-height:0}
+}
 </style>
