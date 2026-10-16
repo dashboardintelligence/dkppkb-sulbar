@@ -12,16 +12,16 @@
 
   var MENU = [
     { id: 'beranda', label: 'Beranda', icon: 'dashboard', group: 'Utama' },
-    { id: 'inputdata', label: 'Input Data', icon: 'edit_note', group: 'Indikator', roles: ['admin', 'pic'] },
+    { id: 'inputdata', label: 'Input Data', icon: 'edit_note', group: 'Indikator', roles: ['admin', 'staf', 'pic'] },
     { id: 'indikator', label: 'Indikator Kesehatan', icon: 'monitor_heart', group: 'Indikator' },
     { id: 'spbe', label: 'Monev SPBE', icon: 'lan', group: 'Indikator' },
     { id: 'monev', label: 'Monev Kinerja', icon: 'rule', group: 'Indikator' },
     { id: 'analitik', label: 'Capaian & Analitik', icon: 'insights', group: 'Analisis' },
-    { id: 'laporan', label: 'Laporan Eksekutif', icon: 'description', group: 'Layanan', roles: ['admin', 'pimpinan'] },
+    { id: 'laporan', label: 'Laporan Eksekutif', icon: 'description', group: 'Layanan', roles: ['admin', 'staf', 'pimpinan'] },
     { id: 'permintaan', label: 'Permintaan Data', icon: 'upload_file', group: 'Layanan' },
-    { id: 'tambahindikator', label: 'Tambah Indikator', icon: 'add_circle', group: 'Administrasi', roles: ['admin'] },
+    { id: 'tambahindikator', label: 'Tambah Indikator', icon: 'add_circle', group: 'Administrasi', roles: ['admin', 'staf'] },
     { id: 'pengguna', label: 'Kelola Pengguna', icon: 'group', group: 'Administrasi', roles: ['admin'] },
-    { id: 'syncform', label: 'Sync Form', icon: 'sync_alt', group: 'Administrasi', roles: ['admin'] },
+    { id: 'syncform', label: 'Sync Form', icon: 'sync_alt', group: 'Administrasi', roles: ['admin', 'staf'] },
     { id: 'pengaturan', label: 'Pengaturan', icon: 'settings', group: 'Lainnya' },
     { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Lainnya' }
   ];
@@ -44,7 +44,7 @@
     { label: 'Lainnya', children: ['pengaturan', 'panduan'] }
   ];
   var EMBLEM_SVG = '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="13.2" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#fff"/></svg>';
-  var ROLE_LABEL = { admin: 'Administrator', pimpinan: 'Pimpinan', pic: 'PIC Bidang' };
+  var ROLE_LABEL = { admin: 'Administrator', staf: 'Staf Admin', pimpinan: 'Pimpinan', pic: 'PIC Bidang' };
 
   /* ---------- util ---------- */
   function $(s, r) { return (r || document).querySelector(s); }
@@ -834,7 +834,7 @@
   var PRATINJAU_ = { pdf: 1, jpg: 1, jpeg: 1, png: 1, webp: 1, txt: 1, csv: 1 };
   /* ---------- permintaan data: buka & tinjau ---------- */
   function openPmt(d) {
-    var adm = AppState.user && AppState.user.role === 'admin';
+    var adm = AppState.user && (AppState.user.role === 'admin' || AppState.user.role === 'staf');
     var ST = ['Baru', 'Diproses', 'Selesai', 'Ditolak'], CLS = { Baru: 'warn', Diproses: 'info', Selesai: 'ok', Ditolak: 'crit' };
     function row(k, v) { return '<div class="pmt-r"><dt>' + k + '</dt><dd>' + (v ? esc(v) : '<span class="muted">—</span>') + '</dd></div>'; }
     var lam = d.lampiran ? '<div class="pmt-r"><dt>Lampiran</dt><dd><span class="chip chip-info">' + esc(d.lampiran.nama) + '</span> ' +
@@ -979,7 +979,7 @@
       mvArea('Indikator kinerja (IK) tujuan program', 'teks', d.teks, 'required maxlength="300" rows="3" placeholder="Contoh: Persentase ibu hamil yang mendapat pelayanan K4"') +
       mvSel('Satuan', 'satuan', [{ v: '%', t: 'Persen (%)' }, { v: 'Angka', t: 'Angka' }, { v: 'Jumlah', t: 'Jumlah' }], d.satuan || '%');
     else {
-      var admin = AppState.user && AppState.user.role === 'admin';
+      var admin = AppState.user && (AppState.user.role === 'admin' || AppState.user.role === 'staf');
       h = mvSel('Indikator kinerja (IK)', 'induk', mvIkOpts(meta, !admin), d.induk);
       if (j === 'target' || j === 'realisasi') h += mvSel('Triwulan', 'tw', MV_TW, d.tw || twSekarang()) + mvInp('Angka ' + MV_JUDUL[j].toLowerCase(), 'angka', d.angka == null ? '' : String(d.angka).replace('.', ','), 'inputmode="decimal" required autocomplete="off" placeholder="Contoh: 87,5"');
       else if (j === 'unit') h += mvSel('Unit / bidang penanggung jawab', 'bidang', [{ v: '', t: '— Pilih unit —' }].concat((meta.bidang || []).map(function (b) { return { v: b, t: b }; })), '') +
