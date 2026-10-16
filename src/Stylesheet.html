@@ -682,18 +682,27 @@ button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;bac
 .tn-sub .ic{color:var(--tx2);font-size:20px}
 .tn-sub:hover{background:var(--rail)}
 .tn-sub.active{background:var(--p-l);color:var(--chip-info-tx)}.tn-sub.active .ic{color:var(--p-d)}
+/* Lebar konten mengikuti layar (maks. 1760px) agar sisi kiri-kanan tidak banyak ruang kosong */
+.content{max-width:1760px}
+.backbar{display:flex}
+.backbar .back-btn{margin:0 0 14px}
 @media(min-width:1024px){
   .sidebar{display:none}
   .shell{margin-left:0}
-  .topbar{flex-wrap:wrap;gap:10px 8px;padding:12px max(32px,calc((100% - 1360px)/2 + 32px)) 0}
-  .topnav{display:flex;gap:4px;flex-wrap:wrap;order:10;flex:1 1 100%;padding:2px 0 10px}
+  /* Menu mengisi kiri dan boleh turun baris sendiri; periode, lonceng, dan akun selalu satu kelompok di kanan */
+  .topbar{flex-wrap:nowrap;gap:8px;padding:12px max(32px,calc((100% - 1760px)/2 + 32px))}
+  .topnav{display:flex;gap:4px;flex-wrap:wrap;flex:1 1 auto;min-width:0}
+  .topbar-spacer{display:none}
+  .topbar .period,#btn-notif,#btn-user{flex:none}
 }
-@media(min-width:1280px){
-  .topbar{padding-block:12px}
-  .topnav{order:0;flex:0 1 auto;padding:0}
-}
-@media(min-width:1280px) and (max-width:1499px){.user-txt{display:none!important}.user-pill{padding:2px}.back-txt{display:none}}
+@media(min-width:1024px) and (max-width:1499px){.user-txt{display:none!important}.user-pill{padding:2px}}
+@media(min-width:1024px) and (max-width:1279px){.tn-item{padding:0 12px}}
 
+/* Bagian atas Beranda: layar lebar = header + ringkasan di kiri, kepatuhan di kanan */
+.a-top{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;margin-bottom:24px;align-items:start}
+.a-top-l{display:flex;flex-direction:column;gap:24px;min-width:0}
+.a-top .a-banner,.a-top .a-comply,.a-top .grid{margin-bottom:0}
+@media(min-width:1440px){.a-top{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}.a-top .a-comply{height:100%;align-content:flex-start}}
 /* Header gambar Beranda (gambar ada di file GambarHeader) */
 .a-banner{display:block;width:100%;aspect-ratio:1380/459;background-color:#f8fafc;background-position:center;background-size:cover;background-repeat:no-repeat;border:1px solid var(--bd);border-radius:2rem;margin-bottom:24px}
 .a-card{background:var(--card);border:1px solid var(--bd);border-radius:2rem}
@@ -744,7 +753,7 @@ button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;bac
 .a-foot{margin-top:24px;background:var(--card);border-top:1px solid var(--bd)}
 .a-motif{display:block}.a-motif-fill{opacity:.16}
 :root[data-theme="dark"] .a-motif-fill{opacity:.24}
-.a-foot-in{max-width:1360px;margin:0 auto;padding:20px 16px 28px;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;justify-content:space-between}
+.a-foot-in{max-width:1760px;margin:0 auto;padding:20px 16px 28px;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;justify-content:space-between}
 @media(min-width:1024px){.a-foot-in{padding:24px 32px 32px}}
 .a-foot-brand{display:flex;align-items:center;gap:14px;flex:1 1 380px;min-width:0}
 .a-foot-brand div{display:flex;flex-direction:column;min-width:0}
