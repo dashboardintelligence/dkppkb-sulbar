@@ -556,6 +556,12 @@
   function injectPage(page, html, title, opts) {
     var keepY = opts && opts.keep ? window.scrollY : 0;
     $('#app-container').innerHTML = html;
+    // Header gambar Beranda (Desain A) juga dipasang dari sisi klien, agar tetap muncul walau server Apps Script masih versi lama.
+    if (page === 'beranda' && !$('#app-container .a-banner')) {
+      var hd = $('#app-container .page-head');
+      var bn = '<div class="a-banner" role="img" aria-label="DKPPKB Sulbar Intelligence — Dasbor eksekutif indikator kesehatan, pengendalian penduduk &amp; KB Provinsi Sulawesi Barat"></div>';
+      if (hd) hd.outerHTML = '<h1 class="sr">' + esc(hd.textContent) + '</h1>' + bn; else $('#app-container').insertAdjacentHTML('afterbegin', bn);
+    }
     $('#topbar-title').textContent = title || '';
     document.title = (title ? title + ' · ' : '') + (BRAND.full || 'DKPPKB Sulbar Intelligence');
     $$('[data-menu]').forEach(function (b) { var on = b.getAttribute('data-menu') === page; b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
