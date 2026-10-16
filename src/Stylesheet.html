@@ -684,17 +684,19 @@ button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;bac
 .tn-sub.active{background:var(--p-l);color:var(--chip-info-tx)}.tn-sub.active .ic{color:var(--p-d)}
 /* Lebar konten mengikuti layar (maks. 1760px) agar sisi kiri-kanan tidak banyak ruang kosong */
 .content{max-width:1920px}
-.backbar{display:flex}
-.backbar .back-btn{margin:0 0 14px}
+/* Baris logo + tombol Kembali: bagian dari topbar yang menempel, jadi tidak ikut bergeser saat di-scroll */
+.topbar{flex-wrap:wrap}
+.tb-sub{order:20;flex:1 1 100%;display:flex;align-items:center;gap:12px;padding:2px 0 4px}
+@media(max-width:1023px){#btn-menu{order:-2}.tb-sub{order:-1;flex:0 0 auto;padding:0;gap:6px}.tb-sub .back-txt{display:none}.tb-sub .back-btn{padding:0;width:44px}}
 @media(min-width:1024px){
   .sidebar{display:none}
   .shell{margin-left:0}
   /* Menu mengisi kiri dan boleh turun baris sendiri; periode, lonceng, dan akun selalu satu kelompok di kanan */
-  .topbar{flex-wrap:nowrap;gap:8px;padding:12px max(24px,calc((100% - 1920px)/2 + 24px))}
+  .topbar{flex-wrap:wrap;gap:8px;padding:12px max(24px,calc((100% - 1920px)/2 + 24px)) 10px}
   .content{padding:24px}
-  .topnav{display:flex;gap:4px;flex-wrap:wrap;flex:1 1 auto;min-width:0}
+  .topnav{display:flex;gap:4px;flex-wrap:wrap;flex:1 1 0;min-width:0}
   .topbar-spacer{display:none}
-  .topbar .period,#btn-notif,#btn-user,.a-logo{flex:none}
+  .topbar .period,#btn-notif,#btn-user{flex:none}
 }
 @media(min-width:1024px) and (max-width:1499px){.user-txt{display:none!important}.user-pill{padding:2px}}
 @media(min-width:1024px) and (max-width:1279px){.tn-item{padding:0 12px}}
@@ -704,9 +706,10 @@ button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;bac
 .a-top-l{display:flex;flex-direction:column;gap:24px;min-width:0}
 .a-top .a-banner,.a-top .a-comply,.a-top .grid{margin-bottom:0}
 @media(min-width:1440px){.a-top{grid-template-columns:minmax(0,1.6fr) minmax(0,1fr)}.a-top .a-comply{height:100%;align-content:flex-start}}
-/* Logo di kanan atas (gambar ada di file GambarHeader) */
-.a-logo{display:inline-block;flex:none;width:40px;height:40px;border-radius:11px;background-color:var(--card);background-size:104%;background-position:center;background-repeat:no-repeat;box-shadow:0 0 0 1px var(--bd)}
-@media(min-width:1024px){.a-logo{width:44px;height:44px;border-radius:12px;margin-left:4px}}
+/* Logo — titik fokus di kiri atas (gambar ada di file GambarHeader) */
+.a-logo{display:inline-block;flex:none;width:48px;height:48px;padding:0;border:0;cursor:pointer;border-radius:14px;background-color:var(--card);background-size:104%;background-position:center;background-repeat:no-repeat;box-shadow:0 0 0 1px var(--bd),0 6px 16px -6px rgba(2,132,199,.35);transition:transform .15s}
+.a-logo:hover{transform:scale(1.04)}
+@media(min-width:1024px){.a-logo{width:56px;height:56px;border-radius:16px}}
 /* Tombol akun: avatar hijau, nama oranye */
 .user-pill .avatar{background:#15803d;color:#fff}
 .user-txt b{color:#c2410c}
