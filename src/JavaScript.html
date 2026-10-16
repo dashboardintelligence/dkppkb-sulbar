@@ -32,6 +32,17 @@
     { id: 'permintaan', label: 'Data', icon: 'upload_file' },
     { id: '_menu', label: 'Menu', icon: 'menu' }
   ];
+  /* Menu tab atas (desktop, Desain A). Grup berisi sub-menu dropdown; item yang tak boleh diakses peran disembunyikan. */
+  var TOP = [
+    { id: 'beranda', label: 'Beranda' },
+    { id: 'inputdata', label: 'Input Data' },
+    { id: 'indikator', label: 'Indikator' },
+    { label: 'Monev', children: ['spbe', 'monev'] },
+    { id: 'analitik', label: 'Analitik' },
+    { label: 'Layanan', children: ['laporan', 'permintaan'] },
+    { label: 'Administrasi', children: ['tambahindikator', 'pengguna', 'syncform'] },
+    { label: 'Lainnya', children: ['pengaturan', 'panduan'] }
+  ];
   var EMBLEM_SVG = '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="13.2" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#fff"/></svg>';
   var ROLE_LABEL = { admin: 'Administrator', pimpinan: 'Pimpinan', pic: 'PIC Bidang' };
 
@@ -161,6 +172,13 @@
   }
   function markMenu(page) {
     $$('[data-menu]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-menu') === page); });
+    $$('.tn-group').forEach(function (g) { $('.tn-item', g).classList.toggle('active', !!$('.tn-sub.active', g)); });
+  }
+  function closeTopMenus(except) {
+    $$('.tn-group').forEach(function (g) {
+      if (g === except) return;
+      var m = $('.tn-menu', g); if (m && !m.hidden) { m.hidden = true; $('.tn-item', g).setAttribute('aria-expanded', 'false'); }
+    });
   }
 
   var toastTimer;
@@ -428,6 +446,25 @@
         (m.badge ? '<span class="chip chip-warn nav-badge" id="nav-badge" hidden>0</span>' : '') + '</button>';
     });
     $('#nav-side').innerHTML = html;
+    var boleh = {}; items.forEach(function (m) { boleh[m.id] = m; });
+    $('#nav-top').innerHTML = TOP.map(function (t, gi) {
+      if (!t.children) {
+        var m = boleh[t.id]; if (!m) return '';
+        return '<button type="button" class="tn-item" data-nav="' + m.id + '" data-menu="' + m.id + '">' + esc(t.label) + '</button>';
+      }
+      var subs = t.children.filter(function (id) { return boleh[id]; });
+      if (!subs.length) return '';
+      return '<div class="tn-group"><button type="button" class="tn-item" data-act="tn-toggle" aria-expanded="false" aria-controls="tn-menu-' + gi + '">' + esc(t.label) + '<span class="ic" aria-hidden="true">expand_more</span></button>' +
+        '<div class="tn-menu" id="tn-menu-' + gi + '" hidden>' + subs.map(function (id) {
+          var m = boleh[id];
+          return '<button type="button" class="tn-sub" data-nav="' + id + '" data-menu="' + id + '"><span class="ic" aria-hidden="true">' + m.icon + '</span>' + esc(m.label) + '</button>';
+        }).join('') + '</div></div>';
+    }).join('');
+    $('#foot-links').innerHTML = ['panduan', 'permintaan', 'laporan'].filter(function (id) { return boleh[id]; }).map(function (id) {
+      return '<button type="button" data-nav="' + id + '">' + esc(boleh[id].label) + '</button>';
+    }).join('');
+    if (d.cfg && d.cfg.namaDinas) $('#foot-dinas').textContent = d.cfg.namaDinas;
+    $('#foot-copy').textContent = '© ' + ((d.cfg && d.cfg.tahun) || new Date().getFullYear()) + ' DKPPKB Provinsi Sulawesi Barat';
     $('#nav-bottom').innerHTML = BOTTOM.map(function (b) {
       return '<button type="button" class="bn" ' + (b.id === '_menu' ? 'data-act="open-drawer"' : 'data-nav="' + b.id + '" data-menu="' + b.id + '"') + '><span class="ic" aria-hidden="true">' + b.icon + '</span><span>' + b.label + '</span></button>';
     }).join('');
@@ -1097,6 +1134,13 @@
       case 'theme': window.DkTheme.next(); break;
       case 'reload': navigateTo(AppState.page, AppState.params); break;
       case 'open-drawer': openDrawer(); break;
+      case 'tn-toggle': {
+        var grp = el.closest('.tn-group'), menu = $('.tn-menu', grp), buka = menu.hidden;
+        closeTopMenus(grp);
+        menu.hidden = !buka; el.setAttribute('aria-expanded', String(buka));
+        if (buka && ev && ev.detail === 0) { var f1 = $('.tn-sub', menu); if (f1) f1.focus(); }
+        break;
+      }
       case 'detail': {
         var src = $('.detail-src', el); if (!src) break;
         var nama = $('.ir-name', el);
@@ -1276,6 +1320,7 @@
     var t = ev.target;
     if (t.id === 'modal-back') { closeModal(); return; }
     if (t.id === 'scrim') { closeDrawer(); return; }
+    if (!(t.closest && t.closest('.tn-group')) || (t.closest && t.closest('.tn-sub'))) closeTopMenus();
     var nav = t.closest && t.closest('[data-nav]');
     if (nav) {
       ev.preventDefault();
@@ -1293,7 +1338,11 @@
     }
   });
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Escape') { if ($('#modal-root').firstChild) closeModal(); else closeDrawer(); return; }
+    if (ev.key === 'Escape') {
+      var openG = $$('.tn-group').filter(function (g) { return !$('.tn-menu', g).hidden; })[0];
+      if (openG) { closeTopMenus(); $('.tn-item', openG).focus(); return; }
+      if ($('#modal-root').firstChild) closeModal(); else closeDrawer(); return;
+    }
     if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[data-act=detail]')) { ev.preventDefault(); onAction(ev.target, ev); }
     if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('.input-search.f-param')) { ev.preventDefault(); applyFilters(); }
     if (ev.key === 'Tab' && $('#modal-root').firstChild) {   // jebakan fokus sederhana

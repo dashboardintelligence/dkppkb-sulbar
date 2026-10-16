@@ -657,4 +657,101 @@ ol.langkah{margin:8px 0 14px 20px;padding:0}ol.langkah li{margin:6px 0}
 .gal-th{width:96px;height:64px;object-fit:cover;border-radius:10px;background:var(--rail)}
 .gal-ed{display:flex;flex-direction:column;gap:6px;min-width:0}
 @media(max-width:800px){.gal-row{grid-template-columns:80px minmax(0,1fr)}.gal-row .row-actions{grid-column:1/-1}}
+/* =================== Desain A (Pita Komando) — lapisan tampilan ===================
+ * Menu tab di atas (desktop), header gambar di Beranda, footer motif Sekomandi, kartu bergaris tipis.
+ * Semua warna memakai token tema sehingga mode terang & gelap tetap berjalan. */
+body{background:var(--bg)}
+.card{box-shadow:none;border-color:var(--bd)}
+.hero{background:var(--card);box-shadow:none}
+button.kpi:hover,.bidang:hover,.ind-row:hover{transform:none;box-shadow:none;background:var(--bg)}
+/* Ringkasan angka menjadi satu strip bergaris pemisah */
+.grid:has(> .kpi){gap:0;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));background:var(--card);border:1px solid var(--bd);border-radius:2rem;overflow:hidden}
+.grid:has(> .kpi) > .kpi{border:0;border-radius:0;box-shadow:1px 0 0 var(--bd),0 1px 0 var(--bd);background:transparent;padding:22px 26px}
+.grid:has(> .kpi) > button.kpi:hover{background:var(--bg)}
+
+/* Topbar & menu tab */
+.topbar .brand,.topbar-title{display:none!important}
+.topnav{display:none}
+.tn-item{display:inline-flex;align-items:center;gap:6px;min-height:44px;padding:0 16px;border-radius:9999px;border:0;background:transparent;color:var(--tx2);font-weight:600;font-size:14px;white-space:nowrap;transition:background .2s,color .2s}
+.tn-item:hover{background:var(--rail);color:var(--tx)}
+.tn-item.active{background:var(--tx);color:var(--bg)}
+.tn-item .ic{font-size:18px;width:auto}
+.tn-group{position:relative}
+.tn-menu{position:absolute;top:calc(100% + 6px);left:0;z-index:70;min-width:240px;background:var(--card);border:1px solid var(--bd);border-radius:20px;box-shadow:var(--sh3);padding:6px;display:flex;flex-direction:column;gap:2px}
+.tn-sub{display:flex;align-items:center;gap:12px;min-height:44px;padding:0 14px;border:0;border-radius:14px;background:transparent;color:var(--tx);font-weight:600;font-size:14px;text-align:left;white-space:nowrap}
+.tn-sub .ic{color:var(--tx2);font-size:20px}
+.tn-sub:hover{background:var(--rail)}
+.tn-sub.active{background:var(--p-l);color:var(--chip-info-tx)}.tn-sub.active .ic{color:var(--p-d)}
+@media(min-width:1024px){
+  .sidebar{display:none}
+  .shell{margin-left:0}
+  .topbar{flex-wrap:wrap;gap:10px 8px;padding:12px max(32px,calc((100% - 1360px)/2 + 32px)) 0}
+  .topnav{display:flex;gap:4px;flex-wrap:wrap;order:10;flex:1 1 100%;padding:2px 0 10px}
+}
+@media(min-width:1280px){
+  .topbar{padding-block:12px}
+  .topnav{order:0;flex:0 1 auto;padding:0}
+}
+@media(min-width:1280px) and (max-width:1499px){.user-txt{display:none!important}.user-pill{padding:2px}.back-txt{display:none}}
+
+/* Header gambar Beranda (gambar ada di file GambarHeader) */
+.a-banner{display:block;width:100%;aspect-ratio:1380/459;background-color:#f8fafc;background-position:center;background-size:cover;background-repeat:no-repeat;border:1px solid var(--bd);border-radius:2rem;margin-bottom:24px}
+.a-card{background:var(--card);border:1px solid var(--bd);border-radius:2rem}
+.a-pad{padding:24px}
+@media(min-width:768px){.a-pad{padding:28px}}
+.t-ok{color:var(--ok-d)}.t-warn{color:var(--warn-d)}.t-crit{color:var(--crit-d)}
+.a-eyebrow{font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--gtx);margin-bottom:4px}
+.a-comply{display:flex;flex-wrap:wrap;gap:24px 48px;align-items:center;padding:24px;margin-bottom:24px}
+@media(min-width:768px){.a-comply{padding:28px}}
+.a-comply-l{flex:1 1 340px;min-width:0}
+.a-comply-r{flex:1 1 400px;min-width:0;display:flex;flex-direction:column;gap:2px}
+.a-comply-title{font-family:var(--fh);font-weight:600;font-size:20px;line-height:28px;color:var(--tx2);margin-top:12px}
+.a-big{font-family:var(--fh);font-weight:700;font-size:72px;line-height:76px;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.a-big small{font-size:32px;color:var(--p-d);letter-spacing:0}
+@media(max-width:600px){.a-big{font-size:52px;line-height:58px}}
+.a-cta{margin-top:18px}
+.a-brow{display:grid;grid-template-columns:110px minmax(0,1fr) 56px;gap:14px;align-items:center;min-height:44px;padding:0 10px;margin:0 -10px;border:0;border-radius:14px;background:transparent;text-align:left;font-size:14px;transition:background .2s}
+.a-brow:hover{background:var(--rail)}
+.a-brow-n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.a-brow b{font-family:var(--fh);text-align:right;font-variant-numeric:tabular-nums}
+.a-track{display:block;height:10px;border-radius:9999px;background:var(--rail);overflow:hidden}
+.a-track>i{display:block;height:100%;border-radius:9999px;transition:width .6s ease}
+.a-cols{display:flex;flex-wrap:wrap;gap:24px;align-items:flex-start;margin-top:24px}
+.a-main{flex:999 1 560px;min-width:0}
+.a-side{flex:1 1 300px;min-width:0;display:flex;flex-direction:column;gap:24px}
+.a-note{margin:-4px 0 8px}
+.a-rank{display:grid;grid-template-columns:36px minmax(0,1fr);gap:8px 16px;align-items:center;padding:16px 0;border-top:1px solid var(--bd)}
+.a-rank-no{font-family:var(--fh);font-weight:700;font-size:22px;color:var(--gtx)}
+.a-rank-main{display:flex;flex-direction:column;min-width:0}
+.a-rank-main b{font-family:var(--fh);font-weight:600;font-size:16px;line-height:22px}
+.a-rank-bar{grid-column:2;display:flex;flex-direction:column;gap:6px}
+.a-rank-cap{grid-column:2}
+@media(min-width:760px){.a-rank{grid-template-columns:36px minmax(0,1fr) minmax(160px,220px) 76px}.a-rank-bar,.a-rank-cap{grid-column:auto}.a-rank-cap{justify-self:end}}
+.a-bullet{position:relative;display:block;height:12px;border-radius:9999px;background:var(--rail)}
+.a-bullet>i{position:absolute;left:0;top:0;bottom:0;border-radius:9999px}
+.a-bullet>em{position:absolute;left:80%;top:-4px;bottom:-4px;width:2px;background:var(--tx)}
+.a-kab{display:flex;justify-content:space-between;align-items:center;gap:12px;min-height:42px;border-top:1px solid var(--rail);font-size:14px;font-weight:600}
+.a-kab b{font-size:13px}
+.a-tip{background:var(--p-l);border-color:var(--p-l);display:flex;flex-direction:column;gap:10px}
+.a-tip-top{display:flex;align-items:center;gap:8px;color:var(--chip-info-tx);font-weight:700;font-size:13px}
+.a-tip-top .ic{font-size:20px}
+.a-tip-text{font-family:var(--fh);font-weight:600;font-size:18px;line-height:26px}
+.a-tip-sol,.a-tip-meta{font-size:14px;color:var(--chip-info-tx)}
+.a-btn-dark{align-self:flex-start;background:var(--tx);color:var(--bg)}
+.a-btn-dark:hover{opacity:.9}
+
+/* Footer motif Sekomandi */
+.a-foot{margin-top:24px;background:var(--card);border-top:1px solid var(--bd)}
+.a-motif{display:block}.a-motif-fill{opacity:.16}
+:root[data-theme="dark"] .a-motif-fill{opacity:.24}
+.a-foot-in{max-width:1360px;margin:0 auto;padding:20px 16px 28px;display:flex;flex-wrap:wrap;gap:16px 24px;align-items:center;justify-content:space-between}
+@media(min-width:1024px){.a-foot-in{padding:24px 32px 32px}}
+.a-foot-brand{display:flex;align-items:center;gap:14px;flex:1 1 380px;min-width:0}
+.a-foot-brand div{display:flex;flex-direction:column;min-width:0}
+.a-foot-brand b{font-family:var(--fh);font-weight:600;font-size:15px}
+.a-foot-links{display:flex;flex-wrap:wrap;gap:0 20px}
+.a-foot-links button{min-height:44px;border:0;background:transparent;padding:0;font-size:14px;font-weight:600;color:var(--tx2)}
+.a-foot-links button:hover{color:var(--p-d)}
+.a-foot-base{flex:1 1 100%;display:flex;flex-wrap:wrap;justify-content:space-between;gap:6px 24px;padding-top:14px;border-top:1px solid var(--rail);font-size:12px;color:var(--gtx)}
+@media print{.a-foot,.topnav{display:none!important}}
 </style>

@@ -14,6 +14,7 @@ let html = rd('Index.html')
   .replace(/data-sub="<\?= subApp \?>"/, 'data-sub="Intelligence"')
   .replace(/<\?!= include\('Stylesheet'\) \?>/, () => '<link rel="stylesheet" href="style.css">')
   .replace(/<\?!= include\('Latar'\) \?>/, () => '<link rel="stylesheet" href="latar.css">')
+  .replace(/<\?!= include\('GambarHeader'\) \?>/, () => '<link rel="stylesheet" href="gambar-header.css">')
   .replace(/<\?!= include\('JavaScript'\) \?>/, () => '<script src="config.js"></script>\n  <script src="app.js"></script>');
 if (/<\?/.test(html)) throw new Error('Masih ada tag template di Index.html');
 
@@ -22,6 +23,7 @@ fs.mkdirSync(OUT, { recursive: true });
 fs.writeFileSync(path.join(OUT, 'index.html'), html);
 fs.writeFileSync(path.join(OUT, 'style.css'), unwrap(rd('Stylesheet.html'), 'style'));
 fs.writeFileSync(path.join(OUT, 'latar.css'), unwrap(rd('Latar.html'), 'style'));
+fs.writeFileSync(path.join(OUT, 'gambar-header.css'), unwrap(rd('GambarHeader.html'), 'style'));
 fs.writeFileSync(path.join(OUT, 'app.js'), unwrap(rd('JavaScript.html'), 'script'));
 let cfg = fs.readFileSync(path.join(__dirname, 'config.js'), 'utf8');
 if (process.env.API_URL) {
