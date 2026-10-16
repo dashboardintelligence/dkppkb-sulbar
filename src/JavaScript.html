@@ -81,7 +81,7 @@
     });
   }
   /** Panggil API ber-token. Mengembalikan data atau melempar Error; sesi habis -> kembali ke login. */
-  var PCACHE = {}, READ_API = { apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiFotoGaleriAdmin: 1 };
+  var PCACHE = {}, READ_API = { apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiFotoGaleriAdmin: 1, apiNotifikasi: 1 };
   function api(fn, args) {
     if (!READ_API[fn]) pcReset();   // ada perubahan data: buang cache halaman
     args = [AppState.sessionToken].concat(args || []);
@@ -553,16 +553,73 @@
     if (ACC[id] !== undefined) ACC[id] = tab;
   }
   function accPulih() { Object.keys(ACC).forEach(function (id) { var art = $('.im-acc[data-acc="' + id + '"]'); if (art) accBuka(art, true, ACC[id]); else delete ACC[id]; }); }
+  /* Header Beranda digambar dengan HTML/CSS (bukan gambar) agar tajam di semua layar dan ukuran teksnya bisa diatur. */
+  function isiBanner(el) {
+    if (el.getAttribute('data-isi')) return;
+    var dots = '';
+    for (var i = 0; i < 12; i++) dots += '<i class="' + (i < 8 ? 'bd-ok' : (i === 8 ? 'bd-now' : 'bd-next')) + '"></i>';
+    el.setAttribute('data-isi', '1');
+    el.removeAttribute('role'); el.removeAttribute('aria-label');
+    el.innerHTML = '<div class="ab-band" aria-hidden="true"><span class="ab-blue"></span><span class="ab-pill"></span><span class="ab-navy"><span class="ab-dots">' + dots + '</span></span></div>' +
+      '<div class="ab-text"><p class="ab-title"><span>' + esc(BRAND.nama || 'DKPPKB Sulbar') + '</span> <span>' + esc(BRAND.sub || 'Intelligence') + '</span></p>' +
+      '<p class="ab-sub">Dasbor eksekutif indikator kesehatan, pengendalian penduduk &amp; KB Provinsi Sulawesi Barat</p></div>';
+  }
+
+  /* ---------- panel pemberitahuan (lonceng) ---------- */
+  var NOTIF_JENIS = { crit: 'Mendesak', warn: 'Perlu tindakan', info: 'Info' };
+  function posNotif() {
+    var p = $('#notif-panel'), b = $('#btn-notif').getBoundingClientRect();
+    var vw = document.documentElement.clientWidth, w = Math.min(380, vw - 24);
+    p.style.top = Math.round(b.bottom + 8) + 'px';
+    p.style.left = 'auto';
+    p.style.right = Math.max(12, Math.min(Math.round(vw - b.right - 8), vw - w - 12)) + 'px';   // tidak keluar layar di ponsel
+  }
+  function closeNotif() {
+    var p = $('#notif-panel'); if (!p || p.hidden) return;
+    p.hidden = true; $('#btn-notif').setAttribute('aria-expanded', 'false');
+  }
+  function renderNotif(d) {
+    var items = (d && d.items) || [];
+    var html = '<div class="np-head"><b>Pemberitahuan</b><button type="button" class="icon-btn np-x" data-act="notif-close" aria-label="Tutup pemberitahuan"><span class="ic" aria-hidden="true">close</span></button></div>';
+    if (!items.length) html += '<div class="np-empty"><span class="ic" aria-hidden="true">notifications_off</span><p>Tidak ada pemberitahuan. Semua isian tertib.</p></div>';
+    else html += '<ul class="np-list">' + items.map(function (it) {
+      return '<li><button type="button" class="np-item np-' + esc(it.jenis) + '" data-nav="' + esc(it.nav || 'monitoring') + '"><span class="np-ic"><span class="ic" aria-hidden="true">' + esc(it.ikon || 'info') + '</span></span>' +
+        '<span class="np-txt"><b>' + esc(it.judul) + '</b><span>' + esc(it.isi || '') + '</span></span><span class="sr">' + esc(NOTIF_JENIS[it.jenis] || '') + '</span></button></li>';
+    }).join('') + '</ul>';
+    if (d && d.lebih) html += '<p class="np-more">+' + d.lebih + ' indikator tertunggak lainnya</p>';
+    html += '<div class="np-foot"><button type="button" class="btn btn-ghost btn-sm" data-nav="monitoring">' + '<span class="ic" aria-hidden="true">fact_check</span>Buka Monitoring Pengisian</button></div>';
+    $('#notif-panel').innerHTML = html;
+  }
+  function toggleNotif() {
+    var p = $('#notif-panel');
+    if (!p.hidden) { closeNotif(); return; }
+    closeTopMenus();
+    posNotif(); p.hidden = false; $('#btn-notif').setAttribute('aria-expanded', 'true');
+    p.innerHTML = '<div class="np-head"><b>Pemberitahuan</b></div><div class="np-empty"><span class="spin" aria-hidden="true"></span><p>Memuat…</p></div>';
+    api('apiNotifikasi').then(renderNotif).catch(function (e) {
+      if (e && e.handled) return;
+      // Server Apps Script lama belum punya apiNotifikasi: tampilkan ringkasan dari data yang sudah ada.
+      var n = Number($('#notif-badge').textContent) || 0, it = [];
+      if (n) it.push({ jenis: 'warn', ikon: 'report', judul: n + ' indikator tertunggak', isi: 'Belum diisi untuk periode berjalan', nav: 'monitoring' });
+      if (!$('#banner-pwd').hidden) it.push({ jenis: 'crit', ikon: 'key', judul: 'Kata sandi bawaan masih dipakai', isi: 'Segera ganti demi keamanan data', nav: 'pengaturan' });
+      renderNotif({ items: it });
+    });
+  }
+
+  window.addEventListener('resize', function () { var p = document.getElementById('notif-panel'); if (p && !p.hidden) posNotif(); });
+
   function injectPage(page, html, title, opts) {
     var keepY = opts && opts.keep ? window.scrollY : 0;
     $('#app-container').innerHTML = html;
     document.documentElement.classList.toggle('di-beranda', page === 'beranda');   // logo hanya tampil di Beranda
-    // Header gambar Beranda (Desain A) juga dipasang dari sisi klien, agar tetap muncul walau server Apps Script masih versi lama.
+    // Header Beranda (Desain A) dipasang dari sisi klien juga, agar tetap muncul walau server Apps Script masih versi lama.
     if (page === 'beranda' && !$('#app-container .a-banner')) {
       var hd = $('#app-container .page-head');
-      var bn = '<div class="a-banner" role="img" aria-label="DKPPKB Sulbar Intelligence — Dasbor eksekutif indikator kesehatan, pengendalian penduduk &amp; KB Provinsi Sulawesi Barat"></div>';
+      var bn = '<div class="a-banner"></div>';
       if (hd) hd.outerHTML = '<h1 class="sr">' + esc(hd.textContent) + '</h1>' + bn; else $('#app-container').insertAdjacentHTML('afterbegin', bn);
     }
+    $$('#app-container .a-banner').forEach(isiBanner);
+    closeNotif();
     $('#topbar-title').textContent = title || '';
     document.title = (title ? title + ' · ' : '') + (BRAND.full || 'DKPPKB Sulbar Intelligence');
     $$('[data-menu]').forEach(function (b) { var on = b.getAttribute('data-menu') === page; b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
@@ -1141,6 +1198,7 @@
       case 'theme': window.DkTheme.next(); break;
       case 'reload': navigateTo(AppState.page, AppState.params); break;
       case 'open-drawer': openDrawer(); break;
+      case 'notif-close': closeNotif(); $('#btn-notif').focus(); break;
       case 'tn-toggle': {
         var grp = el.closest('.tn-group'), menu = $('.tn-menu', grp), buka = menu.hidden;
         closeTopMenus(grp);
@@ -1328,6 +1386,7 @@
     if (t.id === 'modal-back') { closeModal(); return; }
     if (t.id === 'scrim') { closeDrawer(); return; }
     if (!(t.closest && t.closest('.tn-group')) || (t.closest && t.closest('.tn-sub'))) closeTopMenus();
+    if (!(t.closest && t.closest('#notif-panel'))) closeNotif();
     var nav = t.closest && t.closest('[data-nav]');
     if (nav) {
       ev.preventDefault();
@@ -1346,6 +1405,7 @@
   });
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Escape') {
+      if (!$('#notif-panel').hidden) { closeNotif(); $('#btn-notif').focus(); return; }
       var openG = $$('.tn-group').filter(function (g) { return !$('.tn-menu', g).hidden; })[0];
       if (openG) { closeTopMenus(); $('.tn-item', openG).focus(); return; }
       if ($('#modal-root').firstChild) closeModal(); else closeDrawer(); return;
@@ -1425,7 +1485,7 @@
     applyFavicon(document.documentElement.getAttribute('data-logo'));
     applyLogo(document.documentElement.getAttribute('data-logo'));
     $('#btn-menu').addEventListener('click', openDrawer);
-    $('#btn-notif').addEventListener('click', function () { navigateTo('beranda', {}); });
+    $('#btn-notif').addEventListener('click', function (ev) { ev.stopPropagation(); toggleNotif(); });
     $('#btn-user').addEventListener('click', function () {
       var u = AppState.user; if (!u) return;
       openModal('Akun Saya',
