@@ -64,7 +64,10 @@
       .then(function (r) { if (!r.ok) throw new Error('Server mengembalikan status ' + r.status + '.'); return r.text(); })
       .then(function (t) {
         try { return JSON.parse(t); } catch (e) { throw new Error('Respons server tidak valid. Pastikan URL Apps Script benar dan deployment berakses "Siapa saja".'); }
-      }, function (e) { throw new Error(e && e.name === 'AbortError' ? 'Server terlalu lama menjawab. Coba lagi.' : 'Koneksi ke server gagal. Periksa jaringan Anda.'); })
+      }, function (e) {
+        var abort = e && e.name === 'AbortError', err = new Error(abort ? 'Server terlalu lama menjawab. Coba lagi.' : 'Koneksi ke server gagal. Periksa jaringan Anda.');
+        err.retry = !abort; throw err;   // galat jaringan/sibuk dari Apps Script biasanya sementara
+      })
       .then(function (v) { if (timer) clearTimeout(timer); return v; }, function (e) { if (timer) clearTimeout(timer); throw e; });
   }
   function call(fn, args) {
@@ -79,6 +82,24 @@
         r[fn].apply(r, args || []);
       } catch (e) { reject(e); }
     });
+  }
+  /** Seperti call(), tapi mencoba sekali lagi bila gagal karena jaringan / server sibuk (khusus permintaan baca). */
+  function callRetry(fn, args) {
+    return call(fn, args).catch(function (e) {
+      if (!e || !e.retry) throw e;
+      return new Promise(function (ok) { setTimeout(ok, 1500); }).then(function () { return call(fn, args); });
+    });
+  }
+  /** Muat halaman dari server. Permintaan yang sama dan masih berjalan dipakai bersama (tidak dikirim dua kali). */
+  var INFLIGHT = {};
+  function fetchPage(tok, page, p) {
+    var key = page + '|' + JSON.stringify(p);
+    if (INFLIGHT[key] && INFLIGHT[key].tok === tok) return INFLIGHT[key].pr;
+    var pr = callRetry('getPageContent', [tok, page, p]);
+    INFLIGHT[key] = { tok: tok, pr: pr };
+    var lepas = function () { if (INFLIGHT[key] && INFLIGHT[key].pr === pr) delete INFLIGHT[key]; };
+    pr.then(lepas, lepas);
+    return pr;
   }
   /** Panggil API ber-token. Mengembalikan data atau melempar Error; sesi habis -> kembali ke login. */
   var PCACHE = {}, READ_API = { apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiFotoGaleriAdmin: 1, apiNotifikasi: 1 };
@@ -96,7 +117,7 @@
 
   /* ---------- percepatan: jelajahi semua halaman dan tab di latar belakang ---------- */
   var PGEN = 0, PQ = [], PRUN = 0, PSEEN = {}, PNSEEN = 0, keepTimer = null, crawlTimer = null, PTTL = 3600000;
-  function pcReset() { PCACHE = {}; PGEN++; PQ = []; PSEEN = {}; PNSEEN = 0; scheduleCrawl(); }
+  function pcReset() { PCACHE = {}; INFLIGHT = {}; PGEN++; PQ = []; PSEEN = {}; PNSEEN = 0; scheduleCrawl(); }
   function pkey(page, params) { return page + '|' + JSON.stringify(Object.assign({}, params || {}, periode())); }
   /** Ambil satu halaman ke cache. Mengembalikan entri cache (atau null bila gagal). */
   function prefetchPage(page, params) {
@@ -105,7 +126,7 @@
     var key = page + '|' + JSON.stringify(p);
     if (PCACHE[key] && Date.now() - PCACHE[key].t < PTTL) return Promise.resolve(PCACHE[key]);
     var gen = PGEN, tok = AppState.sessionToken;
-    return call('getPageContent', [tok, page, p]).then(function (r) {
+    return fetchPage(tok, page, p).then(function (r) {
       if (r && r.success && !r.redirect && gen === PGEN && tok === AppState.sessionToken) {
         var ks = Object.keys(PCACHE); if (ks.length > 150) delete PCACHE[ks[0]];
         PCACHE[key] = { html: r.html, title: r.title, t: Date.now() };
@@ -127,7 +148,7 @@
   }
   function pump() {
     var tok = AppState.sessionToken;
-    while (PRUN < 2 && PQ.length && tok) {
+    while (PRUN < 2 && PQ.length && tok && !AppState.navBusy) {   // jeda selama pengguna membuka halaman
       var job = PQ.shift(); PRUN++;
       (function (j, gen) {
         prefetchPage(j.page, j.params).then(function (e) {
@@ -509,7 +530,10 @@
       injectPage(page, hit.html, hit.title, opts);   // tampil seketika, lalu disegarkan di latar
       if (opts && opts.fresh) { busy(false); return Promise.resolve(); }   // baru diambil dari server: tidak perlu diambil lagi
     } else if (!(opts && opts.keep)) c.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
-    return call('getPageContent', [AppState.sessionToken, page, p]).then(function (r) {
+    AppState.navBusy = true;
+    function selesai() { if (my === AppState.req) { AppState.navBusy = false; setTimeout(pump, 300); } }
+    return fetchPage(AppState.sessionToken, page, p).then(function (r) {
+      selesai();
       if (my !== AppState.req) return;
       busy(false);
       if (!r) throw new Error('Respons kosong dari server.');
@@ -525,6 +549,7 @@
       }
       injectPage(page, r.html, r.title, opts);
     }).catch(function (e) {
+      selesai();
       if (my !== AppState.req) return;
       busy(false);
       if (hit) return;
