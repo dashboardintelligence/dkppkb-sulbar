@@ -1,3 +1,6 @@
 web/dist/
 node_modules/
 .DS_Store
+
+# Kode server Apps Script TIDAK boleh masuk repo publik ini
+*.gs

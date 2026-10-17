@@ -13,6 +13,7 @@ Data dan logika tetap di Google Apps Script (repo private `akun-dkppkb-intellige
 ## Memperbarui tampilan
 Berkas di `src/` (`Index.html`, `Stylesheet.html`, `GambarHeader.html`, `JavaScript.html`) adalah salinan dari repo private.
 Setelah tampilan diubah di repo private, salin keempat berkas itu ke sini lalu push.
+**Jangan** salin `Kode.gs`/`Halaman.gs` atau berkas `.gs` lain — `.gitignore` menolak `*.gs` agar kode server tidak ikut terbit.
 
 ## Uji lokal
 `API_URL=https://script.google.com/macros/s/XXXX/exec node web/build.js && npx serve web/dist`
