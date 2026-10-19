@@ -13,10 +13,10 @@
   var MENU = [
     { id: 'beranda', label: 'Beranda', icon: 'dashboard', group: 'Utama' },
     { id: 'inputdata', label: 'Input Data', icon: 'edit_note', group: 'Indikator', roles: ['admin', 'staf', 'pic'] },
-    { id: 'indikator', label: 'Indikator Kesehatan', icon: 'monitor_heart', group: 'Indikator' },
     { id: 'spbe', label: 'Monev SPBE', icon: 'lan', group: 'Indikator' },
     { id: 'monev', label: 'Monev Kinerja', icon: 'rule', group: 'Indikator' },
     { id: 'analitik', label: 'Capaian & Analitik', icon: 'insights', group: 'Analisis' },
+    { id: 'indikator', label: 'Indikator Kesehatan', icon: 'monitor_heart', group: 'Analisis' },
     { id: 'laporan', label: 'Laporan Eksekutif', icon: 'description', group: 'Layanan', roles: ['admin', 'staf', 'pimpinan'] },
     { id: 'permintaan', label: 'Permintaan Data', icon: 'upload_file', group: 'Layanan' },
     { id: 'tambahindikator', label: 'Tambah Indikator', icon: 'add_circle', group: 'Administrasi', roles: ['admin', 'staf'] },
@@ -36,9 +36,8 @@
   var TOP = [
     { id: 'beranda', label: 'Beranda' },
     { id: 'inputdata', label: 'Input Data' },
-    { id: 'indikator', label: 'Indikator' },
     { label: 'Monev', children: ['spbe', 'monev'] },
-    { id: 'analitik', label: 'Analitik' },
+    { label: 'Analitik', children: ['analitik', 'indikator'] },
     { label: 'Layanan', children: ['laporan', 'permintaan'] },
     { label: 'Administrasi', children: ['tambahindikator', 'pengguna', 'syncform'] },
     { label: 'Lainnya', children: ['pengaturan', 'panduan'] }
