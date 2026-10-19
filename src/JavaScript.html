@@ -15,12 +15,14 @@
     { id: 'inputdata', label: 'Input Data', icon: 'edit_note', group: 'Indikator', roles: ['admin', 'staf', 'pic'] },
     { id: 'spbe', label: 'Monev SPBE', icon: 'lan', group: 'Indikator' },
     { id: 'monev', label: 'Monev Kinerja', icon: 'rule', group: 'Indikator' },
+    { id: 'monitoring', label: 'Verifikasi & Pengingat', icon: 'fact_check', group: 'Indikator', roles: ['admin', 'staf', 'pimpinan'] },
     { id: 'analitik', label: 'Capaian & Analitik', icon: 'insights', group: 'Analisis' },
     { id: 'indikator', label: 'Indikator Kesehatan', icon: 'monitor_heart', group: 'Analisis' },
     { id: 'laporan', label: 'Laporan Eksekutif', icon: 'description', group: 'Layanan', roles: ['admin', 'staf', 'pimpinan'] },
     { id: 'permintaan', label: 'Permintaan Data', icon: 'upload_file', group: 'Layanan' },
-    { id: 'tambahindikator', label: 'Tambah Indikator', icon: 'add_circle', group: 'Administrasi', roles: ['admin', 'staf'] },
+    { id: 'tambahindikator', label: 'Kelola Indikator', icon: 'add_circle', group: 'Administrasi', roles: ['admin', 'staf'] },
     { id: 'pengguna', label: 'Kelola Pengguna', icon: 'group', group: 'Administrasi', roles: ['admin'] },
+    { id: 'konten', label: 'Konten Halaman Depan', icon: 'add_photo_alternate', group: 'Administrasi', roles: ['admin', 'staf'] },
     { id: 'syncform', label: 'Sync Form', icon: 'sync_alt', group: 'Administrasi', roles: ['admin', 'staf'] },
     { id: 'pengaturan', label: 'Pengaturan', icon: 'settings', group: 'Lainnya' },
     { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Lainnya' }
@@ -35,11 +37,11 @@
   /* Menu tab atas (desktop, Desain A). Grup berisi sub-menu dropdown; item yang tak boleh diakses peran disembunyikan. */
   var TOP = [
     { id: 'beranda', label: 'Beranda' },
-    { id: 'inputdata', label: 'Input Data' },
+    { label: 'Input Data', children: ['inputdata', 'monitoring'] },
     { label: 'Monev', children: ['spbe', 'monev'] },
     { label: 'Analitik', children: ['analitik', 'indikator'] },
     { label: 'Layanan', children: ['laporan', 'permintaan'] },
-    { label: 'Administrasi', children: ['tambahindikator', 'pengguna', 'syncform'] },
+    { label: 'Administrasi', children: ['tambahindikator', 'pengguna', 'konten', 'syncform'] },
     { label: 'Lainnya', children: ['pengaturan', 'panduan'] }
   ];
   var EMBLEM_SVG = '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="13.2" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#fff"/></svg>';
@@ -344,8 +346,10 @@
 
   /* ---------- login / sesi ---------- */
   function landShow(w) {
-    ['pilih', 'login', 'minta'].forEach(function (k) { show($('#land-' + k), k === w); });
-    $$('.lp-link[data-land]').forEach(function (l) { if (l.getAttribute('data-land') === w) l.setAttribute('aria-current', 'page'); else l.removeAttribute('aria-current'); });
+    ['pilih', 'login', 'minta', 'lacak'].forEach(function (k) { show($('#land-' + k), k === w); });
+    if (w === 'lacak') setTimeout(function () { $('#lk-id').focus(); }, 50);
+    var menu = w === 'lacak' ? 'minta' : w;   // Lacak berada di dalam menu Minta Data
+    $$('.lp-link[data-land]').forEach(function (l) { if (l.getAttribute('data-land') === menu) l.setAttribute('aria-current', 'page'); else l.removeAttribute('aria-current'); });
     if (w === 'login') setTimeout(function () { $('#login-user').focus(); }, 50);
     if (w === 'minta') { show($('#minta-form-wrap'), true); show($('#minta-ok'), false); $('#minta-msg').textContent = ''; }
     window.scrollTo(0, 0);
@@ -359,13 +363,17 @@
   function submitMinta(e) {
     var f = $('#form-minta'), btn = $('#minta-btn'), msg = $('#minta-msg'), d = {}, file = $('#mt-file').files[0];
     msg.textContent = '';
-    ['nama', 'instansi', 'kontak', 'kebutuhan', 'format', 'tenggat', 'situs'].forEach(function (k) { d[k] = (f.elements[k] && f.elements[k].value) || ''; });
+    ['nama', 'instansi', 'pekerjaan', 'alamat', 'kontak', 'kebutuhan', 'tujuan', 'format', 'tenggat', 'situs'].forEach(function (k) { d[k] = (f.elements[k] && f.elements[k].value) || ''; });
+    d.cara = $$('input[name=cara]:checked', f).map(function (x) { return x.value; }).join(', ');
+    var trm = $('input[name=terima]:checked', f); d.terima = trm ? trm.value : '';
+    if (d.tujuan.trim().length < 5) { msg.textContent = 'Isi tujuan penggunaan data.'; f.elements.tujuan.focus(); return false; }
     if (file && file.size > 5 * 1048576) { msg.textContent = 'Ukuran dokumen ' + ukuranTeks(file.size) + ' melebihi batas 5 MB.'; return false; }
     function kirim() {
       btn.disabled = true; btn.textContent = file ? 'Mengunggah…' : 'Mengirim…';
       call('apiAjukanDataPublik', [d]).then(function (r) {
         if (!r || !r.success) throw new Error((r && r.message) || 'Gagal mengirim permintaan.');
-        $('#minta-id').textContent = r.data.id; f.reset();
+        MINTA_D = Object.assign({}, d, { id: r.data.id, tanggal: tglIso(new Date()) }); delete MINTA_D.berkas; delete MINTA_D.situs;
+        $('#minta-id').textContent = r.data.id; $('#minta-batas').textContent = tglPanjang(tambahHariKerja(new Date(), 10)) + ' (10 hari kerja)'; f.reset();
         show($('#minta-form-wrap'), false); show($('#minta-ok'), true);
       }).catch(function (err) { msg.textContent = err.message; })
         .then(function () { btn.disabled = false; btn.textContent = 'Kirim Permintaan'; });
@@ -377,6 +385,129 @@
     fr.readAsDataURL(file);
     return false;
   }
+  /* ---------- tanggal & cetak (Minta Data, tabel) ---------- */
+  var MINTA_D = null, PMT_D = null;
+  var BLN_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+  function tglIso(d) { return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2); }
+  function keTanggal(s) { var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})/); return m ? new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3])) : null; }
+  function tglPanjang(d) { return d ? d.getDate() + ' ' + BLN_ID[d.getMonth()] + ' ' + d.getFullYear() : '—'; }
+  /** Tambah n hari kerja (Senin–Jumat). Hari libur nasional belum diperhitungkan. */
+  function tambahHariKerja(d, n) { var x = new Date(d.getTime()), k = 0; while (k < n) { x.setDate(x.getDate() + 1); var w = x.getDay(); if (w !== 0 && w !== 6) k++; } return x; }
+  function hariKerjaAntara(a, b) { var x = new Date(a.getTime()), k = 0; while (x < b) { x.setDate(x.getDate() + 1); var w = x.getDay(); if (x <= b && w !== 0 && w !== 6) k++; } return k; }
+  function kopHtml() {
+    var dinas = (AppState.cfg && AppState.cfg.NamaDinas) || 'Dinas Kesehatan, Pengendalian Penduduk dan Keluarga Berencana';
+    var lg = $('.emblem[data-logo] img'), logo = lg ? '<img src="' + esc(lg.getAttribute('src')) + '" alt="">' : '';
+    return '<div class="pr-kop"><div>' + logo + '</div><div><div class="a">PEMERINTAH PROVINSI SULAWESI BARAT</div><div class="b">' + esc(dinas) + '</div></div><div></div></div>';
+  }
+  /** Cetak potongan HTML saja (bukan seluruh halaman) lewat dialog cetak browser. */
+  function cetakHtml(html) {
+    var r = $('#print-root'); if (!r) return;
+    r.innerHTML = '<div class="pr">' + html + '</div>';
+    document.documentElement.classList.add('is-print');
+    var selesai = function () { document.documentElement.classList.remove('is-print'); r.innerHTML = ''; window.removeEventListener('afterprint', selesai); };
+    window.addEventListener('afterprint', selesai);
+    setTimeout(function () { window.print(); }, 60);
+  }
+  function prBaris(k, v) { return '<dt>' + esc(k) + '</dt><dd>' + esc(v || '') + '</dd>'; }
+  function htmlTandaTerima(d) {
+    var masuk = keTanggal(d.tanggal) || new Date();
+    return '<div class="tt"><h3>TANDA TERIMA PERMINTAAN DATA</h3><dl>' + prBaris('No. permintaan', d.id) + prBaris('Tanggal masuk', tglPanjang(masuk)) +
+      prBaris('Nama pemohon', d.nama) + prBaris('Instansi', d.instansi) + prBaris('Kontak', d.kontak) +
+      prBaris('Data yang diminta', String(d.kebutuhan || '').length > 160 ? String(d.kebutuhan).slice(0, 158) + '…' : d.kebutuhan) +
+      prBaris('Batas jawaban', tglPanjang(tambahHariKerja(masuk, 10)) + ' (10 hari kerja, belum termasuk hari libur)') + '</dl>' +
+      '<p class="foot">Status permintaan dapat dilacak di menu <b>Lacak Permintaan</b> pada halaman depan, dengan nomor di atas dan kontak yang sama.</p></div>';
+  }
+  function htmlFormulir(d) {
+    var masuk = keTanggal(d.tanggal) || new Date();
+    return kopHtml() + '<h1>FORMULIR PERMINTAAN DATA</h1><div class="sub">No. ' + esc(d.id) + ' · ' + esc(tglPanjang(masuk)) + '</div>' +
+      '<h2>A. Identitas pemohon</h2><dl>' + prBaris('Nama lengkap', d.nama) + prBaris('Instansi / asal', d.instansi) + prBaris('Pekerjaan', d.pekerjaan) + prBaris('Alamat', d.alamat) + prBaris('Email / WhatsApp', d.kontak) + '</dl>' +
+      '<h2>B. Data yang diminta</h2><dl>' + prBaris('Rincian data', d.kebutuhan) + prBaris('Tujuan penggunaan', d.tujuan) + '</dl>' +
+      '<h2>C. Cara memperoleh</h2><dl>' + prBaris('Bentuk', d.cara) + prBaris('Format', d.format) + prBaris('Cara menerima salinan', d.terima) + prBaris('Dibutuhkan paling lambat', d.tenggat ? tglPanjang(keTanggal(d.tenggat)) : '') + '</dl>' +
+      '<div class="ttd"><div>Pemohon,<div class="sp"></div>( ' + esc(d.nama || '..............................') + ' )</div><div>Petugas penerima,<div class="sp"></div>( .............................. )</div></div>' +
+      '<p class="foot">Permintaan dijawab paling lambat 10 hari kerja sejak diterima dan dapat diperpanjang paling lama 7 hari kerja (UU No. 14 Tahun 2008 tentang Keterbukaan Informasi Publik).</p>' +
+      '<div class="cut">✂ gunting di sini · lembar untuk pemohon</div>' + htmlTandaTerima(d);
+  }
+  function salinTeks(t) {
+    var ok = function () { toast('Nomor disalin.', 'ok'); };
+    try { navigator.clipboard.writeText(t).then(ok, function () { toast('Salin manual: ' + t, ''); }); } catch (e) { toast('Salin manual: ' + t, ''); }
+  }
+  /* ---------- lacak permintaan (tanpa login) ---------- */
+  function submitLacak(ev) {
+    ev.preventDefault();
+    var f = $('#form-lacak'), msg = $('#lk-msg'), btn = $('#lk-btn'), out = $('#lk-hasil');
+    var id = f.elements.id.value.trim(), kontak = f.elements.kontak.value.trim();
+    msg.textContent = ''; out.innerHTML = '';
+    if (!id || !kontak) { msg.textContent = 'Isi nomor permintaan dan kontak.'; return false; }
+    btn.disabled = true; btn.textContent = 'Mencari…';
+    call('apiLacakPermintaan', [id, kontak]).then(function (r) {
+      if (!r || !r.success) throw new Error((r && r.message) || 'Permintaan tidak ditemukan.');
+      out.innerHTML = htmlLacak(r.data);
+    }).catch(function (e) { msg.textContent = e.message; })
+      .then(function () { btn.disabled = false; btn.textContent = 'Lacak'; });
+    return false;
+  }
+  function htmlLacak(d) {
+    var urut = { Baru: 0, Diproses: 1, Selesai: 2, Ditolak: 2 }, n = urut[d.status] === undefined ? 0 : urut[d.status];
+    var CLS = { Baru: 'warn', Diproses: 'info', Selesai: 'ok', Ditolak: 'crit' };
+    var masuk = keTanggal(d.tanggal), batas = masuk ? tambahHariKerja(masuk, 10) : null;
+    var lalu = masuk ? Math.min(hariKerjaAntara(masuk, new Date()), 99) : 0, sisa = 10 - lalu, selesai = d.status === 'Selesai' || d.status === 'Ditolak';
+    var tj = d.ditinjau ? tglPanjang(keTanggal(d.ditinjau)) : '';
+    var langkah = [['Diterima', tglPanjang(masuk)], ['Diproses', n >= 1 ? tj : ''], [d.status === 'Ditolak' ? 'Ditolak' : 'Selesai', n >= 2 ? tj : '']];
+    var sla = selesai ? '' : '<div class="lk-sla"><span><b>' + (sisa >= 0 ? sisa + ' hari kerja' : 'Lewat ' + (-sisa) + ' hari kerja') + '</b> ' + (sisa >= 0 ? 'tersisa dari 10' : 'dari batas') + '</span>' +
+      '<span class="bar"><i style="width:' + Math.min(100, lalu * 10) + '%;background:var(--' + (sisa < 0 ? 'crit' : sisa <= 3 ? 'warn' : 'ok') + ')"></i></span><span class="chip chip-' + (sisa < 0 ? 'crit' : 'warn') + '">Batas ' + esc(tglPanjang(batas)) + '</span></div>';
+    return '<div class="sec-top"><div><b>' + esc(d.id) + '</b><div class="muted sm">' + esc(d.kebutuhan) + '</div></div><span class="chip chip-' + (CLS[d.status] || 'mute') + '">' + esc(d.status) + '</span></div>' +
+      '<ol class="lk-steps">' + langkah.map(function (l, i) { return '<li class="' + (i <= n ? 'on' : '') + '"><span class="dot">' + (i < n || (i === n && selesai) ? '✓' : i + 1) + '</span><b>' + esc(l[0]) + '</b><small>' + esc(l[1] || '—') + '</small></li>'; }).join('') + '</ol>' + sla +
+      (d.catatan ? '<p class="note-sol"><span class="ic" aria-hidden="true">sticky_note_2</span><span><b>Catatan petugas:</b> ' + esc(d.catatan) + '</span></p>' : '') +
+      (d.terima ? '<p class="muted sm">Cara menerima: ' + esc(d.terima) + '</p>' : '');
+  }
+
+  /* ---------- tabel: unduh CSV / Excel dan cetak ---------- */
+  function isiTabel(t) {
+    var rows = [].slice.call(t.rows).map(function (tr) {
+      return [].slice.call(tr.cells).map(function (c) {
+        var inp = c.querySelector('input,select'); if (inp && !c.textContent.trim()) return inp.value || inp.placeholder || '';
+        return c.innerText.replace(/\s+/g, ' ').trim();
+      });
+    });
+    var aksi = /^(Ubah|Hapus|Isi|Buka|Simpan|Setujui|Kembalikan|Pratinjau|Unduh)( (Ubah|Hapus|Isi|Buka|Simpan|Kembalikan))*$/;
+    var head = rows[0] || [], pakai = head.map(function (h, j) { return h !== '' || rows.slice(1).some(function (r) { return r[j] && !aksi.test(r[j]); }); });   // buang kolom tombol aksi
+    return rows.map(function (r) { return r.filter(function (x, j) { return pakai[j]; }); });
+  }
+  function namaBerkas(ext) { var p = periode(); return (AppState.page || 'tabel') + '-' + p.tahun + '-' + ('0' + p.bulan).slice(-2) + '.' + ext; }
+  function unduhTeks(nama, teks, mime) {
+    var url = URL.createObjectURL(new Blob([teks], { type: mime })), a = document.createElement('a');
+    a.href = url; a.download = nama; document.body.appendChild(a); a.click(); a.remove(); setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
+  }
+  function tabelDari(el) { var bar = el.closest('.tbl-alat'); var n = bar && bar.nextElementSibling; return n ? (n.matches('table') ? n : n.querySelector('table')) : null; }
+  function tabelAlat() {
+    $$('#app-container table.tbl').forEach(function (t) {
+      if (t.getAttribute('data-alat') || !t.tBodies[0] || t.tBodies[0].rows.length < 2) return;
+      t.setAttribute('data-alat', '1');
+      var w = t.closest('.tbl-wrap, .dt-scroll') || t, bar = document.createElement('div');
+      bar.className = 'tbl-alat';
+      bar.innerHTML = '<button type="button" class="btn btn-ghost btn-sm" data-act="tbl-csv"><span class="ic" aria-hidden="true">download</span>CSV</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="tbl-xls"><span class="ic" aria-hidden="true">download</span>Excel</button>' +
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="tbl-cetak"><span class="ic" aria-hidden="true">print</span>Cetak</button>';
+      w.parentNode.insertBefore(bar, w);
+    });
+  }
+  function tabelAksi(act, el) {
+    var t = tabelDari(el); if (!t) return;
+    var rows = isiTabel(t);
+    if (act === 'tbl-csv') {
+      var csv = rows.map(function (r) { return r.map(function (x) { return /[",\n;]/.test(x) ? '"' + x.replace(/"/g, '""') + '"' : x; }).join(','); }).join('\r\n');
+      unduhTeks(namaBerkas('csv'), '\ufeff' + csv, 'text/csv;charset=utf-8');
+    } else {
+      var tbl = '<table><thead><tr>' + (rows[0] || []).map(function (x) { return '<th>' + esc(x) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        rows.slice(1).map(function (r) { return '<tr>' + r.map(function (x) { return '<td>' + esc(x) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+      if (act === 'tbl-xls') unduhTeks(namaBerkas('xls'), '<html><head><meta charset="utf-8"></head><body>' + tbl + '</body></html>', 'application/vnd.ms-excel');
+      else {
+        var p = periode(), judul = ($('#app-container .page-head .h1') || {}).textContent || document.title;
+        cetakHtml(kopHtml() + '<h1>' + esc(String(judul).toUpperCase()) + '</h1><div class="sub">Periode ' + esc(BLN_ID[p.bulan - 1] + ' ' + p.tahun) + ' · dicetak ' + esc(tglPanjang(new Date())) + '</div>' + tbl);
+      }
+    }
+  }
+
   function forceLogout(msg) {
     pcReset(); simpanSesi(null); AppState.sessionToken = null; AppState.user = null; AppState.hist = []; AppState.rendered = false; updBack();
     closeModal(true); closeDrawer(); busy(false);
@@ -608,11 +739,12 @@
     var html = '<div class="np-head"><b>Pemberitahuan</b><button type="button" class="icon-btn np-x" data-act="notif-close" aria-label="Tutup pemberitahuan"><span class="ic" aria-hidden="true">close</span></button></div>';
     if (!items.length) html += '<div class="np-empty"><span class="ic" aria-hidden="true">notifications_off</span><p>Tidak ada pemberitahuan. Semua isian tertib.</p></div>';
     else html += '<ul class="np-list">' + items.map(function (it) {
-      return '<li><button type="button" class="np-item np-' + esc(it.jenis) + '" data-nav="' + esc(it.nav || 'monitoring') + '"><span class="np-ic"><span class="ic" aria-hidden="true">' + esc(it.ikon || 'info') + '</span></span>' +
+      return '<li><button type="button" class="np-item np-' + esc(it.jenis) + '" data-nav="' + esc(it.nav || (AppState.user && AppState.user.role === 'pic' ? 'inputdata' : 'monitoring')) + '"><span class="np-ic"><span class="ic" aria-hidden="true">' + esc(it.ikon || 'info') + '</span></span>' +
         '<span class="np-txt"><b>' + esc(it.judul) + '</b><span>' + esc(it.isi || '') + '</span></span><span class="sr">' + esc(NOTIF_JENIS[it.jenis] || '') + '</span></button></li>';
     }).join('') + '</ul>';
     if (d && d.lebih) html += '<p class="np-more">+' + d.lebih + ' indikator tertunggak lainnya</p>';
-    html += '<div class="np-foot"><button type="button" class="btn btn-ghost btn-sm" data-nav="monitoring">' + '<span class="ic" aria-hidden="true">fact_check</span>Buka Monitoring Pengisian</button></div>';
+    var pic = AppState.user && AppState.user.role === 'pic';
+    html += '<div class="np-foot"><button type="button" class="btn btn-ghost btn-sm" data-nav="' + (pic ? 'inputdata' : 'monitoring') + '">' + '<span class="ic" aria-hidden="true">' + (pic ? 'edit_note' : 'fact_check') + '</span>' + (pic ? 'Buka Input Data' : 'Buka Verifikasi & Pengingat') + '</button></div>';
     $('#notif-panel').innerHTML = html;
   }
   function toggleNotif() {
@@ -625,7 +757,7 @@
       if (e && e.handled) return;
       // Server Apps Script lama belum punya apiNotifikasi: tampilkan ringkasan dari data yang sudah ada.
       var n = Number($('#notif-badge').textContent) || 0, it = [];
-      if (n) it.push({ jenis: 'warn', ikon: 'report', judul: n + ' indikator tertunggak', isi: 'Belum diisi untuk periode berjalan', nav: 'monitoring' });
+      if (n) it.push({ jenis: 'warn', ikon: 'report', judul: n + ' indikator tertunggak', isi: 'Belum diisi untuk periode berjalan', nav: AppState.user && AppState.user.role === 'pic' ? 'inputdata' : 'monitoring' });
       if (!$('#banner-pwd').hidden) it.push({ jenis: 'crit', ikon: 'key', judul: 'Kata sandi bawaan masih dipakai', isi: 'Segera ganti demi keamanan data', nav: 'pengaturan' });
       renderNotif({ items: it });
     });
@@ -656,6 +788,7 @@
     var fib = $('#form-ind-baru'); if (fib) syncIndBaru(fib);
     if ($('[data-gal-thumb]')) galThumbs();
     var ftk = $('#form-tarik'); if (ftk) syncTarik(ftk);
+    tabelAlat();
     if (page === 'pengguna' && AppState.params && AppState.params.tambah) { delete AppState.params.tambah; openUserForm({}); }
     if (AppState.pending) { var fn = AppState.pending; AppState.pending = null; fn(); }
     setTimeout(prefetchTabs, 400);
@@ -691,19 +824,35 @@
         '<input type="hidden" name="indikatorId" value="' + esc(d.id) + '"><input type="hidden" name="bulan" value="' + esc(d.bulan) + '"><input type="hidden" name="tahun" value="' + p.tahun + '">' +
         '<div class="form-grid"><div class="field"><label for="is-ket">Satuan nilai</label><select class="input" id="is-ket" name="keterangan">' + opt + '</select></div>' +
         '<div class="field"><label for="is-real">Realisasi provinsi <span id="is-unit" class="muted"></span></label><input class="input" id="is-real" name="realisasi" type="text" inputmode="decimal" autocomplete="off" required value="' + esc(r.realisasi === null ? String(d.real || '').replace('.', ',') : String(r.realisasi).replace('.', ',')) + '"></div></div>' +
-        '<p class="muted sm" id="is-ket-info" style="margin:-4px 0 14px"></p>' +
+        '<p class="muted sm" id="is-ket-info" style="margin:-4px 0 14px"></p><div id="is-warn" aria-live="polite"></div>' +
         '<div class="field"><label for="is-an">Catatan analisis masalah</label><textarea class="input input-area" id="is-an" name="analisis" maxlength="800" rows="3" placeholder="Apa penyebab capaian belum optimal?">' + esc(r.analisis) + '</textarea></div>' +
         '<div class="field"><label for="is-rek">Catatan rekomendasi</label><textarea class="input input-area" id="is-rek" name="rekomendasi" maxlength="800" rows="3" placeholder="Tindak lanjut yang disarankan">' + esc(r.rekomendasi) + '</textarea></div>' +
         '<div class="field"><label for="is-cat">Catatan lain (opsional)</label><textarea class="input input-area" id="is-cat" name="catatan" maxlength="300" rows="2">' + esc(r.catatan) + '</textarea></div>' +
         (AppState.user.role === 'pic' ? '<p class="muted sm">Isian PIC akan menunggu verifikasi admin.</p>' : '') +
         '<div class="form-actions"><button class="btn btn-primary" type="submit">Simpan</button><button class="btn btn-ghost" type="button" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>';
-      sinkIsian($('#form-isian'));
+      var fi = $('#form-isian'); fi.setAttribute('data-prev', d.prev || ''); fi.setAttribute('data-prev-bulan', d.prevBulan || '');
+      sinkIsian(fi); cekIsian(fi);
     }).catch(function (e) { if (!e.handled) $('#modal-body').innerHTML = '<p class="form-msg err">' + esc(e.message) + '</p>'; });
+  }
+  /** Peringatan nilai tidak wajar: persen di atas 100, atau berubah lebih dari 30% dari bulan terakhir yang terisi. Mengembalikan teks peringatan atau ''. */
+  function cekIsian(form) {
+    var box = $('#is-warn', form), btn = $('button[type=submit]', form); if (!box) return '';
+    var raw = angkaId(form.realisasi.value), v = Number(raw), w = '';
+    var persen = form.keterangan.value === 'persen' || form.getAttribute('data-sat') === '%';
+    var pv = form.getAttribute('data-prev'), pb = Number(form.getAttribute('data-prev-bulan')), prev = pv === '' || pv === null ? null : Number(pv);
+    if (raw !== '' && !isNaN(v)) {
+      if (persen && v > 100) w = 'Nilai persen di atas 100. Pastikan bukan salah ketik.';
+      else if (prev !== null && prev > 0 && Math.abs(v - prev) / prev > 0.3) w = 'Berubah ' + Math.round(Math.abs(v - prev) / prev * 100) + '% dari ' + (pb ? BULAN[pb - 1] : 'bulan sebelumnya') + ' (' + String(prev).replace('.', ',') + '). Periksa lagi.';
+    }
+    box.innerHTML = w ? '<div class="is-warn"><span class="ic" aria-hidden="true">warning</span><div><b>' + esc(w) + '</b> Bila angkanya benar, tulis penyebabnya di <b>Catatan lain</b>.</div></div>' : '';
+    if (btn && !btn.disabled) btn.textContent = w ? 'Simpan dengan catatan' : 'Simpan';
+    return w;
   }
   function submitIsian(form) {
     var msg = $('.form-msg', form), btn = $('button[type=submit]', form);
     var raw = angkaId(form.realisasi.value);
     if (raw === '' || isNaN(Number(raw)) || Number(raw) < 0) { msg.className = 'form-msg'; msg.textContent = 'Realisasi harus berupa angka nol atau lebih.'; form.realisasi.focus(); return; }
+    if (cekIsian(form) && !form.catatan.value.trim()) { msg.className = 'form-msg'; msg.textContent = 'Nilai ini tidak biasa. Tulis penyebabnya di kolom Catatan lain sebelum menyimpan.'; form.catatan.focus(); return; }
     btn.disabled = true; btn.textContent = 'Menyimpan…'; msg.textContent = '';
     api('apiSimpanIsian', [{ indikatorId: form.indikatorId.value, tahun: Number(form.tahun.value), bulan: Number(form.bulan.value), keterangan: form.keterangan.value, realisasi: Number(raw), analisis: form.analisis.value, rekomendasi: form.rekomendasi.value, catatan: form.catatan.value }])
       .then(function (r) {
@@ -866,8 +1015,13 @@
       '<button type="button" class="btn btn-ghost btn-sm" data-act="pmt-unduh" data-id="' + esc(d.id) + '">Unduh</button></dd></div>' : row('Lampiran', '');
     var h = '<div class="pmt-head"><span class="chip chip-' + (CLS[d.status] || 'mute') + '">' + esc(d.status) + '</span> <span class="chip chip-' + (d.sumber === 'Publik' ? 'warn' : 'mute') + '">' + (d.sumber === 'Publik' ? 'Dari publik' : 'Internal') + '</span></div>' +
       '<dl class="pmt-dl">' + row('Nomor', d.id) + row('Diajukan', d.tgl) + row('Pemohon', d.pemohon) + row('Instansi / asal', d.instansi) + row('Kontak', d.kontak) +
-      row('Format', d.format) + row('Dibutuhkan paling lambat', d.tenggat) + '<div class="pmt-r pmt-wide"><dt>Data yang diminta</dt><dd class="pmt-keb">' + esc(d.keb) + '</dd></div>' + lam +
+      (d.pekerjaan ? row('Pekerjaan', d.pekerjaan) : '') + (d.alamat ? row('Alamat', d.alamat) : '') +
+      row('Format', d.format) + row('Dibutuhkan paling lambat', d.tenggat) + '<div class="pmt-r pmt-wide"><dt>Data yang diminta</dt><dd class="pmt-keb">' + esc(d.keb) + '</dd></div>' +
+      (d.tujuan ? '<div class="pmt-r pmt-wide"><dt>Tujuan penggunaan</dt><dd class="pmt-keb">' + esc(d.tujuan) + '</dd></div>' : '') +
+      (d.cara ? row('Cara memperoleh', d.cara) : '') + (d.terima ? row('Cara menerima salinan', d.terima) : '') + lam +
       (d.tinjau ? row('Ditinjau oleh', d.tinjau) : '') + (!adm && d.catatan ? row('Catatan admin', d.catatan) : '') + '</dl>';
+    PMT_D = { id: d.id, tanggal: d.tglIso || '', nama: d.pemohon, instansi: d.instansi, pekerjaan: d.pekerjaan, alamat: d.alamat, kontak: d.kontak, kebutuhan: d.keb, tujuan: d.tujuan, cara: d.cara, terima: d.terima, format: d.format, tenggat: d.tenggatIso || '' };
+    h += '<div class="row-actions" style="margin:8px 0 4px"><button type="button" class="btn btn-ghost btn-sm" data-act="pmt-cetak"><span class="ic" aria-hidden="true">print</span>Cetak formulir & tanda terima</button></div>';
     if (adm) h += '<form id="form-pmt-review" novalidate><input type="hidden" name="id" value="' + esc(d.id) + '"><h3 class="h3 sub-h">Tinjauan admin</h3>' +
       '<div class="field"><label for="pr-st">Status</label><select class="input" id="pr-st" name="status">' + ST.map(function (s) { return '<option' + (s === d.status ? ' selected' : '') + '>' + s + '</option>'; }).join('') + '</select></div>' +
       '<div class="field"><label for="pr-cat">Catatan tinjauan (opsional)</label><textarea class="input input-area" id="pr-cat" name="catatan" maxlength="300" rows="3" placeholder="Contoh: data sudah dikirim lewat email pada 20 Oktober">' + esc(d.catatan || '') + '</textarea></div>' +
@@ -1222,6 +1376,11 @@
       case 'acc-all': { var on = el.getAttribute('data-v') === '1'; $$('.im-acc').forEach(function (a) { accBuka(a, on); }); break; }
       case 'theme': window.DkTheme.next(); break;
       case 'reload': navigateTo(AppState.page, AppState.params); break;
+      case 'minta-cetak': if (MINTA_D) cetakHtml(kopHtml() + htmlTandaTerima(MINTA_D)); break;
+      case 'minta-salin': if (MINTA_D) salinTeks(MINTA_D.id); break;
+      case 'minta-lacak': landShow('lacak'); if (MINTA_D) { $('#lk-id').value = MINTA_D.id; $('#lk-kontak').value = MINTA_D.kontak; } break;
+      case 'pmt-cetak': if (PMT_D) cetakHtml(htmlFormulir(PMT_D)); break;
+      case 'tbl-csv': case 'tbl-xls': case 'tbl-cetak': tabelAksi(act, el); break;
       case 'refresh': {   // ambil ulang halaman ini dari server (abaikan cache), mis. tombol Refresh di Analitik
         el.disabled = true; el.classList.add('is-busy');
         navigateTo(AppState.page, AppState.params, { keep: true });   // halaman baru menampilkan jam pembaruan
@@ -1242,7 +1401,7 @@
         openModal(nama ? nama.textContent : 'Detail Indikator', src.innerHTML, true);
         break;
       }
-      case 'isian': openIsian({ id: el.dataset.id, bulan: el.dataset.bulan, nama: el.dataset.nama, satuan: el.dataset.satuan, real: el.dataset.real, kab: el.dataset.kab, cat: el.dataset.cat }); break;
+      case 'isian': openIsian({ id: el.dataset.id, bulan: el.dataset.bulan, nama: el.dataset.nama, satuan: el.dataset.satuan, real: el.dataset.real, kab: el.dataset.kab, cat: el.dataset.cat, prev: el.dataset.prev, prevBulan: el.dataset.prevBulan }); break;
       case 'gx-tw': {
         var pn = el.closest('.gx-panel'), v = el.getAttribute('data-v');
         if (pn) {
@@ -1335,18 +1494,17 @@
         if (!t.hidden) { t.scrollIntoView({ behavior: 'smooth', block: 'start' }); var i = $('input:not([type=hidden]),textarea,select', t); if (i) setTimeout(function () { i.focus(); }, 250); }
         break;
       }
-      case 'prefill-masalah': {
-        var d = { id: el.dataset.ind, bidang: el.dataset.bidang };
+      case 'prefill-masalah': {   // catatan masalah ditulis di Input Data (tab Permasalahan pada indikator tsb.)
+        var d = { id: el.dataset.ind };
         closeModal(true);
+        if (AppState.user && AppState.user.role === 'pimpinan') { toast('Catatan masalah ditulis oleh admin atau PIC di menu Input Data.', ''); break; }
         var apply = function () {
-          var card = $('#form-masalah-card'), f = $('#form-masalah'); if (!f) return;
-          card.hidden = false; f.reset();
-          if (f.indikatorId) f.indikatorId.value = d.id;
-          if (f.bidang) f.bidang.value = d.bidang;
-          card.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          if (f.permasalahan) setTimeout(function () { f.permasalahan.focus(); }, 250);
+          var art = $('.im-acc[data-acc="' + (window.CSS && CSS.escape ? CSS.escape(d.id) : d.id) + '"]'); if (!art) return;
+          accBuka(art, true, 'msl');
+          art.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          var ta = $('.acc-pane[data-pane="msl"] textarea[name=permasalahan]', art); if (ta) setTimeout(function () { ta.focus(); }, 300);
         };
-        if (AppState.page === 'rekomendasi') apply(); else { AppState.pending = apply; navigateTo('rekomendasi', {}); }
+        AppState.pending = apply; navigateTo('inputdata', { q: d.id });
         break;
       }
       case 'edit-keg': { var dk = {}; try { dk = JSON.parse(el.getAttribute('data-json') || '{}'); } catch (e) { } dk.publik = dk.publik ? 'Ya' : 'Tidak'; fillForm('form-kegiatan', dk); break; }
@@ -1451,6 +1609,7 @@
     }
   });
   document.addEventListener('input', function (ev) {
+    if (ev.target && ev.target.id === 'is-real' && ev.target.form) cekIsian(ev.target.form);
     var t = ev.target;
     if (t.matches && t.matches('.tgt-in')) {
       var f = t.form, n = $$('.tgt-in', f).filter(function (el) { return el.value.trim() !== el.getAttribute('data-orig'); }).length;
@@ -1460,7 +1619,7 @@
   });
   document.addEventListener('change', function (ev) {
     var t = ev.target;
-    if (t.form && t.form.getAttribute('id') === 'form-isian' && t.name === 'keterangan') { sinkIsian(t.form); return; }
+    if (t.form && t.form.getAttribute('id') === 'form-isian' && t.name === 'keterangan') { sinkIsian(t.form); cekIsian(t.form); return; }
     if (t.form && t.form.id === 'form-user-modal' && (t.name === 'role' || t.name === 'modeSandi' || t.name === 'bidang')) { syncUserForm(t.form); return; }
     if (t.form && t.form.getAttribute('id') === 'form-user-modal' && (t.name === 'ik' || t.name === 'program')) { syncIk(t.form); return; }
     if (t.form && t.form.getAttribute('id') === 'form-ind-baru' && t.name === 'bidang') { syncIndBaru(t.form); return; }
@@ -1489,6 +1648,7 @@
     var f = ev.target, fid = f.getAttribute('id');
     if (fid === 'form-login') return doLoginSubmit(ev);
     if (fid === 'form-minta') return submitMinta(ev);
+    if (fid === 'form-lacak') return submitLacak(ev);
     if (fid === 'form-pmt-review') return submitPmtReview(f);
     if (fid === 'form-isian') return submitIsian(f);
     if (fid === 'form-remind') return submitRemind(f);

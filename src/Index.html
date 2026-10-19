@@ -44,7 +44,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
   <!-- Font ikon hanya memuat ikon yang dipakai (±18 KB, bukan ±320 KB). Ikon baru? Tambahkan namanya ke icon_names (urut abjad). -->
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=accessible,account_balance,account_tree,add,add_circle,add_comment,add_photo_alternate,admin_panel_settings,agriculture,analytics,apartment,arrow_back,arrow_downward,arrow_upward,assignment,attach_file,baby_changing_station,badge,bar_chart,biotech,bloodtype,body_system,brightness_auto,business,calendar_month,call,campaign,chat,check_circle,chevron_left,chevron_right,child_care,clean_hands,clinical_notes,close,cloud_off,content_copy,coronavirus,csv,dark_mode,dashboard,dataset,description,diversity_1,diversity_3,domain,download,ecg_heart,eco,edit_calendar,edit_note,elderly,email,emergency,error,event,event_available,expand_more,fact_check,family_restroom,favorite,flag,folder,forest,forum,function,gavel,grid_on,group,groups,handshake,healing,health_and_safety,help,history,home_health,hourglass_empty,hourglass_top,how_to_reg,hub,inbox,info,input,insights,key,labs,lan,leaderboard,light,light_mode,lightbulb,list,local_hospital,local_pharmacy,location_city,login,logout,map,masks,medical_information,medical_services,medication,menu,menu_book,monitor_heart,monitoring,notifications,notifications_active,notifications_off,nutrition,open_in_new,password,pending_actions,person,person_add,person_off,person_search,picture_as_pdf,pie_chart,pip,pregnant_woman,psychology,public,query_stats,recycling,refresh,report,resize,rule,sanitizer,save,school,science,search,search_off,settings,shield,show_chart,skeleton,speed,stack,start,stethoscope,sticky_note_2,sync,sync_alt,tab,table_chart,table_view,target,task,task_alt,timeline,title,toast,track_changes,trending_down,trending_up,update,upload,upload_file,vaccines,verified,verified_user,view_list,volunteer_activism,warning,water_drop,work&display=block" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@24,400,0,0&icon_names=accessible,account_balance,account_tree,add,add_circle,add_comment,add_photo_alternate,admin_panel_settings,agriculture,analytics,apartment,arrow_back,arrow_downward,arrow_upward,assignment,attach_file,baby_changing_station,badge,bar_chart,biotech,bloodtype,body_system,brightness_auto,business,calendar_month,call,campaign,chat,check_circle,chevron_left,chevron_right,child_care,clean_hands,clinical_notes,close,cloud_off,content_copy,coronavirus,csv,dark_mode,dashboard,dataset,description,diversity_1,diversity_3,domain,download,ecg_heart,eco,edit_calendar,edit_note,elderly,email,emergency,error,event,event_available,expand_more,fact_check,family_restroom,favorite,flag,folder,forest,forum,function,gavel,grid_on,group,groups,handshake,healing,health_and_safety,help,history,home_health,hourglass_empty,hourglass_top,how_to_reg,hub,inbox,info,input,insights,key,labs,lan,leaderboard,light,light_mode,lightbulb,list,local_hospital,local_pharmacy,location_city,login,logout,manage_search,map,masks,medical_information,medical_services,medication,menu,menu_book,monitor_heart,monitoring,notifications,notifications_active,notifications_off,nutrition,open_in_new,password,pending_actions,person,person_add,person_off,person_search,picture_as_pdf,pie_chart,pip,pregnant_woman,print,psychology,public,query_stats,receipt_long,recycling,refresh,report,resize,rule,sanitizer,save,school,science,search,search_off,settings,shield,show_chart,skeleton,speed,stack,start,stethoscope,sticky_note_2,sync,sync_alt,tab,table_chart,table_view,target,task,task_alt,timeline,title,toast,track_changes,trending_down,trending_up,update,upload,upload_file,vaccines,verified,verified_user,view_list,volunteer_activism,warning,water_drop,work&display=block" rel="stylesheet">
   <?!= include('Stylesheet') ?>
   <?!= include('GambarHeader') ?>
 </head>
@@ -115,6 +115,10 @@
 
     <section id="land-minta" class="card login-card land-panel land-wide" aria-labelledby="land-minta-h" hidden>
       <div class="land-back"><button type="button" class="btn btn-ghost btn-sm" data-land="pilih"><span class="ic" aria-hidden="true">arrow_back</span>Kembali</button></div>
+      <div class="mt-tabs" role="tablist" aria-label="Layanan permintaan data">
+        <button type="button" role="tab" class="mt-tab mt-ajukan" data-land="minta" aria-selected="true"><span class="ic" aria-hidden="true">upload_file</span><span><b>Ajukan permintaan</b><small>Isi formulir baru</small></span></button>
+        <button type="button" role="tab" class="mt-tab mt-lacak" data-land="lacak" aria-selected="false"><span class="ic" aria-hidden="true">manage_search</span><span><b>Lacak status</b><small>Sudah punya nomor PD-…</small></span></button>
+      </div>
       <div id="minta-form-wrap">
         <h2 id="land-minta-h" class="h2 flat">Minta Data</h2>
         <p class="muted sm" style="margin:0 0 14px">Tidak perlu akun. Isi formulir, admin akan menghubungi Anda melalui kontak yang diberikan.</p>
@@ -123,8 +127,21 @@
             <div class="field"><label for="mt-nama">Nama lengkap *</label><input class="input" id="mt-nama" name="nama" type="text" maxlength="80" autocomplete="name" required></div>
             <div class="field"><label for="mt-inst">Instansi / asal *</label><input class="input" id="mt-inst" name="instansi" type="text" maxlength="100" autocomplete="organization" required></div>
           </div>
-          <div class="field"><label for="mt-kontak">Email atau WhatsApp *</label><input class="input" id="mt-kontak" name="kontak" type="text" maxlength="80" autocomplete="off" required></div>
+          <div class="field-row">
+            <div class="field"><label for="mt-kerja">Pekerjaan</label><input class="input" id="mt-kerja" name="pekerjaan" type="text" maxlength="80" autocomplete="organization-title"></div>
+            <div class="field"><label for="mt-kontak">Email atau WhatsApp *</label><input class="input" id="mt-kontak" name="kontak" type="text" maxlength="80" autocomplete="off" required></div>
+          </div>
+          <div class="field"><label for="mt-alamat">Alamat</label><input class="input" id="mt-alamat" name="alamat" type="text" maxlength="200" autocomplete="street-address"></div>
           <div class="field"><label for="mt-keb">Data yang diminta *</label><textarea class="input input-area" id="mt-keb" name="kebutuhan" maxlength="1000" rows="4" placeholder="Contoh: capaian indikator SPM per kabupaten tahun 2026 untuk bahan musrenbang" required></textarea></div>
+          <div class="field"><label for="mt-tujuan">Tujuan penggunaan data *</label><textarea class="input input-area" id="mt-tujuan" name="tujuan" maxlength="500" rows="2" placeholder="Contoh: bahan penelitian, perencanaan program, laporan instansi" required></textarea></div>
+          <fieldset class="field"><legend>Cara memperoleh</legend><div class="opt-row">
+            <label><input type="checkbox" name="cara" value="Melihat / membaca"> Melihat / membaca</label>
+            <label><input type="checkbox" name="cara" value="Salinan cetak"> Salinan cetak</label>
+            <label><input type="checkbox" name="cara" value="Salinan elektronik" checked> Salinan elektronik</label></div></fieldset>
+          <fieldset class="field"><legend>Cara menerima salinan</legend><div class="opt-row">
+            <label><input type="radio" name="terima" value="Diambil langsung"> Diambil langsung</label>
+            <label><input type="radio" name="terima" value="Email" checked> Email</label>
+            <label><input type="radio" name="terima" value="Pos / kurir"> Pos / kurir</label></div></fieldset>
           <div class="field-row">
             <div class="field"><label for="mt-format">Format</label><select class="input" id="mt-format" name="format"><option>Excel</option><option>PDF</option><option>Dasbor</option><option>Lainnya</option></select></div>
             <div class="field"><label for="mt-tenggat">Dibutuhkan paling lambat</label><input class="input" id="mt-tenggat" name="tenggat" type="date"></div>
@@ -140,9 +157,33 @@
       <div id="minta-ok" class="land-ok" hidden>
         <span class="ic">check_circle</span>
         <h2 class="h2 flat">Permintaan terkirim</h2>
-        <p class="muted">Nomor permintaan Anda: <b id="minta-id"></b>. Simpan nomor ini. Admin akan menghubungi Anda melalui kontak yang diberikan.</p>
-        <button type="button" class="btn btn-primary" data-land="pilih">Kembali ke halaman awal</button>
+        <p class="muted">Simpan nomor permintaan ini untuk melacak statusnya.</p>
+        <div class="noreg" id="minta-id"></div>
+        <p class="muted sm">Batas jawaban: <b id="minta-batas"></b></p>
+        <div class="row-actions">
+          <button type="button" class="btn btn-primary" data-act="minta-cetak"><span class="ic" aria-hidden="true">print</span>Cetak tanda terima</button>
+          <button type="button" class="btn btn-ghost" data-act="minta-salin"><span class="ic" aria-hidden="true">content_copy</span>Salin nomor</button>
+          <button type="button" class="btn btn-ghost" data-act="minta-lacak"><span class="ic" aria-hidden="true">manage_search</span>Lacak status</button>
+        </div>
+        <button type="button" class="btn btn-ghost btn-sm" data-land="pilih">Kembali ke halaman awal</button>
       </div>
+    </section>
+
+    <section id="land-lacak" class="card login-card land-panel land-wide mt-panel-lacak" aria-labelledby="land-lacak-h" hidden>
+      <div class="land-back"><button type="button" class="btn btn-ghost btn-sm" data-land="pilih"><span class="ic" aria-hidden="true">arrow_back</span>Kembali</button></div>
+      <div class="mt-tabs" role="tablist" aria-label="Layanan permintaan data">
+        <button type="button" role="tab" class="mt-tab mt-ajukan" data-land="minta" aria-selected="false"><span class="ic" aria-hidden="true">upload_file</span><span><b>Ajukan permintaan</b><small>Isi formulir baru</small></span></button>
+        <button type="button" role="tab" class="mt-tab mt-lacak" data-land="lacak" aria-selected="true"><span class="ic" aria-hidden="true">manage_search</span><span><b>Lacak status</b><small>Sudah punya nomor PD-…</small></span></button>
+      </div>
+      <h2 id="land-lacak-h" class="h2 flat">Lacak Permintaan</h2>
+      <p class="muted sm" style="margin:0 0 14px">Masukkan nomor permintaan (PD-…) dari tanda terima, dan email/WhatsApp yang Anda pakai saat mengajukan.</p>
+      <form id="form-lacak" class="lk-form" novalidate>
+        <div class="field"><label for="lk-id">Nomor permintaan</label><input class="input" id="lk-id" name="id" type="text" maxlength="40" autocomplete="off" placeholder="PD-…" required></div>
+        <div class="field"><label for="lk-kontak">Email atau WhatsApp</label><input class="input" id="lk-kontak" name="kontak" type="text" maxlength="80" autocomplete="off" required></div>
+        <button class="btn btn-primary" type="submit" id="lk-btn">Lacak</button>
+      </form>
+      <p class="form-msg" id="lk-msg" role="alert"></p>
+      <div id="lk-hasil" class="lk-hasil" aria-live="polite"></div>
     </section>
     </div>
   </div>
@@ -218,6 +259,8 @@
   <div id="modal-root"></div>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
   <div id="loader" class="loader" hidden><span class="spin" aria-hidden="true"></span><span class="sr">Memuat…</span></div>
+
+  <div id="print-root" aria-hidden="true"></div>
 
   <?!= include('JavaScript') ?>
 </body>
