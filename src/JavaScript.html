@@ -814,7 +814,38 @@
     $('#is-ket-info', form).textContent = KET_INFO[ket] || '';
     $('#is-unit', form).textContent = ket === 'persen' ? '%' : (form.getAttribute('data-sat') && ket !== 'angka' ? form.getAttribute('data-sat') : '');
   }
+  /** Bulan terkunci setelah cut-off: Administrator utama bisa membuka kunci sementara; yang lain mengirim permintaan. */
+  function bukaModalKunci(d) {
+    var p = periode(), utama = AppState.user && AppState.user.role === 'admin';
+    var info = '<p class="muted sm" style="margin-bottom:12px"><b>' + esc(d.id) + '</b> · ' + esc(d.nama) + '<br>' + esc(BULAN[Number(d.bulan) - 1]) + ' ' + p.tahun + ' terkunci setelah cut-off. Angkanya hanya bisa dilihat' + (d.real !== '' && d.real !== undefined ? ' (realisasi ' + esc(String(d.real).replace('.', ',')) + ')' : '') + '.</p>';
+    var h = utama
+      ? '<form id="form-buka-kunci" novalidate>' + info + '<input type="hidden" name="indikatorId" value="' + esc(d.id) + '">' +
+        '<fieldset class="field"><legend>Buka untuk</legend><div class="opt-row"><label><input type="radio" name="cakupan" value="indikator" checked> Indikator ini saja</label><label><input type="radio" name="cakupan" value="bidang"> Semua indikator di bidangnya</label></div></fieldset>' +
+        '<div class="field"><label for="bk-jam">Lama dibuka</label><select class="input" id="bk-jam" name="jam"><option value="24">24 jam</option><option value="72">3 hari</option><option value="168">7 hari</option></select></div>' +
+        '<div class="field"><label for="bk-alasan">Alasan (wajib, tercatat di Log)</label><textarea class="input input-area" id="bk-alasan" name="alasan" maxlength="300" rows="2" required placeholder="Contoh: revisi data setelah validasi lapangan"></textarea></div>' +
+        '<p class="muted sm">Setelah waktunya habis, bulan ini terkunci lagi otomatis.</p>' +
+        '<div class="form-actions"><button class="btn btn-primary" type="submit"><span class="ic" aria-hidden="true">lock_open</span>Buka kunci</button><button class="btn btn-ghost" type="button" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>'
+      : '<form id="form-minta-kunci" novalidate>' + info + '<input type="hidden" name="indikatorId" value="' + esc(d.id) + '"><input type="hidden" name="bulan" value="' + esc(d.bulan) + '"><input type="hidden" name="tahun" value="' + p.tahun + '">' +
+        '<div class="field"><label for="mk-alasan">Alasan perbaikan (opsional)</label><textarea class="input input-area" id="mk-alasan" name="alasan" maxlength="200" rows="2"></textarea></div>' +
+        '<p class="muted sm">Permintaan dikirim ke Administrator utama. Anda bisa mengisi ulang setelah kunci dibuka.</p>' +
+        '<div class="form-actions"><button class="btn btn-primary" type="submit">Minta buka kunci</button><button class="btn btn-ghost" type="button" data-act="close-modal">Tutup</button></div><p class="form-msg" role="alert"></p></form>';
+    openModal('Bulan terkunci', h);
+  }
+  function submitKunci(f) {
+    var msg = $('.form-msg', f), btn = $('button[type=submit]', f), lb = btn.innerHTML, buka = f.id === 'form-buka-kunci';
+    if (buka && f.elements.alasan.value.trim().length < 5) { msg.textContent = 'Tulis alasan membuka kunci.'; f.elements.alasan.focus(); return; }
+    btn.disabled = true; btn.textContent = 'Mengirim…'; msg.textContent = '';
+    var cak = $('input[name=cakupan]:checked', f);
+    var pr = buka ? api('apiBukaKunci', [{ indikatorId: f.elements.indikatorId.value, cakupan: cak ? cak.value : 'indikator', jam: Number(f.elements.jam.value), alasan: f.elements.alasan.value }])
+      : api('apiMintaBukaKunci', [{ indikatorId: f.elements.indikatorId.value, tahun: Number(f.elements.tahun.value), bulan: Number(f.elements.bulan.value), alasan: f.elements.alasan.value }]);
+    pr.then(function (r) {
+      closeModal(true);
+      toast(buka ? 'Kunci dibuka sampai ' + r.sampai + '.' : 'Permintaan terkirim ke Administrator utama.', 'ok');
+      if (buka) reload();
+    }).catch(function (e) { if (e.handled) return; msg.textContent = e.message; btn.disabled = false; btn.innerHTML = lb; });
+  }
   function openIsian(d) {
+    if (d.kunci === '1') { bukaModalKunci(d); return; }
     var p = periode();
     openModal('Isi Data Indikator', '<p class="muted">Memuat…</p>');
     api('apiAmbilIsian', [{ indikatorId: d.id, tahun: p.tahun, bulan: Number(d.bulan) }]).then(function (r) {
@@ -1381,6 +1412,37 @@
       case 'minta-lacak': landShow('lacak'); if (MINTA_D) { $('#lk-id').value = MINTA_D.id; $('#lk-kontak').value = MINTA_D.kontak; } break;
       case 'pmt-cetak': if (PMT_D) cetakHtml(htmlFormulir(PMT_D)); break;
       case 'tbl-csv': case 'tbl-xls': case 'tbl-cetak': tabelAksi(act, el); break;
+      case 'hitung-ulang': {
+        var lh = el.innerHTML; el.disabled = true; el.textContent = 'Menghitung…';
+        api('apiHitungUlang').then(function (r) { toast('Ringkasan dihitung ulang' + (r.pemicu ? '.' : '; pemicu tiap jam belum bisa dipasang.'), r.pemicu ? 'ok' : ''); reload(); })
+          .catch(function (e) { if (!e.handled) toast(e.message, 'err'); el.disabled = false; el.innerHTML = lh; });
+        break;
+      }
+      case 'arsip-tanya': {
+        var th = ($('#ars-sampai') || {}).value; if (!th) break;
+        openModal('Arsipkan data sampai ' + th, '<p>Baris tahun <b>' + esc(th) + '</b> dan sebelumnya dari sheet Isian, Target, Monev, SPBE, Bukti, PermintaanData, dan Log akan dipindah ke spreadsheet <b>Arsip DKPPKB Intelligence</b> di Google Drive.</p>' +
+          '<ol class="langkah"><li>Cadangan penuh tiap sheet dibuat lebih dulu di spreadsheet arsip.</li><li>Baris lama disalin dan jumlahnya dicocokkan.</li><li>Baru setelah cocok, baris itu dihapus dari spreadsheet utama.</li></ol>' +
+          '<p class="muted sm">Data tahun itu tetap bisa dilihat lewat pemilih tahun, tetapi tidak bisa diubah lagi. Proses bisa memakan beberapa menit.</p>' +
+          '<div class="form-actions"><button type="button" class="btn btn-alert" data-act="arsip-ya" data-th="' + esc(th) + '">Ya, arsipkan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>');
+        break;
+      }
+      case 'arsip-ya': {
+        var tha = el.getAttribute('data-th'); el.disabled = true; el.textContent = 'Mengarsipkan…';
+        api('apiArsipkan', [Number(tha)]).then(function (r) {
+          $('#modal-body').innerHTML = '<p><b>Arsip selesai.</b> ' + (r.hasil.length ? r.hasil.map(function (x) { return esc(x.sheet) + ': ' + x.dipindah + ' baris dipindah'; }).join(' · ') : 'Tidak ada baris yang perlu dipindah.') + '</p>' +
+            '<div class="form-actions" style="margin-top:14px"><a class="btn btn-ghost" target="_blank" rel="noopener noreferrer" href="' + esc(r.url) + '">Buka spreadsheet arsip</a><button type="button" class="btn btn-primary" data-act="close-modal">Selesai</button></div>';
+          reload();
+        }).catch(function (e) { if (e.handled) return; var m = $('#modal-body .form-msg'); if (m) m.textContent = e.message; el.disabled = false; el.textContent = 'Ya, arsipkan'; });
+        break;
+      }
+      case 'cetak-halaman': {
+        var cl = $('#app-container').cloneNode(true);
+        $$('.ax-bar, .seg, .tbl-alat, .ax-link, .filters, .page-head, button, select, .batas-bar', cl).forEach(function (x) { x.remove(); });
+        $$('[id]', cl).forEach(function (x) { x.removeAttribute('id'); });
+        var jd = ($('#app-container .page-head .h1') || {}).textContent || document.title, sumber = $('#app-container .ax-src select'), pp = periode();
+        cetakHtml(kopHtml() + '<h1>' + esc(String(jd).toUpperCase()) + '</h1><div class="sub">' + (sumber ? esc(sumber.options[sumber.selectedIndex].text) + ' · ' : '') + 'Periode ' + esc(BLN_ID[pp.bulan - 1] + ' ' + pp.tahun) + ' · dicetak ' + esc(tglPanjang(new Date())) + '</div><div class="pr-hal">' + cl.innerHTML + '</div>');
+        break;
+      }
       case 'refresh': {   // ambil ulang halaman ini dari server (abaikan cache), mis. tombol Refresh di Analitik
         el.disabled = true; el.classList.add('is-busy');
         navigateTo(AppState.page, AppState.params, { keep: true });   // halaman baru menampilkan jam pembaruan
@@ -1401,7 +1463,7 @@
         openModal(nama ? nama.textContent : 'Detail Indikator', src.innerHTML, true);
         break;
       }
-      case 'isian': openIsian({ id: el.dataset.id, bulan: el.dataset.bulan, nama: el.dataset.nama, satuan: el.dataset.satuan, real: el.dataset.real, kab: el.dataset.kab, cat: el.dataset.cat, prev: el.dataset.prev, prevBulan: el.dataset.prevBulan }); break;
+      case 'isian': openIsian({ id: el.dataset.id, bulan: el.dataset.bulan, nama: el.dataset.nama, satuan: el.dataset.satuan, real: el.dataset.real, kab: el.dataset.kab, cat: el.dataset.cat, prev: el.dataset.prev, prevBulan: el.dataset.prevBulan, kunci: el.dataset.kunci }); break;
       case 'gx-tw': {
         var pn = el.closest('.gx-panel'), v = el.getAttribute('data-v');
         if (pn) {
@@ -1649,6 +1711,7 @@
     if (fid === 'form-login') return doLoginSubmit(ev);
     if (fid === 'form-minta') return submitMinta(ev);
     if (fid === 'form-lacak') return submitLacak(ev);
+    if (fid === 'form-buka-kunci' || fid === 'form-minta-kunci') return submitKunci(f);
     if (fid === 'form-pmt-review') return submitPmtReview(f);
     if (fid === 'form-isian') return submitIsian(f);
     if (fid === 'form-remind') return submitRemind(f);
