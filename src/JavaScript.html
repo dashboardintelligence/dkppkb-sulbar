@@ -1222,6 +1222,11 @@
       case 'acc-all': { var on = el.getAttribute('data-v') === '1'; $$('.im-acc').forEach(function (a) { accBuka(a, on); }); break; }
       case 'theme': window.DkTheme.next(); break;
       case 'reload': navigateTo(AppState.page, AppState.params); break;
+      case 'refresh': {   // ambil ulang halaman ini dari server (abaikan cache), mis. tombol Refresh di Analitik
+        el.disabled = true; el.classList.add('is-busy');
+        navigateTo(AppState.page, AppState.params, { keep: true });   // halaman baru menampilkan jam pembaruan
+        break;
+      }
       case 'open-drawer': openDrawer(); break;
       case 'notif-close': closeNotif(); $('#btn-notif').focus(); break;
       case 'tn-toggle': {

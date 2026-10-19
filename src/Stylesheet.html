@@ -971,4 +971,111 @@ body{font-size:14px;line-height:21px}
 #view-login .login-card{padding:22px 22px}
 #view-login .land{gap:20px}
 @media(min-width:1024px){#view-login .land{gap:26px}}
+/* ===== Usulan desain Okt 2026 ===== */
+/* 1. KPI Monev Kinerja: satu pita ringkas */
+.gx-kpi{gap:0;background:var(--card);border:1px solid var(--bd);border-radius:16px;overflow:hidden;box-shadow:none}
+.gx-kpi>.gx-k{border:0;border-radius:0;box-shadow:none;background:transparent;padding:9px 14px;border-right:1px solid var(--bd);display:flex;flex-direction:column;gap:0;min-width:0}
+.gx-kpi>.gx-k:last-child{border-right:0}
+.gx-kpi>.gx-k>.muted:first-child{font-size:11.5px;line-height:16px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gx-kpi>.gx-k .gx-kv{font-size:20px;line-height:26px;font-weight:800}
+.gx-kpi>.gx-k>.muted:last-child{font-size:12px;line-height:16px}
+@media (max-width:900px){.gx-kpi3{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:520px){.gx-kpi,.gx-kpi3{grid-template-columns:1fr}.gx-kpi>.gx-k{border-right:0;border-bottom:1px solid var(--bd);flex-direction:row;align-items:baseline;gap:8px;flex-wrap:wrap}.gx-kpi>.gx-k:last-child{border-bottom:0}}
+
+/* 2. Panel pilihan Masuk & Minta Data lebih kecil */
+#view-login .lp-main .login-card{max-width:400px;padding:18px 18px}
+#view-login .lp-main .login-card.land-wide{max-width:560px}
+#view-login .login-card .h2{font-size:17px;line-height:24px}
+#view-login .login-card .field{margin-bottom:10px;gap:4px}
+#view-login .login-card .field label{font-size:12.5px}
+#view-login .login-card .input{min-height:38px;font-size:14px}
+#view-login .login-card .btn{min-height:40px}
+.lp-welcome-h{font-size:19px;line-height:25px}
+.lp-feat{grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:12px}
+.lp-feat li{padding:10px 12px;gap:10px;border-radius:14px}
+.lp-feat .ic{width:30px;height:30px;font-size:18px;border-radius:9px}
+.lp-feat b{font-size:13.5px}
+.lp-feat span:not(.ic){font-size:12px;line-height:17px}
+
+/* 3. Baris daftar indikator ringkas, tanpa grafik mini */
+.acc-list{gap:5px}
+.im-acc{border-radius:12px}
+.acc-head{grid-template-columns:minmax(0,1fr) 76px minmax(0,210px) 18px;gap:4px 12px;padding:7px 12px}
+.acc-spark{display:none}
+.acc-id{display:grid;grid-template-columns:auto minmax(0,1fr);column-gap:8px;row-gap:0;align-items:baseline}
+.acc-id .ir-id{grid-column:1;font-size:11px;white-space:nowrap;max-width:170px;overflow:hidden;text-overflow:ellipsis}
+.acc-id .ir-name{grid-column:2;font:600 13.5px/1.3 var(--fh);margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.acc-id>.muted{grid-column:2;font-size:11.5px;line-height:15px}
+.acc-val b{font-size:14px;line-height:1.2}
+.acc-val .muted{font-size:11px;line-height:14px}
+.acc-st{gap:4px;justify-content:flex-end}
+.acc-st .chip{font-size:11px;padding:2px 8px}
+.acc-chev{font-size:18px}
+.acc-body{padding:4px 14px 14px}
+.tung{padding:9px 12px;border-radius:16px;gap:8px}
+@media(max-width:900px){.acc-head{grid-template-columns:minmax(0,1fr) 18px}.acc-st{justify-content:flex-start}}
+
+/* 4. Analitik multi-sumber */
+:root{--ax-warn:#e5b622}
+:root[data-theme="dark"]{--ax-warn:#e8c547}
+.ax-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:flex-end;padding:12px 16px;margin-bottom:12px}
+.ax-ctl{display:flex;flex-direction:column;gap:3px;min-width:0}
+.ax-ctl>span{font-size:11.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--tx2)}
+.ax-ctl .input{min-width:0}
+.ax-src .input{border:2px solid var(--p);min-width:250px;font-weight:600}
+.ax-upd{margin-left:auto;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ax-upd .btn.is-busy .ic{animation:ax-spin .8s linear infinite}
+@keyframes ax-spin{to{transform:rotate(360deg)}}
+.ax-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));background:var(--card);border:1px solid var(--bd);border-radius:16px;overflow:hidden;margin-bottom:12px}
+.ax-kpi>div{padding:9px 14px;border-right:1px solid var(--bd);display:flex;flex-direction:column;min-width:0}
+.ax-kpi>div:last-child{border-right:0}
+.ax-kpi .l{font-size:11.5px;font-weight:700;letter-spacing:.03em;text-transform:uppercase;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ax-kpi .v{font:800 20px/26px var(--fh);font-variant-numeric:tabular-nums;display:flex;align-items:baseline;gap:6px}
+.ax-kpi .v small{font:600 12px/16px var(--fb);color:var(--tx2)}
+.ax-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px;margin-bottom:12px}
+.ax-w4{grid-column:span 4}.ax-w8{grid-column:span 8}.ax-w12{grid-column:span 12}
+.ax-c{padding:14px 16px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.ax-c h2{font:700 15.5px/22px var(--fh);margin:0}
+.ax-why{font-size:12px;color:var(--tx2);margin-top:auto}
+.ax-svg{display:block;width:100%;height:auto}
+.ax-svg text{font-family:var(--fb)}
+.ax-tx{fill:var(--tx2);font-size:11px}
+.ax-gl{stroke:var(--grid,var(--bd));stroke-width:1}
+.ax-lgd{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12.5px;color:var(--tx2)}
+.ax-lgd i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+.ax-rank{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:7px}
+.ax-rank li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;font-size:13.5px}
+.ax-rank li>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ax-rank b{font-variant-numeric:tabular-nums}
+.ax-rank .tr{grid-column:1/-1;height:6px;border-radius:99px;background:var(--rail);overflow:hidden}
+.ax-rank .tr i{display:block;height:100%;border-radius:99px}
+.ax-heat{overflow-x:auto}
+.ax-hm{display:grid;gap:3px;font-size:11px;min-width:260px}
+.ax-hm span{border-radius:4px;min-height:24px;display:grid;place-items:center;font-weight:700;color:#0b1720;font-variant-numeric:tabular-nums}
+.ax-hm .h{color:var(--tx2);font-weight:600;place-items:center start;min-height:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ax-hm .hc{place-items:center}
+@media (max-width:900px){.ax-w4,.ax-w8{grid-column:span 12}.ax-upd{margin-left:0}.ax-src .input{min-width:0}}
+@media (max-width:520px){.ax-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.ax-kpi>div:nth-child(2){border-right:0}.ax-kpi>div:nth-child(-n+2){border-bottom:1px solid var(--bd)}}
+@media (prefers-reduced-motion:reduce){.ax-upd .btn.is-busy .ic{animation:none}}
+
+/* 5. Sync Form: bagian yang bisa dibuka-tutup */
+.dt{padding:0;overflow:hidden;margin-top:12px}
+.dt+.card{margin-top:12px}
+.dt>summary{list-style:none;cursor:pointer;display:grid;grid-template-columns:34px minmax(0,1fr) 22px;gap:10px;align-items:center;padding:11px 16px}
+.dt>summary::-webkit-details-marker{display:none}
+.dt>summary:hover{background:var(--rail)}
+.dt>summary:focus-visible{outline:2px solid var(--p);outline-offset:-2px}
+.dt-ic{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:var(--p-l);color:var(--p-d)}
+.dt-ic .ic{font-size:19px}
+.dt-tt{display:flex;flex-direction:column;min-width:0}
+.dt-tt b{font:700 15px/21px var(--fh)}
+.dt-tt>span{font-size:12.5px;line-height:17px;color:var(--tx2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.dt-chev{color:var(--tx2);transition:transform .2s}
+.dt[open]>summary .dt-chev{transform:rotate(180deg)}
+.dt[open]>summary{border-bottom:1px solid var(--bd)}
+.dt-body{padding:12px 16px 16px}
+.dt-scroll{max-height:360px;overflow:auto;border:1px solid var(--bd);border-radius:12px}
+.dt-scroll .tbl th{position:sticky;top:0;z-index:1}
+.dt-body>p.muted{margin-top:8px}
+@media (prefers-reduced-motion:reduce){.dt-chev{transition:none}}
 </style>
