@@ -1498,6 +1498,30 @@
     }).catch(function (e) { if (e.handled) return; var mm = $('#modal-body .form-msg'); if (mm) mm.textContent = e.message; el.disabled = false; el.textContent = 'Simpan'; });
   }
 
+  /* ---------- Review Sulbar Sehat: catatan tindak lanjut ---------- */
+  function rvTlBaru(el) {
+    var mt = {}; try { mt = JSON.parse(($('#rv-meta') || {}).getAttribute('data-json') || '{}'); } catch (e) { }
+    var ind = el.getAttribute('data-ind') || '', kab = el.getAttribute('data-kab') || '', tw = el.getAttribute('data-tw') || '';
+    var opt = function (arr, v, kosong) { return (kosong ? '<option value="">' + esc(kosong) + '</option>' : '') + arr.map(function (x) { var id = x.id || x, t = x.nama || x; return '<option value="' + esc(id) + '"' + (String(id) === String(v) ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join(''); };
+    openModal('Catatan tindak lanjut', '<form id="form-tl" novalidate data-tw="' + esc(tw) + '"><div class="form-grid">' +
+      '<div class="field"><label for="tl-ind">Indikator</label><select class="input" id="tl-ind" name="indikatorId">' + opt(mt.ind || [], ind, '') + '</select></div>' +
+      '<div class="field"><label for="tl-kab">Kabupaten</label><select class="input" id="tl-kab" name="kabupaten">' + opt(mt.kab || [], kab, 'Provinsi (semua kabupaten)') + '</select></div></div>' +
+      '<div class="field"><label for="tl-tm">Temuan / permasalahan</label><textarea class="input" id="tl-tm" name="permasalahan" rows="2" maxlength="1000" required placeholder="mis. Distribusi TTD ke puskesmas terlambat"></textarea></div>' +
+      '<div class="field"><label for="tl-rk">Rencana tindak lanjut</label><textarea class="input" id="tl-rk" name="rekomendasi" rows="2" maxlength="1000" placeholder="mis. Koordinasi dengan Farmalkes untuk percepatan distribusi"></textarea></div>' +
+      '<div class="form-grid"><div class="field"><label for="tl-pj">Penanggung jawab</label><input class="input" id="tl-pj" name="penanggung" maxlength="80"></div>' +
+      '<div class="field"><label for="tl-tg">Tenggat</label><input class="input" id="tl-tg" name="tenggat" type="date"></div>' +
+      '<div class="field"><label for="tl-pr">Prioritas</label><select class="input" id="tl-pr" name="prioritas"><option>Tinggi</option><option selected>Sedang</option><option>Rendah</option></select></div></div>' +
+      '<div class="form-actions"><button class="btn btn-primary" type="submit">Simpan catatan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>', true);
+  }
+  function submitTl(f) {
+    var msg = $('.form-msg', f), btn = $('button[type=submit]', f), o = formData(f);
+    o.tw = Number(f.getAttribute('data-tw')) || '';
+    if (String(o.permasalahan || '').trim().length < 5) { msg.textContent = 'Uraikan temuan minimal beberapa kata.'; f.permasalahan.focus(); return; }
+    btn.disabled = true; btn.textContent = 'Menyimpan…';
+    api('apiSimpanMasalah', [o]).then(function () { closeModal(); toast('Catatan tindak lanjut disimpan.', 'ok'); reload(); })
+      .catch(function (e) { if (e.handled) return; msg.textContent = e.message; btn.disabled = false; btn.textContent = 'Simpan catatan'; });
+  }
+
   function onAction(el, ev) {
     var act = el.getAttribute('data-act');
     switch (act) {
@@ -1536,6 +1560,7 @@
         break;
       }
       case 'ss-tempel': ssBukaTempel(); break;
+      case 'ss-tl-baru': rvTlBaru(el); break;
       case 'ss-periksa': ssPeriksa(); break;
       case 'ss-tempel-simpan': ssSimpanTempel(el); break;
       case 'ss-pindah': ssKe(el.getAttribute('data-ind')); break;
@@ -1856,6 +1881,7 @@
     if (fid === 'form-pmt-review') return submitPmtReview(f);
     if (fid === 'form-isian') return submitIsian(f);
     if (fid === 'form-ss') return submitSs(f);
+    if (fid === 'form-tl') return submitTl(f);
     if (fid === 'form-remind') return submitRemind(f);
     if (fid === 'form-user-modal') return submitUserForm(f);
     if (fid === 'form-program-modal') return submitProgramForm(f);

@@ -1253,4 +1253,48 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .ssi-sum b{display:block;font-size:18px;color:var(--tx)}
 #modal-body .ssi-w{margin-top:6px}
 @media (max-width:860px){.ssi-lay{grid-template-columns:minmax(0,1fr)}.ssi-pc{min-width:84px}.ssi-list{max-height:260px}.ssi-sum{grid-template-columns:1fr}.ssi-bar .btn{margin-left:0}}
+/* ---------- Analitik › Review Sulbar Sehat ---------- */
+.rv-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:2px 0 12px}
+.rv-bar-r{margin-left:auto;display:flex;gap:8px}
+.rv-cnt{display:inline-block;margin-left:6px;background:var(--o);color:#1a0e04;border-radius:999px;font-size:11px;padding:0 6px;line-height:18px}
+.rv-lnk{border:0;background:none;padding:0;font:inherit;font-weight:600;color:inherit;text-align:left;cursor:pointer}
+.rv-lnk:hover{color:var(--p-d);text-decoration:underline}
+.rv-lgd{display:flex;flex-wrap:wrap;gap:12px;font-size:12px;color:var(--tx2);margin-top:8px}
+.rv-lgd span{display:inline-flex;align-items:center;gap:5px}
+.rv-lgd i{width:12px;height:12px;border-radius:3px;display:inline-block}
+.rv-lgd-t{margin:4px 0 10px}
+i.rv-ok,.rv-c.rv-ok,.rv-bg-ok{background:var(--ok)}i.rv-warn,.rv-c.rv-warn,.rv-bg-warn{background:var(--warn)}i.rv-crit,.rv-c.rv-crit,.rv-bg-crit{background:var(--crit)}i.rv-na,.rv-c.rv-na{background:var(--rail)}
+i.rv-na{border:1px solid var(--bd)}
+.rv-heat{border-collapse:separate;border-spacing:3px;min-width:760px}
+.rv-heat th,.rv-heat td{border-bottom:0;padding:6px}
+.rv-heat th{text-align:center;font-size:11.5px}
+.rv-heat .rv-ind{position:sticky;left:0;background:var(--card);z-index:1;min-width:210px;max-width:260px;text-align:left;font-size:13px;line-height:1.3}
+.rv-c{text-align:center;border-radius:6px;font-weight:700;font-size:12.5px;font-variant-numeric:tabular-nums;color:#fff;min-width:64px}
+.rv-c.rv-warn{color:#3b2f00}.rv-c.rv-na{color:var(--tx2)}
+.rv-c.rv-prov{outline:2px solid var(--tx);outline-offset:-2px}
+.rv-grp td{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2);padding-top:12px!important;background:transparent!important}
+.rv-dt td.r,.rv-dt th.r{text-align:right;white-space:nowrap;font-variant-numeric:tabular-nums}
+.rv-dt .rv-ind{min-width:200px}
+.rv-tot td{background:var(--rail);font-weight:800}
+.rv-up{color:var(--ok-d);font-weight:700}.rv-dn{color:var(--crit-d);font-weight:700}
+.rv-spark{display:block}
+.rv-tren{width:100%;height:auto;display:block}
+.rv-grid{stroke:var(--grid)}.rv-tgt{stroke:var(--tx);stroke-dasharray:4 3}
+.rv-ax{font-size:10.5px;fill:var(--tx2)}.rv-ax-b{fill:var(--tx);font-weight:700}.rv-ax-crit{fill:var(--crit-d);font-weight:700}
+.rv-rank{list-style:none;margin:10px 0 0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.rv-rank li{display:grid;grid-template-columns:26px minmax(0,1fr) auto;gap:10px;align-items:center}
+.rv-no{display:grid;place-items:center;width:26px;height:26px;border-radius:50%;background:var(--rail);font-weight:800;font-size:12px}
+.rv-bars{display:flex;flex-direction:column;gap:10px;margin-top:10px}
+.rv-b{display:grid;grid-template-columns:130px minmax(0,1fr) 70px;gap:10px;align-items:center;font-size:13px}
+.rv-b small{display:block;color:var(--tx2);font-size:11.5px}
+.rv-b b{text-align:right;font-variant-numeric:tabular-nums}
+.rv-t{height:14px;border-radius:999px;background:var(--rail);overflow:hidden}
+.rv-t i{display:block;height:100%;border-radius:999px}
+.rv-kabsel{display:flex;flex-wrap:wrap;gap:6px}
+.rv-kb{border:1px solid var(--bd);background:var(--card);border-radius:999px;padding:6px 14px;font:inherit;font-weight:600;font-size:13.5px;color:var(--tx);cursor:pointer}
+.rv-kb.is-on{background:var(--tx);border-color:var(--tx);color:var(--card)}
+.rv-tl .rv-tx{min-width:200px}
+.rv-tl .nw{white-space:nowrap}
+.rv-st{border:0;cursor:pointer;font:inherit}
+@media (max-width:760px){.rv-bar-r{margin-left:0}.rv-b{grid-template-columns:96px minmax(0,1fr) 58px}}
 </style>
