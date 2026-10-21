@@ -1297,4 +1297,29 @@ i.rv-na{border:1px solid var(--bd)}
 .rv-tl .nw{white-space:nowrap}
 .rv-st{border:0;cursor:pointer;font:inherit}
 @media (max-width:760px){.rv-bar-r{margin-left:0}.rv-b{grid-template-columns:96px minmax(0,1fr) 58px}}
+/* ---------- Label dashboard indikator (satu warna) ---------- */
+/* Tabel Kelola Indikator: satu baris per indikator, font kecil agar muat di halaman */
+#daftar-indikator .tbl{font-size:12px}
+#daftar-indikator .tbl th,#daftar-indikator .tbl td{white-space:nowrap;padding:7px 8px}
+#daftar-indikator .tbl thead th{font-size:11px}
+#daftar-indikator .ki-nama{max-width:340px;overflow:hidden;text-overflow:ellipsis}
+#daftar-indikator .tbl .btn-sm{min-height:0;height:auto;padding:2px 10px;font-size:12px;line-height:1.5}
+#daftar-indikator .tbl td{line-height:1.4}
+#daftar-indikator .tbl .chip{font-size:10.5px}
+.chip-dash{font-size:11px;font-weight:500;color:var(--tx2);white-space:nowrap}
+/* Input Data › Capaian & analisis: grafik lebih kecil, kartu analisis rapat sejajar grafik */
+.acc-cols{grid-template-columns:minmax(0,500px) minmax(0,1fr);align-items:stretch}
+.acc-cols .acc-an{display:flex;flex-direction:column}
+.acc-cols .acc-an .an-grid{flex:1;grid-auto-rows:1fr}
+.acc-cols .an-c{justify-content:center}
+.acc-pane .gb,.im-acc .gb{max-width:500px;max-height:180px}
+.acc-cols .an-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
+@media(max-width:1250px){.acc-cols .an-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:560px){.acc-cols .an-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.acc-cols .an-c{padding:7px 10px;border-radius:10px;gap:1px}
+.acc-cols .an-c .sm{font-size:11.5px;line-height:1.35}
+.acc-cols .an-c b{font-size:14px;line-height:1.25}
+.acc-cols .an-c .chip{font-size:10.5px;padding:0 6px}
+.acc-cols .h3{margin-bottom:4px}
+@media(max-width:900px){.acc-cols{grid-template-columns:1fr}}
 </style>
