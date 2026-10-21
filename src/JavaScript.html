@@ -1559,6 +1559,17 @@
         }).catch(function (e) { if (e.handled) return; var m = $('#modal-body .form-msg'); if (m) m.textContent = e.message; el.disabled = false; el.textContent = 'Ya, arsipkan'; });
         break;
       }
+      case 'spbe-migrasi':
+        openModal('Pindahkan SPBE ke master indikator', '<ol class="langkah"><li>Seluruh spreadsheet di-backup dulu (folder Backup DKPPKB Intelligence).</li><li>28 indikator SPBE ditambahkan ke sheet Indikator (ID SPBE-01 s.d. SPBE-28).</li><li>Level dan target yang sudah diisi disalin ke sheet Isian dan Target.</li></ol>' +
+          '<p class="muted sm">Sheet SPBE lama tidak dihapus. Tampilan halaman Monev SPBE tetap sama.</p><div class="form-actions"><button type="button" class="btn btn-primary" data-act="spbe-migrasi-ya">Ya, pindahkan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>');
+        break;
+      case 'spbe-migrasi-ya':
+        el.disabled = true; el.textContent = 'Memindahkan…';
+        api('apiMigrasiSpbe').then(function (r) {
+          $('#modal-body').innerHTML = '<p><b>Selesai.</b> ' + r.indikator + ' indikator, ' + r.isian + ' nilai level, dan ' + r.target + ' target dipindahkan.</p><div class="form-actions" style="margin-top:14px">' + (r.cadangan ? '<a class="btn btn-ghost" target="_blank" rel="noopener noreferrer" href="' + esc(r.cadangan) + '">Buka backup</a>' : '') + '<button type="button" class="btn btn-primary" data-act="close-modal">Tutup</button></div>';
+          reload();
+        }).catch(function (e) { if (e.handled) return; var mm = $('#modal-body .form-msg'); if (mm) mm.textContent = e.message; el.disabled = false; el.textContent = 'Ya, pindahkan'; });
+        break;
       case 'ss-tempel': ssBukaTempel(); break;
       case 'ss-tl-baru': rvTlBaru(el); break;
       case 'ss-periksa': ssPeriksa(); break;
