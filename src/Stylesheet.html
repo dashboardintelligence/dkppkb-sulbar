@@ -1220,4 +1220,37 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
   .kap-bk{grid-area:bk;flex-direction:row-reverse;justify-content:space-between;align-items:center}
   .kap-2{grid-template-columns:1fr}
 }
+/* ---------- Input Data › Sulbar Sehat ---------- */
+.ssi-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;margin:4px 0 14px}
+.ssi-bar .btn{margin-left:auto}
+.ssi-lay{display:grid;grid-template-columns:300px minmax(0,1fr);gap:16px;align-items:start}
+.ssi-lay>*{min-width:0}
+.ssi-list{display:flex;flex-direction:column;gap:2px;max-height:720px;overflow:auto}
+.ssi-prog{display:flex;align-items:center;gap:10px;margin-bottom:8px;font-size:12.5px;color:var(--tx2)}
+.ssi-trk{flex:1;height:8px;border-radius:999px;background:var(--rail);overflow:hidden}
+.ssi-trk div{height:100%;background:var(--p-d)}
+.ssi-grp{font-size:11.5px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--tx2);margin:10px 0 4px}
+.ssi-it{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:center;text-align:left;border:1px solid transparent;background:none;border-radius:10px;padding:7px 9px;font:inherit;font-size:13.5px;color:var(--tx);cursor:pointer}
+.ssi-it:hover{background:var(--rail)}
+.ssi-it.is-on{background:var(--p-l);border-color:var(--p)}
+.ssi-it span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ssi-tbl .ssi-in{width:100%;min-width:76px;max-width:140px;margin-left:auto;text-align:right;font-variant-numeric:tabular-nums}
+.ssi-tbl td,.ssi-tbl th{padding-left:8px;padding-right:8px}
+.ssi-tbl .ssi-in.invalid{border-color:var(--crit);background:var(--crit-l)}
+.ssi-tbl tr.ssi-tot td{background:var(--rail);font-weight:800}
+.ssi-pc{min-width:120px}
+.ssi-pc b{font-variant-numeric:tabular-nums}
+.ssi-ok{color:var(--ok-d)}.ssi-warn{color:var(--warn-d)}.ssi-crit{color:var(--crit-d)}.ssi-na{color:var(--tx2)}
+.ssi-bar-mini{display:block;height:6px;border-radius:999px;background:var(--rail);margin-top:3px;overflow:hidden}
+.ssi-bar-mini i{display:block;height:100%}
+.ssi-bg-ok{background:var(--ok)}.ssi-bg-warn{background:var(--warn)}.ssi-bg-crit{background:var(--crit)}.ssi-bg-na{background:transparent}
+.ssi-warns{display:flex;flex-direction:column;gap:6px;margin-top:10px}
+.ssi-w{border-radius:10px;padding:8px 10px;font-size:13px}
+.ssi-w-crit{background:var(--crit-l);color:var(--crit-d)}.ssi-w-warn{background:var(--warn-l);color:var(--warn-d)}.ssi-w-info{background:var(--rail);color:var(--tx2)}
+.ssi-tp{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre;overflow:auto}
+.ssi-sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:10px 0}
+.ssi-sum div{border:1px solid var(--bd);border-radius:10px;padding:8px 10px;font-size:12.5px;color:var(--tx2)}
+.ssi-sum b{display:block;font-size:18px;color:var(--tx)}
+#modal-body .ssi-w{margin-top:6px}
+@media (max-width:860px){.ssi-lay{grid-template-columns:minmax(0,1fr)}.ssi-pc{min-width:84px}.ssi-list{max-height:260px}.ssi-sum{grid-template-columns:1fr}.ssi-bar .btn{margin-left:0}}
 </style>
