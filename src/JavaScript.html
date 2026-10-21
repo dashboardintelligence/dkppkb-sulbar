@@ -15,6 +15,7 @@
     { id: 'inputdata', label: 'Input Data', icon: 'edit_note', group: 'Indikator', roles: ['admin', 'staf', 'pic'] },
     { id: 'spbe', label: 'Monev SPBE', icon: 'lan', group: 'Indikator' },
     { id: 'monev', label: 'Monev Kinerja', icon: 'rule', group: 'Indikator' },
+    { id: 'sulbarsehat', label: 'Review Sulbar Sehat', icon: 'map', group: 'Indikator' },
     { id: 'monitoring', label: 'Verifikasi & Pengingat', icon: 'fact_check', group: 'Indikator', roles: ['admin', 'staf', 'pimpinan'] },
     { id: 'analitik', label: 'Capaian & Analitik', icon: 'insights', group: 'Analisis' },
     { id: 'indikator', label: 'Indikator Kesehatan', icon: 'monitor_heart', group: 'Analisis' },
@@ -38,7 +39,7 @@
   var TOP = [
     { id: 'beranda', label: 'Beranda' },
     { label: 'Input Data', children: ['inputdata', 'monitoring'] },
-    { label: 'Monev', children: ['spbe', 'monev'] },
+    { label: 'Monev', children: ['spbe', 'monev', 'sulbarsehat'] },
     { label: 'Analitik', children: ['analitik', 'indikator'] },
     { label: 'Layanan', children: ['laporan', 'permintaan'] },
     { label: 'Administrasi', children: ['tambahindikator', 'pengguna', 'konten', 'syncform'] },
