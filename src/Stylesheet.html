@@ -1191,4 +1191,33 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .pr table{border-collapse:collapse;width:100%;font-size:11px}
 .pr th,.pr td{border:1px solid #cbd5e1;padding:4px 6px;text-align:left;vertical-align:top}
 .pr th{background:#f1f5f9}
+/* ---------- Pengaturan › Kapasitas Data ---------- */
+.kap-kpi{margin:14px 0 4px}
+.kap-lgd{display:flex;flex-wrap:wrap;gap:14px;font-size:12.5px;color:var(--tx2);margin-bottom:6px}
+.kap-lgd span{display:inline-flex;align-items:center;gap:6px}
+.kap-lgd i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.kap-lgd i.kap-garis{width:2px;height:12px;border-radius:0;background:var(--mute)}
+.kap-ok{background:var(--ok)}.kap-warn{background:var(--warn)}.kap-crit{background:var(--crit)}.kap-na{background:var(--mute2)}
+.kap-rows{display:flex;flex-direction:column}
+.kap-row{display:grid;grid-template-columns:minmax(150px,200px) minmax(0,1fr) 120px 128px;gap:14px;align-items:center;padding:10px 0;border-top:1px solid var(--rail)}
+.kap-row:first-child{border-top:0}
+.kap-nm b{display:flex;align-items:center;gap:6px;font-size:14px}
+.kap-nm small{display:block;color:var(--tx2);font-size:12px}
+.kap-meter{position:relative;height:12px;border-radius:999px;background:var(--rail)}
+.kap-fill{height:100%;border-radius:999px}
+.kap-meter i{position:absolute;left:80%;top:-3px;bottom:-3px;width:2px;background:var(--mute)}
+.kap-num{text-align:right;font-variant-numeric:tabular-nums;font-size:14px}
+.kap-bk{display:flex;flex-direction:column;align-items:flex-end;gap:2px}
+.kap-bk small{font-size:11px;color:var(--tx2);white-space:nowrap}
+.kap-bk small.kap-lama{color:var(--crit-d);font-weight:600}
+.kap-2{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(0,1fr);gap:20px;margin-top:6px}
+.kap-sug{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px;font-size:14px}
+.kap-sug li{display:flex;gap:10px;align-items:flex-start}
+.kap-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:6px;display:inline-block}
+@media (max-width:760px){
+  .kap-row{grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"nm num" "m m" "bk bk";row-gap:8px}
+  .kap-nm{grid-area:nm}.kap-num{grid-area:num}.kap-meter{grid-area:m}
+  .kap-bk{grid-area:bk;flex-direction:row-reverse;justify-content:space-between;align-items:center}
+  .kap-2{grid-template-columns:1fr}
+}
 </style>

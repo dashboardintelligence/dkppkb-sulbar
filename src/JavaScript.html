@@ -1435,6 +1435,36 @@
         }).catch(function (e) { if (e.handled) return; var m = $('#modal-body .form-msg'); if (m) m.textContent = e.message; el.disabled = false; el.textContent = 'Ya, arsipkan'; });
         break;
       }
+      case 'kap-ukur': {
+        var kl = el.innerHTML; el.disabled = true; el.textContent = 'Mengukur…';
+        api('apiUkurKapasitas').then(function () { toast('Kapasitas data diukur ulang.', 'ok'); reload(); })
+          .catch(function (e) { if (!e.handled) toast(e.message, 'err'); el.disabled = false; el.innerHTML = kl; });
+        break;
+      }
+      case 'bk-buat': {
+        var bs = el.getAttribute('data-sheet') || 'semua', bl = el.innerHTML;
+        el.disabled = true; el.textContent = 'Membuat backup…';
+        api('apiBackup', [bs]).then(function (r) { toast('Backup ' + r.isi + ' dibuat di folder Backup DKPPKB Intelligence.', 'ok'); reload(); })
+          .catch(function (e) { if (!e.handled) toast(e.message, 'err'); el.disabled = false; el.innerHTML = bl; });
+        break;
+      }
+      case 'bk-pulih': {
+        var bid = el.getAttribute('data-id'), bnm = el.getAttribute('data-nama');
+        openModal('Pulihkan dari backup', '<p>Isi sheet di spreadsheet utama akan diganti dengan isi backup <b>' + esc(bnm) + '</b>.</p>' +
+          '<ol class="langkah"><li>Kondisi sekarang di-backup dulu secara otomatis.</li><li>Isi tiap sheet di backup disalin ke spreadsheet utama.</li><li>Kalau hasilnya keliru, pulihkan lagi dari backup "sebelum pulihkan".</li></ol>' +
+          '<p class="muted sm">Isian yang masuk setelah waktu backup akan hilang dari spreadsheet utama (tetap ada di backup "sebelum pulihkan").</p>' +
+          '<div class="form-actions"><button type="button" class="btn btn-alert" data-act="bk-pulih-ya" data-id="' + esc(bid) + '">Ya, pulihkan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>');
+        break;
+      }
+      case 'bk-pulih-ya': {
+        el.disabled = true; el.textContent = 'Memulihkan…';
+        api('apiPulihkanBackup', [el.getAttribute('data-id')]).then(function (r) {
+          $('#modal-body').innerHTML = '<p><b>Pemulihan selesai.</b> ' + r.dipulihkan.map(esc).join(' · ') + '</p>' +
+            '<div class="form-actions" style="margin-top:14px"><a class="btn btn-ghost" target="_blank" rel="noopener noreferrer" href="' + esc(r.cadangan) + '">Buka backup sebelum pulihkan</a><button type="button" class="btn btn-primary" data-act="close-modal">Selesai</button></div>';
+          reload();
+        }).catch(function (e) { if (e.handled) return; var mm = $('#modal-body .form-msg'); if (mm) mm.textContent = e.message; el.disabled = false; el.textContent = 'Ya, pulihkan'; });
+        break;
+      }
       case 'cetak-halaman': {
         var cl = $('#app-container').cloneNode(true);
         $$('.ax-bar, .seg, .tbl-alat, .ax-link, .filters, .page-head, button, select, .batas-bar', cl).forEach(function (x) { x.remove(); });
