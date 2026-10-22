@@ -1249,6 +1249,35 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .ssi-w-crit{background:var(--crit-l);color:var(--crit-d)}.ssi-w-warn{background:var(--warn-l);color:var(--warn-d)}.ssi-w-info{background:var(--rail);color:var(--tx2)}
 .ssi-tp{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre;overflow:auto}
 .ssi-tp::placeholder{font-family:inherit;font-style:italic;font-size:13px;white-space:normal}
+/* Input Sulbar Sehat: tabel lembar kerja (kotak tanpa bingkai, font kecil, baris rapat, selang-seling samar) */
+.ssg-info{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);margin:0 0 10px}
+.ssg-wrap{overflow:auto;max-height:calc(100vh - 260px);min-height:280px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
+.ssg{border-collapse:separate;border-spacing:0;font-size:12.5px;line-height:18px;min-width:100%}
+.ssg th{font-size:11px;font-weight:600;color:var(--tx2);text-align:left;padding:5px 8px;background:var(--card);border-bottom:1px solid var(--bd);white-space:nowrap;position:sticky;top:0;z-index:2}
+.ssg thead tr:nth-child(2) th{top:28px}
+.ssg th.c{text-align:center;border-left:1px solid var(--rail)}.ssg th.r{text-align:right;border-left:1px solid var(--rail)}
+.ssg td{padding:0;border-bottom:1px solid var(--rail);border-left:1px solid var(--rail);background:var(--card)}
+.ssg .ssg-fz{position:sticky;left:0;z-index:1;min-width:230px;max-width:300px;white-space:normal;font-weight:500;font-size:12.5px;color:var(--tx);padding:4px 10px;background:var(--card);border-left:0;box-shadow:1px 0 0 var(--bd);text-align:left}
+.ssg thead .ssg-fz{z-index:3;font-size:11px;color:var(--tx2)}
+.ssg tr.ssg-z td,.ssg tr.ssg-z .ssg-fz{background:#f6f8fb}
+.ssg tr.ssg-g td{border:0;padding:9px 10px 3px;font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--tx2);background:var(--card)}
+.ssg-in{display:block;width:100%;min-width:72px;height:27px;border:0;border-radius:0;padding:0 8px;background:transparent;font:inherit;font-size:12.5px;text-align:right;font-variant-numeric:tabular-nums;color:var(--tx)}
+.ssg-in:hover{background:rgba(2,132,199,.04)}
+.ssg-in:focus{outline:none;box-shadow:inset 0 0 0 2px var(--p-d);background:var(--card)}
+.ssg-in::placeholder{color:var(--mute)}
+.ssg-in.chg{background:#e8f4fc}
+.ssg-in.bad{box-shadow:inset 0 0 0 1.5px var(--crit);color:var(--crit-d)}
+.ssg-in:disabled{color:var(--tx2)}
+.ssg .ssg-nc{width:30px;text-align:center;border-left:1px solid var(--rail)}
+.ssg-ct{border:0;background:none;color:var(--mute);cursor:pointer;font-size:13px;padding:0 6px;line-height:27px}
+.ssg-ct:hover,.ssg-ct.ada{color:var(--p-d)}
+.ssg-add{border:0;background:none;color:var(--p-d);font:inherit;font-size:12.5px;padding:8px 2px 0;cursor:pointer}
+.ssg-add:hover{text-decoration:underline}
+.ssg-bar{position:sticky;bottom:0;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px;background:var(--bg);padding:10px 0 4px;margin-top:6px;border-top:1px solid var(--bd);z-index:4}
+.ssg-st{font-size:12.5px;color:var(--tx2)}.ssg-st.err{color:var(--crit-d)}
+.ssg-act{display:flex;gap:8px}
+:root[data-theme="dark"] .ssg tr.ssg-z td,:root[data-theme="dark"] .ssg tr.ssg-z .ssg-fz{background:#1b2832}
+:root[data-theme="dark"] .ssg-in.chg{background:#16384d}
 /* Penanda "Belum diisi": titik kecil + teks abu-abu, tanpa latar berwarna */
 .bd-tanda{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;color:var(--tx2);white-space:nowrap}
 .bd-tanda::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--crit);flex:none}

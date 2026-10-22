@@ -645,6 +645,7 @@
 
   function navigateTo(page, params, opts) {
     if (!AppState.sessionToken) return Promise.resolve();
+    if (ssgKotor() && !confirm('Ada angka yang belum disimpan. Tinggalkan halaman ini?')) return Promise.resolve();
     params = params || {};
     var my = ++AppState.req;
     if (!(opts && (opts.keep || opts.back || opts.redirect)) && AppState.rendered && (page !== AppState.page || JSON.stringify(params) !== JSON.stringify(AppState.params))) {
@@ -1410,104 +1411,121 @@
   }
   function fmtId(n, d) { return n === null || n === undefined || isNaN(n) ? '—' : Number(n).toLocaleString('id-ID', { maximumFractionDigits: d === undefined ? 2 : d }); }
   function tierSs(p, tgt) { return p === null ? 'na' : p >= tgt ? 'ok' : p >= tgt * 0.8 ? 'warn' : 'crit'; }
-  /** Hitung ulang capaian tiap kabupaten dan total provinsi saat angka diketik. */
-  function ssHitung(f) {
-    var tgt = Number(f.getAttribute('data-target')) || 80, S = 0, R = 0, n = 0, sAll = 0, warn = [], kosong = 0;
-    $$('tr[data-kab]', f).forEach(function (tr) {
-      var kab = tr.getAttribute('data-kab'), iS = $('[data-f=s]', tr), iR = $('[data-f=r]', tr);
-      var s = angkaKab(iS.value), r = angkaKab(iR.value), p = null;
-      iS.classList.toggle('invalid', isNaN(s)); iR.classList.toggle('invalid', isNaN(r) || (r !== null && s !== null && r > s));
-      if (isNaN(s) || isNaN(r)) warn.push(['crit', kab + ': isi angka yang valid.']);
-      else {
-        if (s !== null) sAll += s;
-        if (r !== null && s === null) warn.push(['crit', kab + ': isi sasaran lebih dulu.']);
-        if (r !== null && s !== null && r > s) warn.push(['warn', kab + ': realisasi lebih besar dari sasaran. Periksa lagi angkanya.']);
-        if (r === null) kosong++;
-        if (s && r !== null) { p = Math.round(r / s * 1000) / 10; S += s; R += r; n++; }
-      }
-      if (/^\d{1,3}(\.\d{3})+$/.test(String(iS.value).trim()) || /^\d{1,3}(\.\d{3})+$/.test(String(iR.value).trim())) { /* titik ribuan: wajar, tidak perlu peringatan */ }
-      var t = tierSs(p, tgt), pc = $('.ssi-pc', tr);
-      pc.innerHTML = '<b class="ssi-' + t + '">' + (p === null ? '—' : fmtId(p, 1) + '%') + '</b><span class="ssi-bar-mini"><i class="ssi-bg-' + t + '" style="width:' + Math.min(100, p || 0) + '%"></i></span>';
-    });
-    var pp = n ? Math.round(R / S * 1000) / 10 : null;
-    $('[data-tot=s]', f).textContent = fmtId(n ? S : (sAll || null));
-    $('[data-tot=r]', f).textContent = n ? fmtId(R) : '—';
-    $('[data-tot=p]', f).innerHTML = '<b class="ssi-' + tierSs(pp, tgt) + '">' + (pp === null ? '—' : fmtId(pp, 1) + '%') + '</b>';
-    if (kosong) warn.push(['info', kosong + ' kabupaten belum mengisi realisasi. Boleh disimpan sebagai draf.']);
-    $('.ssi-warns', f).innerHTML = warn.map(function (w) { return '<div class="ssi-w ssi-w-' + w[0] + '">' + esc(w[1]) + '</div>'; }).join('');
-    return warn.some(function (w) { return w[0] === 'crit'; });
-  }
-  function ssKe(id) { if (id) navigateTo('inputdata', { mode: 'ss', tw: String(AppState.params.tw || $('#form-ss').getAttribute('data-tw')), ind: id }); }
-  function submitSs(f) {
-    var msg = $('.form-msg', f), btn = $('button[type=submit]', f);
-    msg.textContent = '';
-    if (ssHitung(f)) { msg.textContent = 'Perbaiki kotak yang ditandai merah dulu.'; return; }
-    var rows = $$('tr[data-kab]', f).map(function (tr) { return { kab: tr.getAttribute('data-kab'), s: $('[data-f=s]', tr).value, r: $('[data-f=r]', tr).value }; });
-    if (!rows.some(function (r) { return angkaKab(r.s) !== null || angkaKab(r.r) !== null; })) { msg.textContent = 'Semua kotak masih kosong, jadi tidak ada yang disimpan. Isi minimal satu sasaran, atau pilih indikator lain di daftar.'; return; }
-    var lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Menyimpan…';
-    api('apiSimpanIsianKab', [{ indikatorId: f.getAttribute('data-ind'), tahun: Number(f.getAttribute('data-tahun')), tw: Number(f.getAttribute('data-tw')), rows: rows, catatan: f.elements.catatan.value }])
-      .then(function () { toast('Tersimpan.', 'ok'); var nx = f.getAttribute('data-next'); if (nx) ssKe(nx); else reload(); })
-      .catch(function (e) { if (e.handled) return; msg.textContent = e.message; btn.disabled = false; btn.textContent = lbl; });
-  }
-  /* Tempel dari Excel: baris yang memuat nama kabupaten dibaca; kolom sesudahnya = pasangan Sasaran, Realisasi untuk 22 indikator berurutan. */
-  var SS_TEMPEL = null;
-  function ssMeta() { var el = $('#ss-meta'); try { return el ? JSON.parse(el.getAttribute('data-json')) : null; } catch (e) { return null; } }
-  function ssBukaTempel() {
-    var mt = ssMeta(); if (!mt) return;
-    openModal('Tempel dari Excel · TW ' + ['I', 'II', 'III', 'IV'][mt.tw - 1] + ' ' + mt.tahun, '<p>Di Excel, blok baris <b>Majene sampai Sulawesi Barat</b> (termasuk kolom No dan nama kabupaten), salin (Ctrl/Cmd+C), lalu tempel di bawah ini. Kolom sesudah nama kabupaten dibaca sebagai pasangan <b>Sasaran, Realisasi</b> untuk ' + mt.ind.length + ' indikator sesuai urutan tabel Sulbar Sehat.</p>' +
-      '<div class="field"><label for="ss-tp">Data yang ditempel</label><textarea class="input ssi-tp" id="ss-tp" rows="7" spellcheck="false" placeholder="Kotak ini masih kosong. Klik di sini, lalu tekan Cmd+V (Mac) atau Ctrl+V (Windows)."></textarea>' +
-      '<p class="muted sm">Contoh hasil tempel yang benar: <code>1 · Majene · 3424 · 3075 · 9760 · …</code> (angka dari file Excel, bukan dari tabel di aplikasi ini).</p></div>' +
-      '<div id="ss-tp-hasil"></div><div class="form-actions"><button type="button" class="btn btn-primary" data-act="ss-periksa">Periksa</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>', true);
-  }
-  function ssPeriksa() {
-    var mt = ssMeta(), teks = ($('#ss-tp') || {}).value || '', hasil = $('#ss-tp-hasil');
-    var low = mt.kab.map(function (k) { return k.toLowerCase(); }), per = {}, total = null, titik = false, buruk = [];
-    teks.split(/\r?\n/).forEach(function (baris) {
-      var c = baris.split('\t'), idx = -1, isTot = false;
-      for (var i = 0; i < Math.min(c.length, 4); i++) { var v = c[i].trim().toLowerCase(); if (low.indexOf(v) >= 0) { idx = i; break; } if (v === 'sulawesi barat' || v === 'sulbar' || v === 'provinsi') { idx = i; isTot = true; break; } }
-      if (idx < 0) return;
-      var angka = c.slice(idx + 1).map(function (x) { if (/^\s*\d{1,3}(\.\d{3})+\s*$/.test(x)) titik = true; return angkaKab(x); });
-      if (isTot) total = angka; else per[mt.kab[low.indexOf(c[idx].trim().toLowerCase())]] = angka;
-    });
-    var kabAda = Object.keys(per), gagal = null;
-    if (!teks.trim()) gagal = 'Kotak masih kosong, belum ada data yang ditempel. Di Excel, blok baris Majene sampai Sulawesi Barat dan tekan Cmd+C (Ctrl+C), lalu klik kotak di atas dan tekan Cmd+V (Ctrl+V).';
-    else if (/belum diisi|\(otomatis\)/i.test(teks)) gagal = 'Data ini tampaknya disalin dari tabel di aplikasi, bukan dari file Excel. Salin dari Excel: sheet berisi Sasaran dan Realisasi 22 indikator, baris Majene sampai Sulawesi Barat.';
-    else if (!kabAda.length) gagal = 'Tidak ada baris kabupaten yang dikenali. Pastikan kolom nama kabupaten ikut tersalin.';
-    if (gagal) {
-      SS_TEMPEL = null;
-      hasil.innerHTML = '<div class="ssi-w ssi-w-crit">' + esc(gagal) + '</div>';
-      $('#modal-body .form-actions').innerHTML = '<button type="button" class="btn btn-primary" data-act="ss-periksa">Periksa</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button>';
-      return;
+  /* ---------- Input Sulbar Sehat: tabel lembar kerja ----------
+   * Satu tabel indikator × kabupaten (Sasaran, Realisasi). Kotak yang diubah ditandai, salah ketik bergaris merah,
+   * dan Simpan hanya mengirim indikator yang berubah. Tempel dari Excel: format baris kabupaten (file Excel Sulbar Sehat)
+   * atau blok angka biasa yang diisikan mulai dari kotak aktif. */
+  function ssgMeta() { var el = $('#ssg-meta'); try { return el ? JSON.parse(el.getAttribute('data-json')) : null; } catch (e) { return null; } }
+  function ssgBaris() { return $$('#form-ssg tbody tr[data-ind]').map(function (tr) { return $$('.ssg-in', tr); }); }
+  function ssgKotak(ind, kab, f) { return $('#form-ssg tr[data-ind="' + ind + '"] .ssg-in[data-kab="' + kab + '"][data-f="' + f + '"]'); }
+  function ssgKotor() { return !!$('#form-ssg .ssg-in.chg'); }
+  function ssgCek(inp) {
+    var v = angkaKab(inp.value), bad = isNaN(v);
+    if (!bad && inp.getAttribute('data-f') === 'r' && v !== null) {
+      var s = ssgKotak(inp.closest('tr').getAttribute('data-ind'), inp.getAttribute('data-kab'), 's');
+      bad = !s || angkaKab(s.value) === null;
     }
-    var data = [], lengkap = 0, kosong = 0, selisih = [], lewat = [];
-    mt.ind.forEach(function (ind, j) {
-      var rows = kabAda.map(function (k) { var a = per[k]; return { kab: k, s: a[j * 2] === undefined ? null : a[j * 2], r: a[j * 2 + 1] === undefined ? null : a[j * 2 + 1] }; });
-      rows.forEach(function (r) { if (isNaN(r.s) || isNaN(r.r)) buruk.push(ind.id + ' ' + r.kab); else if (r.s !== null && r.r !== null) lengkap++; else if (r.s !== null) kosong++; });
-      if (total) [0, 1].forEach(function (q) {
-        var t = total[j * 2 + q], sm = rows.reduce(function (a, r) { var v = q ? r.r : r.s; return a + (v && !isNaN(v) ? v : 0); }, 0);
-        if (t !== null && t !== undefined && !isNaN(t) && Math.abs(t - sm) > 0.5) selisih.push(ind.nama + ' (' + (q ? 'realisasi' : 'sasaran') + '): total Excel ' + fmtId(t) + ', jumlah kabupaten ' + fmtId(sm));
-      });
-      if (!ind.boleh) { lewat.push(ind.id); return; }
-      if (rows.some(function (r) { return r.s !== null || r.r !== null; })) data.push({ indikatorId: ind.id, rows: rows });
+    inp.classList.toggle('bad', bad);
+    inp.classList.toggle('chg', inp.value.trim() !== inp.getAttribute('data-o'));
+    inp.title = bad ? (isNaN(v) ? 'Bukan angka' : 'Isi sasaran lebih dulu') : '';
+  }
+  function ssgCekBaris(inp) {
+    ssgCek(inp);
+    if (inp.getAttribute('data-f') === 's') { var r = ssgKotak(inp.closest('tr').getAttribute('data-ind'), inp.getAttribute('data-kab'), 'r'); if (r) ssgCek(r); }
+  }
+  function ssgStatus() {
+    var f = $('#form-ssg'); if (!f) return;
+    var n = $$('.ssg-in.chg', f).length, b = $$('.ssg-in.bad', f).length, st = $('.ssg-st', f);
+    if (st) { st.textContent = b ? b + ' kotak perlu diperbaiki' + (n ? ' · ' + n + ' kotak diubah, belum disimpan' : '') : n ? n + ' kotak diubah, belum disimpan' : 'Belum ada perubahan'; st.classList.toggle('err', !!b); }
+    var bt = $('[data-act=ssg-batal]', f), sv = $('button[type=submit]', f);
+    if (bt) bt.disabled = !n; if (sv) sv.disabled = !n || !!b;
+  }
+  function ssgBatal() {
+    $$('#form-ssg .ssg-in').forEach(function (i) { i.value = i.getAttribute('data-o'); i.classList.remove('chg', 'bad'); i.title = ''; });
+    ssgStatus();
+  }
+  function ssgPindah(inp, arah) {
+    var rows = ssgBaris(), r = -1, c = -1;
+    rows.some(function (row, i) { var k = row.indexOf(inp); if (k >= 0) { r = i; c = k; return true; } return false; });
+    var t = rows[r + arah]; if (t && t[c]) { t[c].focus(); t[c].select(); }
+  }
+  function ssgTempel(inp, teks) {
+    var mt = ssgMeta(); if (!mt) return 0;
+    var baris = teks.replace(/\r/g, '').split('\n').filter(function (l) { return l.replace(/\t/g, '').trim() !== ''; });
+    var low = mt.kab.map(function (k) { return k.toLowerCase(); }), n = 0, kenal = false;
+    var isi = function (el, v) { if (!el || el.disabled || v === undefined) return; el.value = String(v).trim(); ssgCekBaris(el); n++; };
+    baris.forEach(function (l) {
+      var c = l.split('\t');
+      for (var i = 0; i < Math.min(c.length, 4); i++) {
+        var k = low.indexOf(c[i].trim().toLowerCase());
+        if (k < 0) continue;
+        kenal = true;
+        var angka = c.slice(i + 1);
+        mt.excel.forEach(function (id, j) { isi(ssgKotak(id, mt.kab[k], 's'), angka[j * 2]); isi(ssgKotak(id, mt.kab[k], 'r'), angka[j * 2 + 1]); });
+        return;
+      }
     });
-    SS_TEMPEL = buruk.length ? null : { tahun: mt.tahun, tw: mt.tw, data: data };
-    hasil.innerHTML = '<div class="ssi-sum"><div><b>' + kabAda.length + '</b>kabupaten terbaca</div><div><b>' + lengkap + '</b>pasangan sasaran–realisasi</div><div><b>' + kosong + '</b>realisasi kosong (disimpan "belum diisi")</div></div>' +
-      (kabAda.length < mt.kab.length ? '<div class="ssi-w ssi-w-warn">Belum ada: ' + esc(mt.kab.filter(function (k) { return kabAda.indexOf(k) < 0; }).join(', ')) + '. Kabupaten ini tidak diubah.</div>' : '') +
-      (titik ? '<div class="ssi-w ssi-w-info">Angka bertitik seperti 188.272 dibaca sebagai ribuan (188.272 orang).</div>' : '') +
-      selisih.map(function (x) { return '<div class="ssi-w ssi-w-warn">' + esc(x) + '. Aplikasi memakai jumlah kabupaten.</div>'; }).join('') +
-      (lewat.length ? '<div class="ssi-w ssi-w-info">Bukan indikator Anda, dilewati: ' + esc(lewat.join(', ')) + '</div>' : '') +
-      (buruk.length ? '<div class="ssi-w ssi-w-crit">Bukan angka: ' + esc(buruk.slice(0, 8).join(', ')) + (buruk.length > 8 ? ' …' : '') + '. Perbaiki di Excel lalu tempel ulang.</div>' : '');
-    var act = $('#modal-body .form-actions');
-    act.innerHTML = (SS_TEMPEL && data.length ? '<button type="button" class="btn btn-primary" data-act="ss-tempel-simpan">Simpan ' + data.length + ' indikator</button>' : '') + '<button type="button" class="btn btn-ghost" data-act="ss-periksa">Periksa ulang</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button>';
+    if (kenal) return n;
+    // blok angka biasa: isi mulai dari kotak aktif, ke kanan dan ke bawah
+    var rows = ssgBaris(), r0 = -1, c0 = -1;
+    rows.some(function (row, i) { var k = row.indexOf(inp); if (k >= 0) { r0 = i; c0 = k; return true; } return false; });
+    baris.forEach(function (l, i) { var row = rows[r0 + i]; if (!row) return; l.split('\t').forEach(function (v, k) { isi(row[c0 + k], v); }); });
+    return n;
   }
-  function ssSimpanTempel(el) {
-    if (!SS_TEMPEL) return;
-    el.disabled = true; el.textContent = 'Menyimpan…';
-    api('apiSimpanIsianKabMassal', [SS_TEMPEL]).then(function (r) {
-      $('#modal-body').innerHTML = '<p><b>' + r.tersimpan + ' isian tersimpan.</b>' + (r.lewat && r.lewat.length ? ' Dilewati: ' + esc(r.lewat.join(', ')) + '.' : '') + '</p><div class="form-actions" style="margin-top:14px"><button type="button" class="btn btn-primary" data-act="close-modal">Selesai</button></div>';
-      SS_TEMPEL = null; reload();
-    }).catch(function (e) { if (e.handled) return; var mm = $('#modal-body .form-msg'); if (mm) mm.textContent = e.message; el.disabled = false; el.textContent = 'Simpan'; });
+  function submitSsg(f) {
+    if ($('.ssg-in.bad', f)) { toast('Perbaiki kotak bergaris merah dulu.', 'err'); return; }
+    var data = [];
+    $$('tbody tr[data-ind]', f).forEach(function (tr) {
+      if (!$('.ssg-in.chg', tr)) return;
+      var per = {};
+      $$('.ssg-in', tr).forEach(function (i) { var k = i.getAttribute('data-kab'); (per[k] = per[k] || { kab: k })[i.getAttribute('data-f')] = i.value; });
+      data.push({ indikatorId: tr.getAttribute('data-ind'), rows: Object.keys(per).map(function (k) { return per[k]; }) });
+    });
+    if (!data.length) return;
+    var btn = $('button[type=submit]', f); btn.disabled = true; btn.textContent = 'Menyimpan…';
+    api('apiSimpanIsianKabMassal', [{ tahun: Number(f.getAttribute('data-tahun')), tw: Number(f.getAttribute('data-tw')), data: data }])
+      .then(function (r) {
+        $$('.ssg-in', f).forEach(function (i) { i.setAttribute('data-o', i.value.trim()); i.classList.remove('chg'); });
+        toast(r.tersimpan + ' isian tersimpan' + (r.lewat && r.lewat.length ? ' · dilewati ' + r.lewat.join(', ') : '') + '.', 'ok'); reload();
+      })
+      .catch(function (e) { btn.textContent = 'Simpan'; ssgStatus(); if (!e.handled) toast(e.message, 'err'); });
   }
+  function ssgCatatan(el) {
+    if (ssgKotor()) { toast('Simpan atau batalkan perubahan angka dulu.', 'err'); return; }
+    var tr = el.closest('tr'), nama = $('th', tr).textContent;
+    openModal('Catatan · ' + nama, '<form id="form-ssg-cat" novalidate data-ind="' + esc(el.getAttribute('data-ind')) + '"><div class="field"><label for="ssg-cat">Catatan untuk TW ini (opsional)</label><textarea class="input" id="ssg-cat" name="catatan" rows="3" maxlength="500">' + esc(el.getAttribute('data-cat') || '') + '</textarea></div>' +
+      '<div class="form-actions"><button class="btn btn-primary" type="submit">Simpan catatan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
+  }
+  function submitSsgCat(f) {
+    var g = $('#form-ssg'), id = f.getAttribute('data-ind'), msg = $('.form-msg', f), btn = $('button[type=submit]', f), per = {};
+    $$('tr[data-ind="' + id + '"] .ssg-in', g).forEach(function (i) { var k = i.getAttribute('data-kab'); (per[k] = per[k] || { kab: k })[i.getAttribute('data-f')] = i.getAttribute('data-o'); });
+    btn.disabled = true;
+    api('apiSimpanIsianKab', [{ indikatorId: id, tahun: Number(g.getAttribute('data-tahun')), tw: Number(g.getAttribute('data-tw')), rows: Object.keys(per).map(function (k) { return per[k]; }), catatan: f.elements.catatan.value }])
+      .then(function () { closeModal(); toast('Catatan disimpan.', 'ok'); reload(); })
+      .catch(function (e) { btn.disabled = false; if (!e.handled) msg.textContent = e.message; });
+  }
+  function ssgTambah() {
+    if (ssgKotor()) { toast('Simpan atau batalkan perubahan angka dulu.', 'err'); return; }
+    var mt = ssgMeta() || {}, opt = function (a, v) { return a.map(function (x) { return '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join(''); };
+    openModal('Tambah indikator Sulbar Sehat', '<form id="form-ssg-ind" novalidate><p class="muted sm" style="margin:0 0 10px">Indikator baru langsung muncul sebagai baris di tabel dan siap diisi per kabupaten.</p>' +
+      '<div class="field"><label for="ssgi-nama">Nama indikator</label><input class="input" id="ssgi-nama" name="nama" maxlength="200" required placeholder="mis. Remaja putri mendapat edukasi gizi"></div>' +
+      '<div class="form-grid"><div class="field"><label for="ssgi-grup">Kelompok</label><select class="input" id="ssgi-grup" name="grup">' + opt(mt.grup || [], '') + '<option>Lainnya</option></select></div>' +
+      '<div class="field"><label for="ssgi-bid">Bidang</label><select class="input" id="ssgi-bid" name="bidang">' + opt(mt.bidang || [], '') + '</select></div>' +
+      '<div class="field"><label for="ssgi-sat">Satuan</label><select class="input" id="ssgi-sat" name="satuan">' + opt(['%', 'orang', 'desa', 'per 1.000', 'per 100.000 KH'], '%') + '</select></div>' +
+      '<div class="field"><label for="ssgi-tgt">Target</label><input class="input" id="ssgi-tgt" name="target" inputmode="decimal" value="80"></div>' +
+      '<div class="field"><label for="ssgi-arah">Arah</label><select class="input" id="ssgi-arah" name="arah"><option value="Naik">↑ makin besar makin baik</option><option value="Turun">↓ makin kecil makin baik</option></select></div></div>' +
+      '<div class="form-actions"><button class="btn btn-primary" type="submit">Tambah</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
+  }
+  function submitSsgInd(f) {
+    var o = formData(f), msg = $('.form-msg', f), btn = $('button[type=submit]', f);
+    if (String(o.nama || '').trim().length < 3) { msg.textContent = 'Tulis nama indikator.'; f.elements.nama.focus(); return; }
+    var tgt = angkaKab(o.target); if (tgt === null || isNaN(tgt)) { msg.textContent = 'Target harus berupa angka.'; return; }
+    btn.disabled = true;
+    api('apiSimpanIndikator', [{ baru: true, nama: o.nama, grup: o.grup, bidang: o.bidang, satuan: o.satuan, target: tgt, arah: o.arah, jenis: 'Sulbar Sehat', frekuensi: 'Triwulan' }])
+      .then(function (r) { closeModal(); toast('Indikator ' + r.id + ' ditambahkan.', 'ok'); reload(); })
+      .catch(function (e) { btn.disabled = false; if (!e.handled) msg.textContent = e.message; });
+  }
+  window.addEventListener('beforeunload', function (ev) { if (ssgKotor()) { ev.preventDefault(); ev.returnValue = ''; } });
 
   /* ---------- Review Sulbar Sehat: catatan tindak lanjut ---------- */
   function rvTlBaru(el) {
@@ -1592,11 +1610,10 @@
           reload();
         }).catch(function (e) { if (e.handled) return; var mm = $('#modal-body .form-msg'); if (mm) mm.textContent = e.message; el.disabled = false; el.textContent = 'Ya, pindahkan'; });
         break;
-      case 'ss-tempel': ssBukaTempel(); break;
+      case 'ssg-batal': ssgBatal(); break;
+      case 'ssg-catatan': ssgCatatan(el); break;
+      case 'ssg-tambah': ssgTambah(); break;
       case 'ss-tl-baru': rvTlBaru(el); break;
-      case 'ss-periksa': ssPeriksa(); break;
-      case 'ss-tempel-simpan': ssSimpanTempel(el); break;
-      case 'ss-pindah': ssKe(el.getAttribute('data-ind')); break;
       case 'ss-pasang': {
         el.disabled = true; el.textContent = 'Memasang…';
         api('apiPasangSulbarSehat').then(function (r) { toast(r.ditambah + ' indikator Sulbar Sehat dipasang.', 'ok'); reload(); })
@@ -1858,6 +1875,7 @@
       if (openG) { closeTopMenus(); $('.tn-item', openG).focus(); return; }
       if ($('#modal-root').firstChild) closeModal(); else closeDrawer(); return;
     }
+    if (ev.target.matches && ev.target.matches('.ssg-in') && (ev.key === 'Enter' || ev.key === 'ArrowDown' || ev.key === 'ArrowUp')) { ev.preventDefault(); ssgPindah(ev.target, ev.key === 'ArrowUp' || (ev.key === 'Enter' && ev.shiftKey) ? -1 : 1); return; }
     if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[data-act=detail]')) { ev.preventDefault(); onAction(ev.target, ev); }
     if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('.input-search.f-param')) { ev.preventDefault(); applyFilters(); }
     if (ev.key === 'Tab' && $('#modal-root').firstChild) {   // jebakan fokus sederhana
@@ -1868,9 +1886,17 @@
       else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
     }
   });
+  document.addEventListener('paste', function (ev) {
+    var t = ev.target; if (!(t.matches && t.matches('.ssg-in'))) return;
+    var teks = (ev.clipboardData || window.clipboardData).getData('text') || '';
+    if (!/[\t\n]/.test(teks.replace(/\s+$/, ''))) return;   // satu angka: biarkan tempel biasa
+    ev.preventDefault();
+    var n = ssgTempel(t, teks); ssgStatus();
+    toast(n ? n + ' kotak terisi dari tempelan. Periksa lalu tekan Simpan.' : 'Tidak ada angka yang bisa ditempel di sini.', n ? 'ok' : 'err');
+  });
   document.addEventListener('input', function (ev) {
     if (ev.target && ev.target.id === 'is-real' && ev.target.form) cekIsian(ev.target.form);
-    if (ev.target && ev.target.classList && ev.target.classList.contains('ssi-in') && ev.target.form) ssHitung(ev.target.form);
+    if (ev.target && ev.target.classList && ev.target.classList.contains('ssg-in')) { ssgCekBaris(ev.target); ssgStatus(); }
     var t = ev.target;
     if (t.matches && t.matches('.tgt-in')) {
       var f = t.form, n = $$('.tgt-in', f).filter(function (el) { return el.value.trim() !== el.getAttribute('data-orig'); }).length;
@@ -1913,7 +1939,9 @@
     if (fid === 'form-buka-kunci' || fid === 'form-minta-kunci') return submitKunci(f);
     if (fid === 'form-pmt-review') return submitPmtReview(f);
     if (fid === 'form-isian') return submitIsian(f);
-    if (fid === 'form-ss') return submitSs(f);
+    if (fid === 'form-ssg') return submitSsg(f);
+    if (fid === 'form-ssg-cat') return submitSsgCat(f);
+    if (fid === 'form-ssg-ind') return submitSsgInd(f);
     if (fid === 'form-tl') return submitTl(f);
     if (fid === 'form-remind') return submitRemind(f);
     if (fid === 'form-user-modal') return submitUserForm(f);
