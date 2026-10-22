@@ -1249,6 +1249,68 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .ssi-w-crit{background:var(--crit-l);color:var(--crit-d)}.ssi-w-warn{background:var(--warn-l);color:var(--warn-d)}.ssi-w-info{background:var(--rail);color:var(--tx2)}
 .ssi-tp{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre;overflow:auto}
 .ssi-tp::placeholder{font-family:inherit;font-style:italic;font-size:13px;white-space:normal}
+/* Dashboard (gaya kartu "Dashboard V14"): sapaan, angka besar, satu kartu aksen hijau muda, kartu membulat */
+.db-hello{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:2px 0 18px}
+.db-hello p{margin:0;color:var(--tx2)}.db-hello p b{color:var(--tx)}
+.db-h1{margin:2px 0 0;font-size:30px;line-height:36px;letter-spacing:-.02em}
+.db-chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.db-chip{background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--tx2)}
+.db-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
+.db-c{background:var(--card);border:1px solid var(--bd);border-radius:22px;padding:18px 20px;min-width:0}
+.db-s2{grid-column:span 2}.db-s3{grid-column:span 3}.db-s5{grid-column:span 5}.db-s7{grid-column:span 7}
+@media (max-width:1100px){.db-s2,.db-s3{grid-column:span 6}.db-s5,.db-s7{grid-column:span 12}}
+@media (max-width:560px){.db-s2,.db-s3{grid-column:span 12}}
+.db-lbl{display:flex;justify-content:space-between;align-items:center;gap:8px;font-size:13px;font-weight:500;color:var(--tx2)}
+.db-lbl em{font-style:normal;font-size:12px;font-weight:400;color:var(--mute);text-align:right}
+.db-big{font-size:52px;line-height:58px;font-weight:800;letter-spacing:-.03em;margin:8px 0 2px;font-variant-numeric:tabular-nums}
+.db-big small{font-size:20px;font-weight:600;color:var(--mute);margin-left:4px;letter-spacing:0}
+.db-mid{font-size:34px;line-height:40px;font-weight:800;letter-spacing:-.02em;margin:10px 0 2px;font-variant-numeric:tabular-nums}
+.db-mid small{font-size:15px;font-weight:600;color:var(--mute)}
+.db-sub{font-size:12.5px;color:var(--mute)}
+.db-track{position:relative;height:8px;background:var(--rail);border-radius:9px;margin:14px 0 6px}
+.db-track i{position:absolute;left:0;top:0;bottom:0;border-radius:9px;background:var(--ok)}
+.db-track b{position:absolute;top:-4px;width:2px;height:16px;background:var(--tx);border-radius:2px}
+.db-trio{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:16px}
+.db-trio div{background:var(--rail);border-radius:14px;padding:10px 12px}
+.db-trio span{display:block;font-size:12px;color:var(--tx2)}
+.db-trio b{font-size:22px;line-height:28px;font-variant-numeric:tabular-nums}
+.db-aksen{background:linear-gradient(150deg,#d9fbe9,#a7f0cf);border:0;color:#064e3b;position:relative;overflow:hidden}
+.db-aksen::after{content:"";position:absolute;right:-40px;bottom:-60px;width:180px;height:180px;border-radius:50%;background:rgba(255,255,255,.35)}
+.db-aksen .db-lbl,.db-aksen .db-sub{color:#065f46}
+.db-aksen .db-big{color:#064e3b}
+.db-aksen .db-big small{color:#047857}
+.db-aksen ul{list-style:none;margin:12px 0 0;padding:0;position:relative;z-index:1}
+.db-aksen li{display:flex;justify-content:space-between;padding:5px 0;border-top:1px solid rgba(6,95,70,.18);font-size:13px}
+:root[data-theme="dark"] .db-aksen{background:linear-gradient(150deg,#123a2e,#0f5a43);color:#d1fae5}
+:root[data-theme="dark"] .db-aksen .db-lbl,:root[data-theme="dark"] .db-aksen .db-sub,:root[data-theme="dark"] .db-aksen .db-big,:root[data-theme="dark"] .db-aksen .db-big small{color:#d1fae5}
+.db-mini{display:flex;gap:4px;margin-top:12px}
+.db-mini i{flex:1;height:6px;border-radius:9px;background:var(--rail)}
+.db-mini i.on{background:var(--ok)}
+.db-h2{font-size:15px;margin:0 0 2px}
+.db-hint{font-size:12px;color:var(--mute);margin:0 0 12px}
+.db-bars{display:flex;flex-direction:column;gap:10px}
+.db-bar{display:grid;grid-template-columns:130px minmax(0,1fr) 56px;align-items:center;gap:10px;font-size:13px}
+.db-t{position:relative;height:22px;background:var(--rail);border-radius:8px}
+.db-t i{position:absolute;left:0;top:0;bottom:0;border-radius:8px;background:var(--ok)}
+.db-t b{position:absolute;top:-3px;bottom:-3px;width:0;border-left:2px dashed var(--tx);opacity:.55}
+.db-bar span:last-child{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+.db-legend{font-size:12px;color:var(--tx2);margin-top:12px}
+.db-legend i{display:inline-block;width:14px;border-top:2px dashed var(--tx);opacity:.55;vertical-align:middle;margin-right:6px}
+.db-prog{display:flex;flex-direction:column;gap:12px;font-size:13px}
+.db-row{display:flex;justify-content:space-between;margin-bottom:5px}
+.db-row b{font-variant-numeric:tabular-nums}
+.db-tr{height:8px;background:var(--rail);border-radius:9px;overflow:hidden}
+.db-tr i{display:block;height:100%;background:var(--ok);border-radius:9px}
+.db-list{list-style:none;margin:0;padding:0}
+.db-list li{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 0;border-top:1px solid var(--rail);font-size:13.5px}
+.db-list li:first-child{border-top:0}
+.db-list small{display:block;color:var(--mute);font-size:12px}
+.db-list .r{text-align:right}.db-list .r b{font-variant-numeric:tabular-nums}
+.db-act li{grid-template-columns:34px minmax(0,1fr) auto}
+.db-ico{width:34px;height:34px;border-radius:11px;background:var(--rail);display:grid;place-items:center;color:var(--tx2)}
+.db-ico .ic{font-size:18px}
+.db-when{font-size:12px;color:var(--mute);white-space:nowrap}
+@media print{.db-chips .seg{display:none}}
 /* Dashboard: satu tabel capaian, titik satu warna, baris selang-seling samar, rincian dengan pie per kabupaten */
 .dsb-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin:4px 0 10px}
 .dsb-alat{display:flex;flex-wrap:wrap;gap:8px;align-items:center}

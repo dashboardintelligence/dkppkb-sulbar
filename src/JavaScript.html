@@ -11,7 +11,8 @@
   var AppState = { sessionToken: null, user: null, cfg: null, tahunList: [], page: 'dashboard', params: {}, req: 0, pending: null, hist: [] };
 
   var MENU = [
-    { id: 'dashboard', label: 'Review', icon: 'dashboard', group: 'Utama' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', group: 'Utama' },
+    { id: 'review', label: 'Review', icon: 'fact_check', group: 'Utama' },
     { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'pic'] },
     { id: 'laporan', label: 'Laporan', icon: 'description', group: 'Utama' },
     { id: 'pengaturan', label: 'Pengaturan', icon: 'settings', group: 'Pengaturan' },
@@ -23,14 +24,16 @@
     { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Pengaturan' }
   ];
   var BOTTOM = [
-    { id: 'dashboard', label: 'Review', icon: 'dashboard' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
+    { id: 'review', label: 'Review', icon: 'fact_check' },
     { id: 'inputdata', label: 'Isi Data', icon: 'edit_note' },
     { id: 'laporan', label: 'Laporan', icon: 'description' },
     { id: '_menu', label: 'Menu', icon: 'menu' }
   ];
-  /* Menu tab atas: empat menu. SPBE/Kinerja di Isi Data; Tindak Lanjut dan Permintaan Data di Laporan. */
+  /* Menu tab atas: Dashboard, Review, Isi Data, Laporan, Pengaturan. SPBE/Kinerja di Isi Data; Tindak Lanjut dan Permintaan Data di Laporan. */
   var TOP = [
-    { id: 'dashboard', label: 'Review' },
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'review', label: 'Review' },
     { id: 'inputdata', label: 'Isi Data' },
     { id: 'laporan', label: 'Laporan' },
     { label: 'Pengaturan', children: ['pengaturan', 'monitoring', 'tambahindikator', 'pengguna', 'konten', 'syncform', 'panduan'] }
@@ -781,7 +784,7 @@
     document.title = (title ? title + ' · ' : '') + (BRAND.full || 'DKPPKB Sulbar Intelligence');
     $$('[data-menu]').forEach(function (b) { var on = b.getAttribute('data-menu') === menuInduk(page); b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     AppState.rendered = true; updBack();
-    if (page === 'dashboard') dsbSaring();
+    if (page === 'review') dsbSaring();
     window.scrollTo(0, keepY);
     if (!(opts && opts.keep)) { try { $('#main').focus({ preventScroll: true }); } catch (e) { } }
     applyImLayout();
