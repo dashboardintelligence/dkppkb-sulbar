@@ -1443,6 +1443,7 @@
     msg.textContent = '';
     if (ssHitung(f)) { msg.textContent = 'Perbaiki kotak yang ditandai merah dulu.'; return; }
     var rows = $$('tr[data-kab]', f).map(function (tr) { return { kab: tr.getAttribute('data-kab'), s: $('[data-f=s]', tr).value, r: $('[data-f=r]', tr).value }; });
+    if (!rows.some(function (r) { return angkaKab(r.s) !== null || angkaKab(r.r) !== null; })) { msg.textContent = 'Semua kotak masih kosong, jadi tidak ada yang disimpan. Isi minimal satu sasaran, atau pilih indikator lain di daftar.'; return; }
     var lbl = btn.textContent; btn.disabled = true; btn.textContent = 'Menyimpan…';
     api('apiSimpanIsianKab', [{ indikatorId: f.getAttribute('data-ind'), tahun: Number(f.getAttribute('data-tahun')), tw: Number(f.getAttribute('data-tw')), rows: rows, catatan: f.elements.catatan.value }])
       .then(function () { toast('Tersimpan.', 'ok'); var nx = f.getAttribute('data-next'); if (nx) ssKe(nx); else reload(); })
@@ -1454,7 +1455,8 @@
   function ssBukaTempel() {
     var mt = ssMeta(); if (!mt) return;
     openModal('Tempel dari Excel · TW ' + ['I', 'II', 'III', 'IV'][mt.tw - 1] + ' ' + mt.tahun, '<p>Di Excel, blok baris <b>Majene sampai Sulawesi Barat</b> (termasuk kolom No dan nama kabupaten), salin (Ctrl/Cmd+C), lalu tempel di bawah ini. Kolom sesudah nama kabupaten dibaca sebagai pasangan <b>Sasaran, Realisasi</b> untuk ' + mt.ind.length + ' indikator sesuai urutan tabel Sulbar Sehat.</p>' +
-      '<div class="field"><label for="ss-tp">Data yang ditempel</label><textarea class="input ssi-tp" id="ss-tp" rows="7" spellcheck="false" placeholder="1&#9;Majene&#9;3424&#9;3075&#9;…"></textarea></div>' +
+      '<div class="field"><label for="ss-tp">Data yang ditempel</label><textarea class="input ssi-tp" id="ss-tp" rows="7" spellcheck="false" placeholder="Kotak ini masih kosong. Klik di sini, lalu tekan Cmd+V (Mac) atau Ctrl+V (Windows)."></textarea>' +
+      '<p class="muted sm">Contoh hasil tempel yang benar: <code>1 · Majene · 3424 · 3075 · 9760 · …</code> (angka dari file Excel, bukan dari tabel di aplikasi ini).</p></div>' +
       '<div id="ss-tp-hasil"></div><div class="form-actions"><button type="button" class="btn btn-primary" data-act="ss-periksa">Periksa</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>', true);
   }
   function ssPeriksa() {
@@ -1467,8 +1469,16 @@
       var angka = c.slice(idx + 1).map(function (x) { if (/^\s*\d{1,3}(\.\d{3})+\s*$/.test(x)) titik = true; return angkaKab(x); });
       if (isTot) total = angka; else per[mt.kab[low.indexOf(c[idx].trim().toLowerCase())]] = angka;
     });
-    var kabAda = Object.keys(per);
-    if (!kabAda.length) { hasil.innerHTML = '<div class="ssi-w ssi-w-crit">Tidak ada baris kabupaten yang dikenali. Pastikan nama kabupaten ikut tersalin.</div>'; return; }
+    var kabAda = Object.keys(per), gagal = null;
+    if (!teks.trim()) gagal = 'Kotak masih kosong, belum ada data yang ditempel. Di Excel, blok baris Majene sampai Sulawesi Barat dan tekan Cmd+C (Ctrl+C), lalu klik kotak di atas dan tekan Cmd+V (Ctrl+V).';
+    else if (/belum diisi|\(otomatis\)/i.test(teks)) gagal = 'Data ini tampaknya disalin dari tabel di aplikasi, bukan dari file Excel. Salin dari Excel: sheet berisi Sasaran dan Realisasi 22 indikator, baris Majene sampai Sulawesi Barat.';
+    else if (!kabAda.length) gagal = 'Tidak ada baris kabupaten yang dikenali. Pastikan kolom nama kabupaten ikut tersalin.';
+    if (gagal) {
+      SS_TEMPEL = null;
+      hasil.innerHTML = '<div class="ssi-w ssi-w-crit">' + esc(gagal) + '</div>';
+      $('#modal-body .form-actions').innerHTML = '<button type="button" class="btn btn-primary" data-act="ss-periksa">Periksa</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button>';
+      return;
+    }
     var data = [], lengkap = 0, kosong = 0, selisih = [], lewat = [];
     mt.ind.forEach(function (ind, j) {
       var rows = kabAda.map(function (k) { var a = per[k]; return { kab: k, s: a[j * 2] === undefined ? null : a[j * 2], r: a[j * 2 + 1] === undefined ? null : a[j * 2 + 1] }; });
