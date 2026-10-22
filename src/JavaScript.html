@@ -11,7 +11,8 @@
   var AppState = { sessionToken: null, user: null, cfg: null, tahunList: [], page: 'beranda', params: {}, req: 0, pending: null, hist: [] };
 
   var MENU = [
-    { id: 'beranda', label: 'Beranda', icon: 'dashboard', group: 'Utama' },
+    { id: 'beranda', label: 'Beranda', icon: 'home', group: 'Utama' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', group: 'Utama' },
     { id: 'inputdata', label: 'Input Data', icon: 'edit_note', group: 'Indikator', roles: ['admin', 'staf', 'pic'] },
     { id: 'spbe', label: 'Monev SPBE', icon: 'lan', group: 'Indikator' },
     { id: 'monev', label: 'Monev Kinerja', icon: 'rule', group: 'Indikator' },
@@ -30,7 +31,7 @@
   ];
   var BOTTOM = [
     { id: 'beranda', label: 'Beranda', icon: 'dashboard' },
-    { id: 'indikator', label: 'Indikator', icon: 'monitor_heart' },
+    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'spbe', label: 'Monev SPBE', icon: 'lan' },
     { id: 'permintaan', label: 'Data', icon: 'upload_file' },
     { id: '_menu', label: 'Menu', icon: 'menu' }
@@ -38,6 +39,7 @@
   /* Menu tab atas (desktop, Desain A). Grup berisi sub-menu dropdown; item yang tak boleh diakses peran disembunyikan. */
   var TOP = [
     { id: 'beranda', label: 'Beranda' },
+    { id: 'dashboard', label: 'Dashboard' },
     { label: 'Input Data', children: ['inputdata', 'monitoring'] },
     { label: 'Monev', children: ['spbe', 'monev', 'sulbarsehat'] },
     { label: 'Analitik', children: ['analitik', 'indikator'] },
@@ -783,6 +785,7 @@
     document.title = (title ? title + ' · ' : '') + (BRAND.full || 'DKPPKB Sulbar Intelligence');
     $$('[data-menu]').forEach(function (b) { var on = b.getAttribute('data-menu') === page; b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     AppState.rendered = true; updBack();
+    if (page === 'dashboard') dsbSaring();
     window.scrollTo(0, keepY);
     if (!(opts && opts.keep)) { try { $('#main').focus({ preventScroll: true }); } catch (e) { } }
     applyImLayout();
@@ -1527,6 +1530,27 @@
   }
   window.addEventListener('beforeunload', function (ev) { if (ssgKotor()) { ev.preventDefault(); ev.returnValue = ''; } });
 
+  /* ---------- Dashboard: saring, cari, dan buka rincian tanpa memuat ulang ---------- */
+  function dsbSaring() {
+    var root = $('#app-container'); if (!$('table.dsb', root)) return;
+    var fb = $('.dsb-fb.on', root), f = fb ? fb.getAttribute('data-f') : '';
+    var jn = ($('.dsb-sel[data-k=jenis]', root) || {}).value || '', bd = ($('.dsb-sel[data-k=bidang]', root) || {}).value || '';
+    var q = String(($('.dsb-cari', root) || {}).value || '').trim().toLowerCase(), n = { '': 0, lo: 0, na: 0, ok: 0 }, z = 0;
+    $$('tr.dsb-row', root).forEach(function (tr) {
+      var cocok = (!jn || tr.getAttribute('data-jenis') === jn) && (!bd || tr.getAttribute('data-bidang') === bd) && (!q || tr.getAttribute('data-q').indexOf(q) >= 0);
+      var st = tr.getAttribute('data-st'); if (cocok) { n['']++; n[st]++; }
+      var tampil = cocok && (!f || st === f), det = tr.nextElementSibling;
+      tr.hidden = !tampil; tr.classList.toggle('dsb-z', tampil && (z++ % 2 === 1));
+      if (det && det.classList.contains('dsb-det') && !tampil) { det.hidden = true; tr.classList.remove('on'); $('.dsb-nm', tr).setAttribute('aria-expanded', 'false'); }
+    });
+    $$('.dsb-fb', root).forEach(function (b) { $('b', b).textContent = n[b.getAttribute('data-f')]; });
+    $('.dsb-kosong', root).hidden = z > 0;
+  }
+  function dsbBuka(tr) {
+    var det = tr.nextElementSibling, buka = det.hidden;
+    det.hidden = !buka; tr.classList.toggle('on', buka); $('.dsb-nm', tr).setAttribute('aria-expanded', String(buka));
+  }
+
   /* ---------- Review Sulbar Sehat: catatan tindak lanjut ---------- */
   function rvTlBaru(el) {
     var mt = {}; try { mt = JSON.parse(($('#rv-meta') || {}).getAttribute('data-json') || '{}'); } catch (e) { }
@@ -1611,6 +1635,8 @@
         }).catch(function (e) { if (e.handled) return; var mm = $('#modal-body .form-msg'); if (mm) mm.textContent = e.message; el.disabled = false; el.textContent = 'Ya, pindahkan'; });
         break;
       case 'ssg-batal': ssgBatal(); break;
+      case 'dsb-filter': $$('.dsb-fb').forEach(function (b) { var on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); dsbSaring(); break;
+      case 'dsb-buka': dsbBuka(el); break;
       case 'ssg-catatan': ssgCatatan(el); break;
       case 'ssg-tambah': ssgTambah(); break;
       case 'ss-tl-baru': rvTlBaru(el); break;
@@ -1895,6 +1921,7 @@
     toast(n ? n + ' kotak terisi dari tempelan. Periksa lalu tekan Simpan.' : 'Tidak ada angka yang bisa ditempel di sini.', n ? 'ok' : 'err');
   });
   document.addEventListener('input', function (ev) {
+    if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
     if (ev.target && ev.target.id === 'is-real' && ev.target.form) cekIsian(ev.target.form);
     if (ev.target && ev.target.classList && ev.target.classList.contains('ssg-in')) { ssgCekBaris(ev.target); ssgStatus(); }
     var t = ev.target;
@@ -1906,6 +1933,7 @@
   });
   document.addEventListener('change', function (ev) {
     var t = ev.target;
+    if (t.classList && t.classList.contains('dsb-sel')) { dsbSaring(); return; }
     if (t.form && t.form.getAttribute('id') === 'form-isian' && t.name === 'keterangan') { sinkIsian(t.form); cekIsian(t.form); return; }
     if (t.form && t.form.id === 'form-user-modal' && (t.name === 'role' || t.name === 'modeSandi' || t.name === 'bidang')) { syncUserForm(t.form); return; }
     if (t.form && t.form.getAttribute('id') === 'form-user-modal' && (t.name === 'ik' || t.name === 'program')) { syncIk(t.form); return; }

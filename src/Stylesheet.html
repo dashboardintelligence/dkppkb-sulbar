@@ -1249,6 +1249,44 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .ssi-w-crit{background:var(--crit-l);color:var(--crit-d)}.ssi-w-warn{background:var(--warn-l);color:var(--warn-d)}.ssi-w-info{background:var(--rail);color:var(--tx2)}
 .ssi-tp{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre;overflow:auto}
 .ssi-tp::placeholder{font-family:inherit;font-style:italic;font-size:13px;white-space:normal}
+/* Dashboard: satu tabel capaian, titik satu warna, baris selang-seling samar, rincian dengan pie per kabupaten */
+.dsb-bar{display:flex;flex-wrap:wrap;gap:10px 14px;align-items:center;justify-content:space-between;margin:4px 0 10px}
+.dsb-alat{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.dsb-alat .input-sm{height:34px;font-size:13px;width:auto;min-width:150px}
+.dsb-filt{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 12px}
+.dsb-fb{border:1px solid var(--bd);background:var(--card);border-radius:999px;padding:4px 12px;font:inherit;font-size:13px;color:var(--tx2);cursor:pointer}
+.dsb-fb b{margin-left:6px;color:var(--tx);font-weight:600}
+.dsb-fb.on{border-color:var(--tx);color:var(--tx);font-weight:600}
+.dsb-card{padding:4px 0}
+.dsb{width:100%;border-collapse:collapse;font-size:13.5px}
+.dsb th{font-size:11.5px;font-weight:600;color:var(--tx2);text-align:left;padding:8px 14px;border-bottom:1px solid var(--bd);white-space:nowrap}
+.dsb th.r,.dsb td.r{text-align:right}
+.dsb td{padding:7px 14px;border-bottom:1px solid var(--rail);vertical-align:middle}
+.dsb-row{cursor:pointer}
+.dsb-row.dsb-z td{background:#f6f8fb}
+.dsb-row:hover td,.dsb-row.on td{background:#eef6fc}
+.dsb-nm{display:flex;align-items:center;gap:8px;border:0;background:none;padding:0;font:inherit;color:var(--tx);text-align:left;cursor:pointer}
+.dsb-dot{width:7px;height:7px;border-radius:50%;background:#94a3b8;flex:none}
+.dsb-jn{font-size:12px;color:var(--mute);white-space:nowrap}
+.dsb-tg{font-size:12.5px;color:var(--tx2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.dsb td.r b{font-variant-numeric:tabular-nums}
+.dsb-bd{color:var(--tx2);font-size:12.5px}
+.dsb-det>td{background:#fafcff;padding:6px 14px 16px}
+.dsb-dg{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:24px;align-items:start}
+.dsb-h4{font-size:11.5px;font-weight:600;color:var(--mute);margin:6px 0 6px}
+.dsb-kt{width:100%;border-collapse:collapse;font-size:13px}
+.dsb-kt th{font-size:11.5px;color:var(--mute);font-weight:600;text-align:left;padding:5px 8px;border-bottom:1px solid var(--bd)}
+.dsb-kt td{padding:5px 8px;border-bottom:1px solid var(--rail);font-variant-numeric:tabular-nums}
+.dsb-kw{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:8px;vertical-align:-1px}
+.dsb-pie{text-align:center}
+.dsb-pie svg{max-width:100%;height:auto}
+.dsb-kosong{padding:20px 14px}
+.dsb-ket{margin-top:8px}
+@media (max-width:860px){.dsb-dg{grid-template-columns:1fr}.dsb-jn,.dsb th:nth-child(2){display:none}}
+:root[data-theme="dark"] .dsb-row.dsb-z td{background:#1b2832}
+:root[data-theme="dark"] .dsb-row:hover td,:root[data-theme="dark"] .dsb-row.on td{background:#16384d}
+:root[data-theme="dark"] .dsb-det>td{background:#15212a}
+@media print{.dsb-bar,.dsb-filt{display:none}}
 /* Input Sulbar Sehat: tabel lembar kerja (kotak tanpa bingkai, font kecil, baris rapat, selang-seling samar) */
 .ssg-info{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--tx2);margin:0 0 10px}
 .ssg-wrap{overflow:auto;max-height:calc(100vh - 260px);min-height:280px;border:1px solid var(--bd);border-radius:12px;background:var(--card)}
