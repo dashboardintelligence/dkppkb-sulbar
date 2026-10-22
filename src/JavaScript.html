@@ -8,44 +8,32 @@
 (function () {
   'use strict';
 
-  var AppState = { sessionToken: null, user: null, cfg: null, tahunList: [], page: 'beranda', params: {}, req: 0, pending: null, hist: [] };
+  var AppState = { sessionToken: null, user: null, cfg: null, tahunList: [], page: 'dashboard', params: {}, req: 0, pending: null, hist: [] };
 
   var MENU = [
-    { id: 'beranda', label: 'Beranda', icon: 'home', group: 'Utama' },
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', group: 'Utama' },
-    { id: 'inputdata', label: 'Input Data', icon: 'edit_note', group: 'Indikator', roles: ['admin', 'staf', 'pic'] },
-    { id: 'spbe', label: 'Monev SPBE', icon: 'lan', group: 'Indikator' },
-    { id: 'monev', label: 'Monev Kinerja', icon: 'rule', group: 'Indikator' },
-    { id: 'sulbarsehat', label: 'Review Sulbar Sehat', icon: 'map', group: 'Indikator' },
-    { id: 'monitoring', label: 'Verifikasi & Pengingat', icon: 'fact_check', group: 'Indikator', roles: ['admin', 'staf', 'pimpinan'] },
-    { id: 'analitik', label: 'Capaian & Analitik', icon: 'insights', group: 'Analisis' },
-    { id: 'indikator', label: 'Indikator Kesehatan', icon: 'monitor_heart', group: 'Analisis' },
-    { id: 'laporan', label: 'Laporan Eksekutif', icon: 'description', group: 'Layanan', roles: ['admin', 'staf', 'pimpinan'] },
-    { id: 'permintaan', label: 'Permintaan Data', icon: 'upload_file', group: 'Layanan' },
-    { id: 'tambahindikator', label: 'Kelola Indikator', icon: 'add_circle', group: 'Administrasi', roles: ['admin', 'staf'] },
-    { id: 'pengguna', label: 'Kelola Pengguna', icon: 'group', group: 'Administrasi', roles: ['admin'] },
-    { id: 'konten', label: 'Konten Halaman Depan', icon: 'add_photo_alternate', group: 'Administrasi', roles: ['admin', 'staf'] },
-    { id: 'syncform', label: 'Sync Form', icon: 'sync_alt', group: 'Administrasi', roles: ['admin', 'staf'] },
-    { id: 'pengaturan', label: 'Pengaturan', icon: 'settings', group: 'Lainnya' },
-    { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Lainnya' }
+    { id: 'dashboard', label: 'Review', icon: 'dashboard', group: 'Utama' },
+    { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'pic'] },
+    { id: 'laporan', label: 'Laporan', icon: 'description', group: 'Utama' },
+    { id: 'pengaturan', label: 'Pengaturan', icon: 'settings', group: 'Pengaturan' },
+    { id: 'monitoring', label: 'Verifikasi & Pengingat', icon: 'fact_check', group: 'Pengaturan', roles: ['admin', 'staf', 'pimpinan'] },
+    { id: 'tambahindikator', label: 'Kelola Indikator', icon: 'add_circle', group: 'Pengaturan', roles: ['admin', 'staf'] },
+    { id: 'pengguna', label: 'Kelola Pengguna', icon: 'group', group: 'Pengaturan', roles: ['admin'] },
+    { id: 'konten', label: 'Konten Halaman Depan', icon: 'add_photo_alternate', group: 'Pengaturan', roles: ['admin', 'staf'] },
+    { id: 'syncform', label: 'Sync Form', icon: 'sync_alt', group: 'Pengaturan', roles: ['admin', 'staf'] },
+    { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Pengaturan' }
   ];
   var BOTTOM = [
-    { id: 'beranda', label: 'Beranda', icon: 'dashboard' },
-    { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
-    { id: 'spbe', label: 'Monev SPBE', icon: 'lan' },
-    { id: 'permintaan', label: 'Data', icon: 'upload_file' },
+    { id: 'dashboard', label: 'Review', icon: 'dashboard' },
+    { id: 'inputdata', label: 'Isi Data', icon: 'edit_note' },
+    { id: 'laporan', label: 'Laporan', icon: 'description' },
     { id: '_menu', label: 'Menu', icon: 'menu' }
   ];
-  /* Menu tab atas (desktop, Desain A). Grup berisi sub-menu dropdown; item yang tak boleh diakses peran disembunyikan. */
+  /* Menu tab atas: empat menu. SPBE/Kinerja di Isi Data; Tindak Lanjut dan Permintaan Data di Laporan. */
   var TOP = [
-    { id: 'beranda', label: 'Beranda' },
-    { id: 'dashboard', label: 'Dashboard' },
-    { label: 'Input Data', children: ['inputdata', 'monitoring'] },
-    { label: 'Monev', children: ['spbe', 'monev', 'sulbarsehat'] },
-    { label: 'Analitik', children: ['analitik', 'indikator'] },
-    { label: 'Layanan', children: ['laporan', 'permintaan'] },
-    { label: 'Administrasi', children: ['tambahindikator', 'pengguna', 'konten', 'syncform'] },
-    { label: 'Lainnya', children: ['pengaturan', 'panduan'] }
+    { id: 'dashboard', label: 'Review' },
+    { id: 'inputdata', label: 'Isi Data' },
+    { id: 'laporan', label: 'Laporan' },
+    { label: 'Pengaturan', children: ['pengaturan', 'monitoring', 'tambahindikator', 'pengguna', 'konten', 'syncform', 'panduan'] }
   ];
   var EMBLEM_SVG = '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="13.2" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#fff"/></svg>';
   var ROLE_LABEL = { admin: 'Administrator', staf: 'Staf Admin', pimpinan: 'Pimpinan', pic: 'PIC Bidang' };
@@ -195,7 +183,14 @@
       call('apiMerek', []).catch(function () { });
     }, 240000);
   }
+  /** Halaman tanpa menu sendiri disorot di menu induknya (SPBE/Kinerja di Isi Data, halaman lain di Laporan). */
+  function menuInduk(page) {
+    var isi = AppState.user && ['admin', 'staf', 'pic'].indexOf(AppState.user.role) >= 0;
+    if (page === 'spbe' || page === 'monev') return isi ? 'inputdata' : 'laporan';
+    return { sulbarsehat: 'laporan', permintaan: 'laporan' }[page] || page;
+  }
   function markMenu(page) {
+    page = menuInduk(page);
     $$('[data-menu]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-menu') === page); });
     $$('.tn-group').forEach(function (g) { $('.tn-item', g).classList.toggle('active', !!$('.tn-sub.active', g)); });
   }
@@ -543,9 +538,10 @@
       AppState.user = d.user; AppState.cfg = d.cfg; AppState.tahunList = d.tahunList;
       buildChrome(d);
       show($('#view-login'), false); show($('#view-app'), true);
-      var pg = mu.page, segar = false;
-      if (pg && pg.success && !pg.redirect && pg.html) { PCACHE[pkey('beranda', {})] = { html: pg.html, title: pg.title, t: Date.now() }; segar = true; }
-      return navigateTo('beranda', {}, segar ? { fresh: true } : undefined).then(function () { prefetchMenu(); startKeepAlive(); });
+      // halaman awal ditentukan server: Dashboard, atau Isi Data bagi PIC yang masih punya isian kosong
+      var pg = mu.page, awal = (pg && pg.page) || 'dashboard', segar = false;
+      if (pg && pg.success && !pg.redirect && pg.html) { PCACHE[pkey(awal, {})] = { html: pg.html, title: pg.title, t: Date.now() }; segar = true; }
+      return navigateTo(awal, {}, segar ? { fresh: true } : undefined).then(function () { prefetchMenu(); startKeepAlive(); });
     });
   }
   /* Logo resmi (opsional, dari Config LogoUrl). Tanpa URL, dipakai emblem hijau bawaan. */
@@ -615,12 +611,12 @@
           return '<button type="button" class="tn-sub" data-nav="' + id + '" data-menu="' + id + '"><span class="ic" aria-hidden="true">' + m.icon + '</span>' + esc(m.label) + '</button>';
         }).join('') + '</div></div>';
     }).join('');
-    $('#foot-links').innerHTML = ['panduan', 'permintaan', 'laporan'].filter(function (id) { return boleh[id]; }).map(function (id) {
+    $('#foot-links').innerHTML = [].filter(function (id) { return boleh[id]; }).map(function (id) {   // menu sudah ada di atas; tidak digandakan di kaki halaman
       return '<button type="button" data-nav="' + id + '">' + esc(boleh[id].label) + '</button>';
     }).join('');
     if (d.cfg && d.cfg.namaDinas) $('#foot-dinas').textContent = d.cfg.namaDinas;
     $('#foot-copy').textContent = '© ' + ((d.cfg && d.cfg.tahun) || new Date().getFullYear()) + ' DKPPKB Provinsi Sulawesi Barat';
-    $('#nav-bottom').innerHTML = BOTTOM.map(function (b) {
+    $('#nav-bottom').innerHTML = BOTTOM.filter(function (b) { return b.id === '_menu' || boleh[b.id]; }).map(function (b) {
       return '<button type="button" class="bn" ' + (b.id === '_menu' ? 'data-act="open-drawer"' : 'data-nav="' + b.id + '" data-menu="' + b.id + '"') + '><span class="ic" aria-hidden="true">' + b.icon + '</span><span>' + b.label + '</span></button>';
     }).join('');
     setBadge(d.badge);
@@ -783,7 +779,7 @@
     closeNotif();
     $('#topbar-title').textContent = title || '';
     document.title = (title ? title + ' · ' : '') + (BRAND.full || 'DKPPKB Sulbar Intelligence');
-    $$('[data-menu]').forEach(function (b) { var on = b.getAttribute('data-menu') === page; b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    $$('[data-menu]').forEach(function (b) { var on = b.getAttribute('data-menu') === menuInduk(page); b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     AppState.rendered = true; updBack();
     if (page === 'dashboard') dsbSaring();
     window.scrollTo(0, keepY);
@@ -798,11 +794,11 @@
     if (AppState.pending) { var fn = AppState.pending; AppState.pending = null; fn(); }
     setTimeout(prefetchTabs, 400);
   }
-  function updBack() { var b = $('#btn-back'); if (b) b.hidden = !(AppState.sessionToken && AppState.rendered && (AppState.hist.length || AppState.page !== 'beranda')); }
+  function updBack() { var b = $('#btn-back'); if (b) b.hidden = !(AppState.sessionToken && AppState.rendered && (AppState.hist.length || AppState.page !== 'dashboard')); }
   function goBack() {
     var prev = AppState.hist.pop();
     if (prev) navigateTo(prev.page, prev.params, { back: true });
-    else navigateTo('beranda', {}, { back: true });
+    else navigateTo('dashboard', {}, { back: true });
   }
   function reload() { return navigateTo(AppState.page, AppState.params, { keep: true }); }
 
@@ -1419,32 +1415,34 @@
    * dan Simpan hanya mengirim indikator yang berubah. Tempel dari Excel: format baris kabupaten (file Excel Sulbar Sehat)
    * atau blok angka biasa yang diisikan mulai dari kotak aktif. */
   function ssgMeta() { var el = $('#ssg-meta'); try { return el ? JSON.parse(el.getAttribute('data-json')) : null; } catch (e) { return null; } }
-  function ssgBaris() { return $$('#form-ssg tbody tr[data-ind]').map(function (tr) { return $$('.ssg-in', tr); }); }
+  function ssgBaris() { return $$('form.ssg-form tbody tr[data-ind]').map(function (tr) { return $$('.ssg-in', tr); }); }
   function ssgKotak(ind, kab, f) { return $('#form-ssg tr[data-ind="' + ind + '"] .ssg-in[data-kab="' + kab + '"][data-f="' + f + '"]'); }
-  function ssgKotor() { return !!$('#form-ssg .ssg-in.chg'); }
+  function ssgKotor() { return !!$('form.ssg-form .ssg-in.chg'); }
   function ssgCek(inp) {
-    var v = angkaKab(inp.value), bad = isNaN(v);
+    if (!inp.hasAttribute('data-t')) inp.setAttribute('data-t', inp.title || '');
+    var v = angkaKab(inp.value), bad = isNaN(v), pesan = 'Bukan angka';
     if (!bad && inp.getAttribute('data-f') === 'r' && v !== null) {
       var s = ssgKotak(inp.closest('tr').getAttribute('data-ind'), inp.getAttribute('data-kab'), 's');
-      bad = !s || angkaKab(s.value) === null;
+      bad = !s || angkaKab(s.value) === null; pesan = 'Isi sasaran lebih dulu';
     }
+    if (!bad && v === null && inp.hasAttribute('data-b') && inp.getAttribute('data-o') !== '') { bad = true; pesan = 'Isian yang sudah tersimpan tidak bisa dikosongkan di sini. Pakai Tampilan lengkap.'; }
     inp.classList.toggle('bad', bad);
     inp.classList.toggle('chg', inp.value.trim() !== inp.getAttribute('data-o'));
-    inp.title = bad ? (isNaN(v) ? 'Bukan angka' : 'Isi sasaran lebih dulu') : '';
+    inp.title = bad ? pesan : inp.getAttribute('data-t');
   }
   function ssgCekBaris(inp) {
     ssgCek(inp);
     if (inp.getAttribute('data-f') === 's') { var r = ssgKotak(inp.closest('tr').getAttribute('data-ind'), inp.getAttribute('data-kab'), 'r'); if (r) ssgCek(r); }
   }
   function ssgStatus() {
-    var f = $('#form-ssg'); if (!f) return;
+    var f = $('form.ssg-form'); if (!f) return;
     var n = $$('.ssg-in.chg', f).length, b = $$('.ssg-in.bad', f).length, st = $('.ssg-st', f);
     if (st) { st.textContent = b ? b + ' kotak perlu diperbaiki' + (n ? ' · ' + n + ' kotak diubah, belum disimpan' : '') : n ? n + ' kotak diubah, belum disimpan' : 'Belum ada perubahan'; st.classList.toggle('err', !!b); }
     var bt = $('[data-act=ssg-batal]', f), sv = $('button[type=submit]', f);
     if (bt) bt.disabled = !n; if (sv) sv.disabled = !n || !!b;
   }
   function ssgBatal() {
-    $$('#form-ssg .ssg-in').forEach(function (i) { i.value = i.getAttribute('data-o'); i.classList.remove('chg', 'bad'); i.title = ''; });
+    $$('form.ssg-form .ssg-in').forEach(function (i) { i.value = i.getAttribute('data-o'); i.classList.remove('chg', 'bad'); if (i.hasAttribute('data-t')) i.title = i.getAttribute('data-t'); });
     ssgStatus();
   }
   function ssgPindah(inp, arah) {
@@ -1453,7 +1451,7 @@
     var t = rows[r + arah]; if (t && t[c]) { t[c].focus(); t[c].select(); }
   }
   function ssgTempel(inp, teks) {
-    var mt = ssgMeta(); if (!mt) return 0;
+    var mt = ssgMeta() || { kab: [], excel: [] };
     var baris = teks.replace(/\r/g, '').split('\n').filter(function (l) { return l.replace(/\t/g, '').trim() !== ''; });
     var low = mt.kab.map(function (k) { return k.toLowerCase(); }), n = 0, kenal = false;
     var isi = function (el, v) { if (!el || el.disabled || v === undefined) return; el.value = String(v).trim(); ssgCekBaris(el); n++; };
@@ -1490,6 +1488,18 @@
       .then(function (r) {
         $$('.ssg-in', f).forEach(function (i) { i.setAttribute('data-o', i.value.trim()); i.classList.remove('chg'); });
         toast(r.tersimpan + ' isian tersimpan' + (r.lewat && r.lewat.length ? ' · dilewati ' + r.lewat.join(', ') : '') + '.', 'ok'); reload();
+      })
+      .catch(function (e) { btn.textContent = 'Simpan'; ssgStatus(); if (!e.handled) toast(e.message, 'err'); });
+  }
+  function submitRtn(f) {
+    if ($('.ssg-in.bad', f)) { toast('Perbaiki kotak bergaris merah dulu.', 'err'); return; }
+    var data = $$('.ssg-in.chg', f).map(function (i) { return { indikatorId: i.closest('tr').getAttribute('data-ind'), bulan: Number(i.getAttribute('data-b')), realisasi: angkaKab(i.value) }; });
+    if (!data.length) return;
+    var btn = $('button[type=submit]', f); btn.disabled = true; btn.textContent = 'Menyimpan…';
+    api('apiSimpanIsianMassal', [{ tahun: Number(f.getAttribute('data-tahun')), data: data }])
+      .then(function (r) {
+        $$('.ssg-in', f).forEach(function (i) { i.setAttribute('data-o', i.value.trim()); i.classList.remove('chg'); });
+        toast(r.tersimpan + ' isian tersimpan' + (r.lewat && r.lewat.length ? ' · dilewati: ' + r.lewat.slice(0, 3).join('; ') + (r.lewat.length > 3 ? ' …' : '') : '') + '.', r.lewat && r.lewat.length ? 'err' : 'ok'); reload();
       })
       .catch(function (e) { btn.textContent = 'Simpan'; ssgStatus(); if (!e.handled) toast(e.message, 'err'); });
   }
@@ -1530,7 +1540,7 @@
   }
   window.addEventListener('beforeunload', function (ev) { if (ssgKotor()) { ev.preventDefault(); ev.returnValue = ''; } });
 
-  /* ---------- Dashboard: saring, cari, dan buka rincian tanpa memuat ulang ---------- */
+  /* ---------- Review: saring, cari, dan buka rincian tanpa memuat ulang ---------- */
   function dsbSaring() {
     var root = $('#app-container'); if (!$('table.dsb', root)) return;
     var fb = $('.dsb-fb.on', root), f = fb ? fb.getAttribute('data-f') : '';
@@ -1902,6 +1912,7 @@
       if ($('#modal-root').firstChild) closeModal(); else closeDrawer(); return;
     }
     if (ev.target.matches && ev.target.matches('.ssg-in') && (ev.key === 'Enter' || ev.key === 'ArrowDown' || ev.key === 'ArrowUp')) { ev.preventDefault(); ssgPindah(ev.target, ev.key === 'ArrowUp' || (ev.key === 'Enter' && ev.shiftKey) ? -1 : 1); return; }
+    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[role=button][data-nav]')) { ev.preventDefault(); ev.target.click(); return; }
     if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.matches && ev.target.matches('[data-act=detail]')) { ev.preventDefault(); onAction(ev.target, ev); }
     if (ev.key === 'Enter' && ev.target.matches && ev.target.matches('.input-search.f-param')) { ev.preventDefault(); applyFilters(); }
     if (ev.key === 'Tab' && $('#modal-root').firstChild) {   // jebakan fokus sederhana
@@ -1968,6 +1979,7 @@
     if (fid === 'form-pmt-review') return submitPmtReview(f);
     if (fid === 'form-isian') return submitIsian(f);
     if (fid === 'form-ssg') return submitSsg(f);
+    if (fid === 'form-rtn') return submitRtn(f);
     if (fid === 'form-ssg-cat') return submitSsgCat(f);
     if (fid === 'form-ssg-ind') return submitSsgInd(f);
     if (fid === 'form-tl') return submitTl(f);
