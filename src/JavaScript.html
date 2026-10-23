@@ -100,10 +100,10 @@
   /** Panggil API ber-token. Mengembalikan data atau melempar Error; sesi habis -> kembali ke login. */
   var PCACHE = {}, READ_API = { apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiFotoGaleriAdmin: 1, apiNotifikasi: 1 };
   function api(fn, args) {
-    if (!READ_API[fn]) pcReset();   // ada perubahan data: buang cache halaman
+    if (!READ_API[fn]) pcBasi();   // ada perubahan data: tandai cache halaman basi
     args = [AppState.sessionToken].concat(args || []);
     return call(fn, args).then(function (r) {
-      if (!READ_API[fn]) pcReset();   // data berubah di server: buang lagi agar tidak ada halaman basi
+      if (!READ_API[fn]) pcBasi();   // data berubah di server: halaman lama tetap tampil seketika lalu diperbarui
       if (r && r.success) return r.data;
       if (r && r.expired) { forceLogout(r.message); }
       var err = new Error((r && r.message) || 'Terjadi kesalahan.'); err.handled = !!(r && r.expired); throw err;
@@ -114,11 +114,14 @@
   /* ---------- percepatan: jelajahi semua halaman dan tab di latar belakang ---------- */
   var PGEN = 0, PQ = [], PRUN = 0, PSEEN = {}, PNSEEN = 0, keepTimer = null, crawlTimer = null, PTTL = 3600000;
   function pcReset() { PCACHE = {}; INFLIGHT = {}; PGEN++; PQ = []; PSEEN = {}; PNSEEN = 0; scheduleCrawl(); }
-  function pkey(page, params) { return page + '|' + JSON.stringify(Object.assign({}, params || {}, periode())); }
+  /** Setelah data berubah: halaman tersimpan ditandai basi (t = 0), bukan dibuang. Saat dibuka tetap tampil seketika,
+   *  lalu versi terbaru diambil dan menggantikannya. Logout/login tetap membuang semuanya (pcReset). */
+  function pcBasi() { Object.keys(PCACHE).forEach(function (k) { PCACHE[k].t = 0; }); INFLIGHT = {}; PGEN++; PQ = []; PSEEN = {}; PNSEEN = 0; scheduleCrawl(); }
+  function pkey(page, params) { return page + '|' + JSON.stringify(srvParams(page, params)); }
   /** Ambil satu halaman ke cache. Mengembalikan entri cache (atau null bila gagal). */
   function prefetchPage(page, params) {
     if (!AppState.sessionToken) return Promise.resolve(null);
-    var p = Object.assign({}, params || {}, periode());
+    var p = srvParams(page, params);
     var key = page + '|' + JSON.stringify(p);
     if (PCACHE[key] && Date.now() - PCACHE[key].t < PTTL) return Promise.resolve(PCACHE[key]);
     var gen = PGEN, tok = AppState.sessionToken;
@@ -144,7 +147,7 @@
   }
   function pump() {
     var tok = AppState.sessionToken;
-    while (PRUN < 2 && PQ.length && tok && !AppState.navBusy) {   // jeda selama pengguna membuka halaman
+    while (PRUN < 3 && PQ.length && tok && !AppState.navBusy) {   // jeda selama pengguna membuka halaman
       var job = PQ.shift(); PRUN++;
       (function (j, gen) {
         prefetchPage(j.page, j.params).then(function (e) {
@@ -152,15 +155,6 @@
           setTimeout(pump, 60);
         });
       })(job, PGEN);
-    }
-  }
-  /** Cari tautan [data-nav] pada HTML halaman (tab, kartu, tombol) lalu antrekan semuanya. */
-  function discoverHtml(html) {
-    var doc; try { doc = new DOMParser().parseFromString(html, 'text/html'); } catch (e) { return; }
-    var els = doc.querySelectorAll('.seg-btn[data-nav]');
-    for (var i = 0; i < els.length; i++) {
-      var pr = {}; try { pr = JSON.parse(els[i].getAttribute('data-params') || '{}'); } catch (e) { }
-      enqueue(els[i].getAttribute('data-nav'), pr, false);
     }
   }
   /** Tab di halaman yang sedang terbuka didahulukan. */
@@ -490,6 +484,7 @@
   }
   /** Mulai aplikasi. `pre` = {boot, page} dari doLogin/apiMulai: satu panggilan server untuk data awal + Beranda. */
   function startApp(pre) {
+    try { localStorage.removeItem('dkppkb_per'); } catch (e) { }
     pcReset();
     var ambil = pre && pre.boot ? Promise.resolve(pre) : api('apiMulai').catch(function (e) {
       if (e && e.handled) throw e;   // server lama belum punya apiMulai: pakai cara lama
@@ -613,12 +608,12 @@
     var x = /^(b|tw|s)(\d{1,2})$/.exec(String(per || '')); if (!x) return 0;
     var n = Number(x[2]); return x[1] === 'b' ? n : x[1] === 'tw' ? n * 3 : n * 6;
   }
-  function perPakai(page, params, p) {
-    var on = PER_HAL.indexOf(page) >= 0 && params.mode !== 'lengkap';
-    var wrap = $('#sel-bulan') && $('#sel-bulan').closest('.period');
-    if (wrap) wrap.classList.toggle('no-bulan', on);
-    if (!on) return p;
-    var per = params.per || (params.tw ? '' : perIngat()), akhir = perAkhir(per);
+  function perHal(page, params) { return PER_HAL.indexOf(page) >= 0 && (params || {}).mode !== 'lengkap'; }
+  /** Parameter yang dikirim ke server untuk satu halaman. Dipakai navigasi, prefetch, dan kunci cache agar selalu sama. */
+  function srvParams(page, params) {
+    var p = Object.assign({}, params || {}, periode());
+    if (!perHal(page, params)) return p;
+    var per = p.per || (p.tw ? '' : perIngat()), akhir = perAkhir(per);
     if (akhir) { p.per = per; p.bulan = akhir; }
     return p;
   }
@@ -646,11 +641,13 @@
     updBack(); markMenu(page);   // sorot menu seketika saat diklik
     closeDrawer(); busy(true);
     var c = $('#app-container');
-    var p = perPakai(page, params, Object.assign({}, params, periode()));
-    var ckey = page + '|' + JSON.stringify(p), hit = !(opts && (opts.keep || opts.redirect)) && PCACHE[ckey] && (Date.now() - PCACHE[ckey].t < PTTL) ? PCACHE[ckey] : null;
+    var wrapBln = $('#sel-bulan') && $('#sel-bulan').closest('.period');
+    if (wrapBln) wrapBln.classList.toggle('no-bulan', perHal(page, params));
+    var p = srvParams(page, params);
+    var ckey = page + '|' + JSON.stringify(p), ent = PCACHE[ckey], hit = !(opts && (opts.keep || opts.redirect)) && ent && (ent.t === 0 || Date.now() - ent.t < PTTL) ? ent : null;
     if (hit) {
       injectPage(page, hit.html, hit.title, opts);   // tampil seketika, lalu disegarkan di latar
-      if (opts && opts.fresh) { busy(false); return Promise.resolve(); }   // baru diambil dari server: tidak perlu diambil lagi
+      if (opts && opts.fresh && hit.t) { busy(false); return Promise.resolve(); }   // baru diambil dari server: tidak perlu diambil lagi
     } else if (!(opts && opts.keep)) c.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div><div class="skeleton"></div>';
     AppState.navBusy = true;
     function selesai() { if (my === AppState.req) { AppState.navBusy = false; setTimeout(pump, 300); } }
@@ -1400,8 +1397,6 @@
     t = t.replace(',', '.');
     var n = Number(t); return isNaN(n) ? NaN : n;
   }
-  function fmtId(n, d) { return n === null || n === undefined || isNaN(n) ? '—' : Number(n).toLocaleString('id-ID', { maximumFractionDigits: d === undefined ? 2 : d }); }
-  function tierSs(p, tgt) { return p === null ? 'na' : p >= tgt ? 'ok' : p >= tgt * 0.8 ? 'warn' : 'crit'; }
   /* ---------- Input Sulbar Sehat: tabel lembar kerja ----------
    * Satu tabel indikator × kabupaten (Sasaran, Realisasi). Kotak yang diubah ditandai, salah ketik bergaris merah,
    * dan Simpan hanya mengirim indikator yang berubah. Tempel dari Excel: format baris kabupaten (file Excel Sulbar Sehat)
@@ -1480,18 +1475,6 @@
       .then(function (r) {
         $$('.ssg-in', f).forEach(function (i) { i.setAttribute('data-o', i.value.trim()); i.classList.remove('chg'); });
         toast(r.tersimpan + ' isian tersimpan' + (r.lewat && r.lewat.length ? ' · dilewati ' + r.lewat.join(', ') : '') + '.', 'ok'); reload();
-      })
-      .catch(function (e) { btn.textContent = 'Simpan'; ssgStatus(); if (!e.handled) toast(e.message, 'err'); });
-  }
-  function submitRtn(f) {
-    if ($('.ssg-in.bad', f)) { toast('Perbaiki kotak bergaris merah dulu.', 'err'); return; }
-    var data = $$('.ssg-in.chg', f).map(function (i) { return { indikatorId: i.closest('tr').getAttribute('data-ind'), bulan: Number(i.getAttribute('data-b')), realisasi: angkaKab(i.value) }; });
-    if (!data.length) return;
-    var btn = $('button[type=submit]', f); btn.disabled = true; btn.textContent = 'Menyimpan…';
-    api('apiSimpanIsianMassal', [{ tahun: Number(f.getAttribute('data-tahun')), data: data }])
-      .then(function (r) {
-        $$('.ssg-in', f).forEach(function (i) { i.setAttribute('data-o', i.value.trim()); i.classList.remove('chg'); });
-        toast(r.tersimpan + ' isian tersimpan' + (r.lewat && r.lewat.length ? ' · dilewati: ' + r.lewat.slice(0, 3).join('; ') + (r.lewat.length > 3 ? ' …' : '') : '') + '.', r.lewat && r.lewat.length ? 'err' : 'ok'); reload();
       })
       .catch(function (e) { btn.textContent = 'Simpan'; ssgStatus(); if (!e.handled) toast(e.message, 'err'); });
   }
@@ -1974,7 +1957,6 @@
     if (fid === 'form-pmt-review') return submitPmtReview(f);
     if (fid === 'form-isian') return submitIsian(f);
     if (fid === 'form-ssg') return submitSsg(f);
-    if (fid === 'form-rtn') return submitRtn(f);
     if (fid === 'form-ssg-cat') return submitSsgCat(f);
     if (fid === 'form-ssg-ind') return submitSsgInd(f);
     if (fid === 'form-tl') return submitTl(f);
