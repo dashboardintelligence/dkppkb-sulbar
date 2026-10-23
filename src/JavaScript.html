@@ -603,6 +603,36 @@
   /* ---------- router SPA ---------- */
   function periode() { return { tahun: Number($('#sel-tahun').value), bulan: Number($('#sel-bulan').value) }; }
 
+  /* ---------- pilihan periode (Dashboard, Review, Isi Data) ----------
+   * per = b1–b12 | tw1–tw4 | s1–s2; angka kumulatif, jadi periode dibaca di bulan akhirnya. Pilihan diingat antarhalaman,
+   * dan pemilih Bulan di bilah atas disembunyikan di halaman ini karena sudah digantikan. */
+  var PER_HAL = ['dashboard', 'review', 'inputdata'];
+  function perSimpan(v) { try { if (v) localStorage.setItem('dkppkb_per', v); } catch (e) { } }
+  function perIngat() { try { return localStorage.getItem('dkppkb_per') || ''; } catch (e) { return ''; } }
+  function perAkhir(per) {
+    var x = /^(b|tw|s)(\d{1,2})$/.exec(String(per || '')); if (!x) return 0;
+    var n = Number(x[2]); return x[1] === 'b' ? n : x[1] === 'tw' ? n * 3 : n * 6;
+  }
+  function perPakai(page, params, p) {
+    var on = PER_HAL.indexOf(page) >= 0 && params.mode !== 'lengkap';
+    var wrap = $('#sel-bulan') && $('#sel-bulan').closest('.period');
+    if (wrap) wrap.classList.toggle('no-bulan', on);
+    if (!on) return p;
+    var per = params.per || (params.tw ? '' : perIngat()), akhir = perAkhir(per);
+    if (akhir) { p.per = per; p.bulan = akhir; }
+    return p;
+  }
+  function perGanti(t) {
+    var box = t.closest('.per-pick'), jn = $('.per-jn', box).value, no = Number($('.per-no', box).value);
+    if (t.classList.contains('per-jn')) {   // ganti jenis: pilih periode jenis baru yang memuat bulan akhir sebelumnya
+      var akhir = Number(box.getAttribute('data-akhir')) || 3;
+      no = jn === 'bulan' ? akhir : jn === 'tw' ? Math.ceil(akhir / 3) : Math.ceil(akhir / 6);
+    }
+    var kode = { bulan: 'b', tw: 'tw', sm: 's' }[jn] + no, ekstra = {};
+    try { ekstra = JSON.parse(box.getAttribute('data-ekstra') || '{}'); } catch (e) { }
+    perSimpan(kode);
+    navigateTo(box.getAttribute('data-rute'), Object.assign(ekstra, { per: kode }));
+  }
   function navigateTo(page, params, opts) {
     if (!AppState.sessionToken) return Promise.resolve();
     if (ssgKotor() && !confirm('Ada angka yang belum disimpan. Tinggalkan halaman ini?')) return Promise.resolve();
@@ -616,7 +646,7 @@
     updBack(); markMenu(page);   // sorot menu seketika saat diklik
     closeDrawer(); busy(true);
     var c = $('#app-container');
-    var p = Object.assign({}, params, periode());
+    var p = perPakai(page, params, Object.assign({}, params, periode()));
     var ckey = page + '|' + JSON.stringify(p), hit = !(opts && (opts.keep || opts.redirect)) && PCACHE[ckey] && (Date.now() - PCACHE[ckey].t < PTTL) ? PCACHE[ckey] : null;
     if (hit) {
       injectPage(page, hit.html, hit.title, opts);   // tampil seketika, lalu disegarkan di latar
@@ -1446,7 +1476,7 @@
     });
     if (!data.length) return;
     var btn = $('button[type=submit]', f); btn.disabled = true; btn.textContent = 'Menyimpan…';
-    api('apiSimpanIsianKabMassal', [{ tahun: Number(f.getAttribute('data-tahun')), tw: Number(f.getAttribute('data-tw')), data: data, dp: !!(ssgMeta() || {}).dp }])
+    api('apiSimpanIsianKabMassal', [{ tahun: Number(f.getAttribute('data-tahun')), bulan: Number(f.getAttribute('data-bulan')), data: data, dp: !!(ssgMeta() || {}).dp }])
       .then(function (r) {
         $$('.ssg-in', f).forEach(function (i) { i.setAttribute('data-o', i.value.trim()); i.classList.remove('chg'); });
         toast(r.tersimpan + ' isian tersimpan' + (r.lewat && r.lewat.length ? ' · dilewati ' + r.lewat.join(', ') : '') + '.', 'ok'); reload();
@@ -1475,7 +1505,7 @@
     var g = $('#form-ssg'), id = f.getAttribute('data-ind'), msg = $('.form-msg', f), btn = $('button[type=submit]', f), per = {};
     $$('tr[data-ind="' + id + '"] .ssg-in', g).forEach(function (i) { var k = i.getAttribute('data-kab'); (per[k] = per[k] || { kab: k })[i.getAttribute('data-f')] = i.getAttribute('data-o'); });
     btn.disabled = true;
-    api('apiSimpanIsianKab', [{ indikatorId: id, tahun: Number(g.getAttribute('data-tahun')), tw: Number(g.getAttribute('data-tw')), rows: Object.keys(per).map(function (k) { return per[k]; }), catatan: f.elements.catatan.value }])
+    api('apiSimpanIsianKab', [{ indikatorId: id, tahun: Number(g.getAttribute('data-tahun')), bulan: Number(g.getAttribute('data-bulan')), rows: Object.keys(per).map(function (k) { return per[k]; }), catatan: f.elements.catatan.value }])
       .then(function () { closeModal(); toast('Catatan disimpan.', 'ok'); reload(); })
       .catch(function (e) { btn.disabled = false; if (!e.handled) msg.textContent = e.message; });
   }
@@ -1909,6 +1939,7 @@
   document.addEventListener('change', function (ev) {
     var t = ev.target;
     if (t.classList && t.classList.contains('dsb-sel')) { dsbSaring(); return; }
+    if (t.classList && (t.classList.contains('per-jn') || t.classList.contains('per-no'))) { perGanti(t); return; }
     if (t.form && t.form.getAttribute('id') === 'form-isian' && t.name === 'keterangan') { sinkIsian(t.form); cekIsian(t.form); return; }
     if (t.form && t.form.id === 'form-user-modal' && (t.name === 'role' || t.name === 'modeSandi' || t.name === 'bidang')) { syncUserForm(t.form); return; }
     if (t.form && t.form.getAttribute('id') === 'form-user-modal' && (t.name === 'ik' || t.name === 'program')) { syncIk(t.form); return; }
