@@ -8,6 +8,7 @@
 (function () {
   'use strict';
 
+  (function () { var c = document.getElementById('lp-foot-copy'); if (c) c.textContent = '© ' + new Date().getFullYear() + ' DKPPKB Provinsi Sulawesi Barat'; })();   // tahun di kaki halaman login
   var AppState = { sessionToken: null, user: null, cfg: null, tahunList: [], page: 'dashboard', params: {}, req: 0, pending: null, hist: [] };
 
   var MENU = [

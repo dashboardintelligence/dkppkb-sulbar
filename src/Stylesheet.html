@@ -1249,6 +1249,82 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .ssi-w-crit{background:var(--crit-l);color:var(--crit-d)}.ssi-w-warn{background:var(--warn-l);color:var(--warn-d)}.ssi-w-info{background:var(--rail);color:var(--tx2)}
 .ssi-tp{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre;overflow:auto}
 .ssi-tp::placeholder{font-family:inherit;font-style:italic;font-size:13px;white-space:normal}
+/* Login berlatar gambar (GambarHeader): judul ada di gambar, jadi panel kiri dikosongkan; teks judul tetap ada untuk pembaca layar */
+#view-login .lp-hero{background:transparent !important;box-shadow:none !important;border:0 !important}
+#view-login .lh-blue,#view-login .lh-pill,#view-login .lh-navy,#view-login .lh-logo{display:none !important}
+#view-login.login-wrap{position:relative;display:flex !important;flex-direction:column}
+#view-login .land{flex:1 0 auto;width:100%}
+#view-login .lp-top,#view-login .a-foot{width:100%}
+#view-login .a-foot{margin-top:0;background:transparent;border-top:0;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
+#view-login .a-foot-base{border-top:0;padding-top:0}
+/* Halaman login pas satu layar: hero tidak lagi memaksa tinggi, footer dipadatkan agar terlihat tanpa scroll */
+#view-login.login-wrap{min-height:100vh;min-height:100dvh}
+#view-login .land{flex:1 1 auto;padding-bottom:16px}
+#view-login .a-motif{height:40px}
+#view-login .a-foot-in{padding:8px 24px 14px;gap:6px 24px}
+#view-login .a-foot-brand .emblem{transform:scale(.85)}
+#view-login .a-foot-brand b{font-size:14px}
+@media (min-width:1024px){
+  #view-login .lp-hero{min-height:0 !important}
+  #view-login .a-foot-brand{flex:1 1 auto}
+  #view-login .a-foot-base{flex:0 1 auto;flex-direction:column;align-items:flex-end;gap:2px;text-align:right}
+}
+@media (max-width:1023px){#view-login .a-foot-in{padding:6px 16px 12px}#view-login .a-foot-base{font-size:11.5px;gap:2px 16px}}
+:root[data-theme="dark"] #view-login .a-foot{background:transparent}
+#view-login .lp-hero{position:static !important}
+#view-login .lh-text{position:absolute;left:clamp(20px,3vw,48px);top:clamp(18px,3.2vh,34px);max-width:380px;z-index:2;display:block;padding:0;margin:0}
+#view-login .lh-title{margin:0;font-family:var(--fh);font-size:clamp(26px,2.4vw,34px);line-height:1.08;font-weight:800;letter-spacing:-.02em;color:#fff;width:min-content;-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+#view-login .lh-title::after{content:"";display:block;width:76px;height:5px;border-radius:9px;margin:12px 0 10px;background:linear-gradient(90deg,#f97316 0 48%,#38bdf8 48% 100%)}
+#view-login .lh-sub{margin:0;font-size:13.5px;line-height:20px;color:#d2ecf2;font-weight:500;max-width:330px}
+:root[data-theme="dark"] #view-login .lh-title{color:#fff}
+:root[data-theme="dark"] #view-login .lh-sub{color:#d2ecf2}
+#view-login .lp-top .lp-link,#view-login .lp-top .lp-theme{color:#fff}
+/* Menu atas login: teks saja, garis bawah muncul saat kursor di atasnya */
+#view-login .lp-top .lp-link .ic{display:none}
+#view-login .lp-top .lp-link{position:relative;background:transparent !important;border-radius:0;padding:0 4px;margin:0 10px;min-height:36px}
+#view-login .lp-top .lp-link::after{content:"";position:absolute;left:4px;right:4px;bottom:6px;height:2px;border-radius:2px;background:currentColor;transform:scaleX(0);transform-origin:left;transition:transform .2s ease}
+#view-login .lp-top .lp-link:hover::after,#view-login .lp-top .lp-link:focus-visible::after{transform:scaleX(1)}
+#view-login .lp-top .lp-theme:hover{background:rgba(255,255,255,.14);color:#fff}
+#view-login .lp-main .login-card,#view-login .lp-welcome{box-shadow:0 24px 48px -24px rgba(2,62,105,.35)}
+#view-login .lp-welcome{background:rgba(255,255,255,.86);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);border-radius:18px;padding:18px 20px}
+:root[data-theme="dark"] #view-login .lp-welcome{background:rgba(8,30,36,.72);border:1px solid rgba(210,236,242,.12)}
+:root[data-theme="dark"] #view-login .lp-welcome-h{color:#e6f4f7}
+:root[data-theme="dark"] #view-login .lp-main .login-card{background:rgba(8,30,36,.78);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);border:1px solid rgba(210,236,242,.12)}
+:root[data-theme="dark"] #view-login .lp-main .login-card input,:root[data-theme="dark"] #view-login .lp-main .login-card select,:root[data-theme="dark"] #view-login .lp-main .login-card textarea{background:rgba(4,18,22,.6);border-color:rgba(210,236,242,.18)}
+:root[data-theme="dark"] #view-login .lp-welcome .muted{color:#a9c7ce}
+:root[data-theme="dark"] #view-login .a-foot-brand b{color:#e6f4f7}
+:root[data-theme="dark"] #view-login .a-foot .muted,:root[data-theme="dark"] #view-login .a-foot-base{color:#8fb0b8}
+/* Kotak sambutan & footer login dibuat ringkas, ukuran huruf seperti situs umumnya */
+#view-login .lp-welcome{max-width:380px;padding:12px 16px;border-radius:14px}
+#view-login .lp-welcome-h{font-size:15px;line-height:20px;margin:0 0 4px}
+#view-login .lp-welcome .muted{font-size:12.5px;line-height:18px}
+#view-login .a-motif{height:32px}
+#view-login .a-foot-brand{gap:10px}
+#view-login .a-foot-brand .emblem{transform:scale(.72)}
+#view-login .a-foot-brand b{font-size:12.5px;line-height:16px}
+#view-login .a-foot-brand .sm{font-size:11px;line-height:15px}
+#view-login .a-foot-base{font-size:11px;line-height:15px}
+@media (min-width:1024px){#view-login .lp-welcome{margin-left:auto}}
+@media (max-width:1023px){#view-login .lp-welcome{max-width:none}#view-login .a-foot-base{font-size:10.5px}}
+@media (max-width:1023px){#view-login .lp-hero{min-height:36vh !important}#view-login .lh-text{top:62px;left:20px}#view-login .lh-title{font-size:26px}}
+/* Panel Login & Minta Data dibuat ringkas (kecil): lebar, jarak, dan ukuran huruf diperkecil */
+#view-login .lp-main .login-card{max-width:330px;padding:14px 16px 16px;border-radius:16px;gap:4px}
+#view-login .lp-main .login-card.land-wide{max-width:440px}
+#view-login .login-card .h2{font-size:15px;line-height:22px;margin-bottom:4px}
+#view-login .login-card .land-back .btn{min-height:28px;padding:2px 10px;font-size:12px}
+#view-login .login-card .field{margin-bottom:7px;gap:3px}
+#view-login .login-card .field label{font-size:11.5px}
+#view-login .login-card .input{min-height:32px;padding:5px 10px;font-size:13px;border-radius:9px}
+#view-login .login-card textarea.input{min-height:58px}
+#view-login .login-card .btn{min-height:34px;font-size:13px;padding:6px 14px}
+#view-login .login-card .form-grid{gap:0 10px}
+#view-login .login-card .muted,#view-login .login-card p{font-size:12px;line-height:17px}
+#view-login .login-card .mt-tabs{gap:6px;margin-bottom:6px}
+#view-login .login-card .mt-tab{padding:6px 10px;border-radius:11px}
+#view-login .login-card .mt-tab b{font-size:12.5px}
+#view-login .login-card .mt-tab small{font-size:11px}
+#view-login .login-card .mt-tab .ic{font-size:18px}
+#view-login .login-card .chk,#view-login .login-card label.chk{font-size:12px}
 /* Dashboard (gaya kartu "Dashboard V14"): sapaan, angka besar, satu kartu aksen hijau muda, kartu membulat */
 .db-hello{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;margin:2px 0 18px}
 .db-hello p{margin:0;color:var(--tx2)}.db-hello p b{color:var(--tx)}
