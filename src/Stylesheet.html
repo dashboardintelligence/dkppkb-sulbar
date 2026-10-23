@@ -1430,6 +1430,57 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
   background-position:right -200px top -220px,calc(var(--side) - 300px) calc(100% + 260px);background-size:720px 720px,620px 620px}
 :root[data-theme="dark"] #view-app .shell{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720'%3E%3Cg fill='none' stroke='%23d2ecf2' stroke-opacity='.05' stroke-width='.8'%3E%3Ccircle cx='360' cy='360' r='60'/%3E%3Ccircle cx='360' cy='360' r='96'/%3E%3Ccircle cx='360' cy='360' r='132'/%3E%3Ccircle cx='360' cy='360' r='168'/%3E%3Ccircle cx='360' cy='360' r='204'/%3E%3Ccircle cx='360' cy='360' r='240'/%3E%3Ccircle cx='360' cy='360' r='276'/%3E%3Ccircle cx='360' cy='360' r='312'/%3E%3Ccircle cx='360' cy='360' r='348'/%3E%3C/g%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720'%3E%3Cg fill='none' stroke='%23d2ecf2' stroke-opacity='.05' stroke-width='.8'%3E%3Ccircle cx='360' cy='360' r='60'/%3E%3Ccircle cx='360' cy='360' r='96'/%3E%3Ccircle cx='360' cy='360' r='132'/%3E%3Ccircle cx='360' cy='360' r='168'/%3E%3Ccircle cx='360' cy='360' r='204'/%3E%3Ccircle cx='360' cy='360' r='240'/%3E%3Ccircle cx='360' cy='360' r='276'/%3E%3Ccircle cx='360' cy='360' r='312'/%3E%3Ccircle cx='360' cy='360' r='348'/%3E%3C/g%3E%3C/svg%3E")}
 @media(max-width:1023px){#view-app .shell{background-position:right -260px top -260px,left -320px bottom -320px;background-size:560px 560px,520px 520px}}
+/* Lembar isian gabungan: kotak perlu diperiksa (kuning), sasaran tidak dipakai, saringan program, templat */
+.ssg-in.warn{background:#fff7d6;border-color:#e3b341}
+:root[data-theme="dark"] .ssg-in.warn{background:rgba(227,179,65,.18);border-color:#c9a648}
+.ssg-in:disabled{background:transparent;border-style:dashed;opacity:.55}
+.ssg-tpl{display:inline-flex;gap:6px;flex-wrap:wrap;margin-left:auto}
+.ssg-prog{width:auto}
+.ssg-satu table.ssg{width:auto;min-width:min(100%,640px)}
+.ssg-satu .ssg-in{min-width:110px}
+/* Review: kelengkapan isian, tren, cetak terpilih */
+.kl-t th small{display:block;font-weight:500;color:var(--tx2)}
+.kl-t .kl-wa th{padding-top:0}
+.kl-t .kl-g td{font-size:var(--ts-th,11.5px);font-weight:600;color:var(--p-d);background:var(--rail)}
+.kl-c{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:6px;background:var(--rail);color:var(--tx2);font-weight:700}
+.kl-c.isi{background:#d9f2e6;color:#137a4a}
+:root[data-theme="dark"] .kl-c.isi{background:rgba(52,211,153,.18);color:#34d399}
+.rv-wa{min-height:28px;padding:0 10px}
+.dsb-tren{margin-top:14px;padding-top:12px;border-top:1px solid var(--rail)}
+.dsb-tren svg{display:block;max-width:100%;margin:4px 0}
+.rvc-jenis{display:flex;flex-wrap:wrap;gap:6px 14px}
+.chk{display:inline-flex;align-items:center;gap:6px;font-size:13px}
+.rv-kab{width:auto}
+.pr-t{width:100%;border-collapse:collapse;font-size:11px;margin:8px 0 14px}
+.pr-t th,.pr-t td{border:1px solid #cbd5e1;padding:4px 6px;text-align:left}
+.pr-t th{background:#e0f2fe}
+.pr-h3{font-size:12px;margin:12px 0 4px}
+/* Dashboard: ringkasan otomatis & peta skematis */
+.db-ringkas{display:flex;gap:10px;align-items:flex-start;margin:-6px 0 16px;padding:12px 16px;border-radius:14px;background:var(--card);box-shadow:0 0 0 1px var(--bd);font-size:var(--ts-isi,13px);line-height:1.55}
+.db-ringkas .ic{color:var(--p-d);font-size:20px;flex:none}
+.db-kab{display:grid;grid-template-columns:150px minmax(0,1fr);gap:16px;align-items:center}
+.db-peta{width:100%;height:auto}
+@media (max-width:640px){.db-kab{grid-template-columns:1fr}.db-peta{max-width:180px;margin:0 auto}}
+.lap-catat{display:flex;gap:10px;align-items:flex-start;margin:6px 0 12px;padding:10px 14px;border-radius:12px;background:var(--p-l);font-size:var(--ts-isi,13px);line-height:1.55}
+.lap-catat .ic{color:var(--p-d);font-size:19px;flex:none}
+:root[data-theme="dark"] .lap-catat{background:rgba(90,200,212,.1)}
+/* Panduan singkat per peran */
+.pd-langkah{margin:0 0 6px;padding:0;list-style:none;counter-reset:pd;display:flex;flex-direction:column;gap:12px}
+.pd-langkah li{counter-increment:pd;display:grid;grid-template-columns:30px 1fr;gap:2px 12px}
+.pd-langkah li::before{content:counter(pd);grid-row:span 2;display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--p-l);color:var(--p-d);font-weight:700}
+.pd-langkah b{font-size:14px}.pd-langkah span{font-size:13px;color:var(--tx2)}
+/* Review di HP: baris menjadi kartu (nama di atas, jenis & capaian di bawah) */
+@media (max-width:640px){
+  table.dsb:not(.kl-t) > thead{display:none}
+  table.dsb:not(.kl-t) tr.dsb-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:2px 10px;padding:10px 12px;border-bottom:1px solid var(--rail)}
+  table.dsb:not(.kl-t) tr.dsb-row > td{border:0;padding:0}
+  table.dsb:not(.kl-t) tr.dsb-row > td:first-child{grid-column:1/-1}
+  table.dsb:not(.kl-t) tr.dsb-row > .dsb-jn{display:block!important;font-size:11.5px;color:var(--tx2)}
+  table.dsb:not(.kl-t) tr.dsb-row > .dsb-tg{grid-column:1;text-align:left;font-size:12px;color:var(--tx2)}
+  table.dsb:not(.kl-t) tr.dsb-row > td:last-child{grid-column:2;grid-row:2/span 2;align-self:center;font-size:15px}
+  table.dsb:not(.kl-t) tr.dsb-det:not([hidden]){display:block}
+  table.dsb:not(.kl-t) tr.dsb-det > td{display:block}
+}
 /* Pilihan periode (Dashboard, Review, Isi Data): dua dropdown, huruf normal; pemilih Bulan di bilah atas disembunyikan */
 .per-pick{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .per-pick select{font-weight:400;width:auto;min-width:0}
