@@ -112,7 +112,7 @@ button.card{text-align:left;width:100%;font:inherit}
 .shell{min-height:100vh;display:flex;flex-direction:column;padding-bottom:76px}
 .brand{display:flex;align-items:center;gap:12px;padding:0 6px}
 
-.emblem{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#22c55e,#15803d);color:#fff;font-family:var(--fh);font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none;overflow:hidden;box-shadow:0 6px 16px -6px rgba(21,128,61,.55)}
+.emblem{width:44px;height:44px;border-radius:14px;background:linear-gradient(135deg,#0f8090,#075057);color:#fff;font-family:var(--fh);font-weight:700;display:inline-flex;align-items:center;justify-content:center;flex:none;overflow:hidden;box-shadow:0 6px 16px -6px rgba(21,128,61,.55)}
 .emblem svg{width:68%;height:68%;display:block}
 .emblem.emblem-img{background:#fff;box-shadow:0 0 0 1px var(--bd)}
 .emblem.emblem-img img{width:100%;height:100%;object-fit:contain;padding:3px;display:block}
@@ -1334,6 +1334,102 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .db-chip{background:var(--card);border:1px solid var(--bd);border-radius:999px;padding:6px 14px;font-size:13px;color:var(--tx2)}
 .db-grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px}
 .db-c{background:var(--card);border:1px solid var(--bd);border-radius:22px;padding:18px 20px;min-width:0}
+/* ---------- Bilah samping kiri gaya Apple: kaca tosca, ikon Phosphor Thin, huruf sistem ----------
+ * Desktop: bilah selalu tampil di kiri dan baris menu atas disembunyikan. HP: tetap laci dari kiri. */
+:root{--side:240px;--f-apple:-apple-system,BlinkMacSystemFont,'SF Pro Text','SF Pro Display','Helvetica Neue','Segoe UI',system-ui,sans-serif}
+#view-app{--fh:var(--f-apple);--fb:var(--f-apple);font-family:var(--f-apple);letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
+#view-app .sidebar{display:flex;flex-direction:column;gap:1px;padding:14px 10px;overflow-y:auto;scrollbar-width:none;color:#fff;
+  background:linear-gradient(180deg,rgba(10,102,114,.9) 0%,rgba(7,80,87,.93) 60%,rgba(10,62,69,.95) 100%);
+  -webkit-backdrop-filter:saturate(180%) blur(24px);backdrop-filter:saturate(180%) blur(24px)}
+#view-app .sidebar::-webkit-scrollbar{display:none}
+:root[data-theme="dark"] #view-app .sidebar{background:linear-gradient(180deg,rgba(9,96,109,.85),rgba(10,30,36,.95))}
+#view-app .sidebar .brand{gap:9px;padding:2px 8px 10px}
+#view-app .sidebar .emblem{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.18);box-shadow:none}
+#view-app .sidebar .brand-name{font-size:13px;font-weight:600;line-height:1.2;color:#fff}
+#view-app .sidebar .brand-sub{font-size:11px;color:rgba(255,255,255,.6)}
+.side-cari{display:flex;align-items:center;gap:6px;margin:0 2px 6px;padding:0 8px;border-radius:8px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.65)}
+.side-cari i{font-size:15px}
+.side-cari input{flex:1;min-width:0;border:0;background:transparent;color:#fff;font:400 12.5px var(--f-apple);padding:6px 0;outline:none}
+.side-cari input::placeholder{color:rgba(255,255,255,.6)}
+.side-cari:focus-within{box-shadow:0 0 0 2px rgba(210,236,242,.5)}
+#view-app .sidebar .nav{gap:1px;flex:none}
+#view-app .sidebar .nav-label{font-size:11px;font-weight:600;letter-spacing:0;text-transform:none;color:rgba(255,255,255,.6);padding:10px 10px 4px}
+#view-app .sidebar .nav-item{gap:9px;min-height:30px;padding:5px 10px;border-radius:7px;font-size:13px;font-weight:400;color:rgba(255,255,255,.92);margin:0;width:100%}
+#view-app .sidebar .nav-item i{font-size:19px;width:20px;color:#d2ecf2;flex:none;display:inline-grid;place-items:center}
+#view-app .sidebar .nav-item:hover{background:rgba(255,255,255,.08);color:#fff}
+#view-app .sidebar .nav-item.active{background:rgba(255,255,255,.18);color:#fff;font-weight:600;border-radius:7px;margin-right:0;width:100%;padding-right:10px}
+#view-app .sidebar .nav-item.active i{color:#fff}
+#view-app .sidebar .nav-badge{background:transparent;color:rgba(255,255,255,.65);border:0;padding:0;font-size:11px;font-weight:500}
+#view-app .sidebar .side-foot{display:none}
+@media(min-width:1024px){
+  #view-app .sidebar{display:flex;transform:none}
+  #view-app .shell{margin-left:var(--side)}
+  #view-app .topnav{display:none!important}
+  #view-app .topbar-spacer{display:block;flex:1}
+  #view-app .topbar{background:rgba(245,245,247,.72);-webkit-backdrop-filter:saturate(180%) blur(20px);backdrop-filter:saturate(180%) blur(20px);border-bottom:.5px solid var(--bd)}
+  :root[data-theme="dark"] #view-app .topbar{background:rgba(28,28,30,.72)}
+}
+/* ---------- Skala huruf bersama (semua halaman setelah login) ----------
+ * Tujuh tingkat agar setiap menu terasa satu bahasa desain:
+ * judul halaman 28 · judul bagian 15 · isi 13 · label & tabel kecil 12 · kepala tabel 11.5 · angka besar 40 · angka sedang 26 */
+#view-app{--ts-judul:28px;--ts-bagian:15px;--ts-isi:13px;--ts-kecil:12px;--ts-th:11.5px;--ts-angka:40px;--ts-angka2:26px}
+#view-app .shell{font-size:var(--ts-isi);line-height:1.5}
+#view-app .h1,#view-app .db-h1{font-size:var(--ts-judul);line-height:1.2;font-weight:700;letter-spacing:-.02em}
+#view-app .page-head{margin-bottom:16px}
+#view-app .page-head .muted,#view-app .db-hello p{font-size:var(--ts-isi);color:var(--tx2)}
+#view-app .h2,#view-app .h3,#view-app .db-h2,#view-app .lap-h,#view-app .sec-top .h2{font-size:var(--ts-bagian);line-height:1.35;font-weight:600;letter-spacing:-.01em}
+#view-app .db-lbl,#view-app .kpi-label,#view-app .dsb-h4{font-size:var(--ts-kecil);font-weight:600;color:var(--tx2);letter-spacing:0;text-transform:none}
+#view-app .db-hint,#view-app .muted.sm,#view-app .sm,#view-app .db-sub,#view-app .kpi-sub{font-size:var(--ts-kecil)}
+#view-app .muted{font-size:inherit}
+#view-app .db-big,#view-app .kpi-num{font-size:var(--ts-angka);line-height:1.1;font-weight:700;letter-spacing:-.03em}
+#view-app .db-big small{font-size:15px}
+#view-app .db-mid{font-size:var(--ts-angka2);line-height:1.15;font-weight:700}
+#view-app .db-mid small{font-size:13px}
+/* sub-menu (tab di atas halaman) satu ukuran */
+#view-app .seg-btn{font-size:var(--ts-isi);font-weight:500;min-height:34px;padding:0 14px}
+#view-app .seg-btn .ic{font-size:18px}
+#view-app .seg-sub .seg-btn{font-size:var(--ts-isi)}
+/* tabel dan daftar indikator */
+#view-app .tbl,#view-app .dsb,#view-app .dsb-kt{font-size:var(--ts-isi)}
+#view-app .tbl thead th,#view-app .dsb th,#view-app .ssg th{font-size:var(--ts-th);font-weight:600;letter-spacing:0;text-transform:none}
+#view-app .ssg .ssg-fz,#view-app .dsb-nm{font-size:var(--ts-isi)}
+#view-app .ssg tr.ssg-g td{font-size:var(--ts-th)}
+#view-app .btn{font-size:var(--ts-isi)}
+#view-app .btn-sm{font-size:var(--ts-kecil)}
+
+/* Halaman login memakai huruf sistem Apple seperti aplikasi; judul di kiri (.lh-text) dan footer tetap memakai huruf lama */
+#view-login{--fb:var(--f-apple);--fh:var(--f-apple);font-family:var(--f-apple);letter-spacing:-.01em;-webkit-font-smoothing:antialiased}
+#view-login .lh-text,#view-login .a-foot{--fh:'Figtree',system-ui,sans-serif;--fb:'Figtree',system-ui,-apple-system,sans-serif;font-family:var(--fb);letter-spacing:normal}
+#view-login .lp-top .lp-link{font-family:var(--f-apple);font-weight:500}
+#view-login .lp-welcome-h,#view-login .login-card .h2{font-family:var(--f-apple);font-weight:600;letter-spacing:-.01em}
+#view-login .login-card input,#view-login .login-card select,#view-login .login-card textarea,#view-login .login-card .btn{font-family:var(--f-apple)}
+/* Judul kiri atas halaman login: huruf grotesk ramping sangat tebal (Anton), rapat seperti poster */
+#view-login .lh-title{font-family:'Anton','Helvetica Neue Condensed','Arial Narrow',sans-serif;font-weight:400;font-size:clamp(40px,3.6vw,56px);line-height:.92;letter-spacing:-.005em}
+#view-login .lh-title::after{margin-top:14px}
+@media (max-width:1023px){#view-login .lh-title{font-size:38px}}
+/* Logo garis di atas judul kiri halaman login */
+#view-login .lh-mark{display:block;width:64px;height:58px;margin:0 0 12px -4px}
+#view-login .lh-mark svg{width:100%;height:100%;display:block}
+@media (max-width:1023px){#view-login .lh-mark{width:48px;height:44px;margin-bottom:8px}}
+/* Laporan Eksekutif di dalam aplikasi: ikut warna tema dan skala huruf (PDF unduhan tetap memakai warna cetak RPT_CSS) */
+#view-app .rpt{font-family:inherit;font-size:var(--ts-isi);color:var(--tx)}
+#view-app .rpt h1{font-size:18px;font-weight:700;letter-spacing:-.01em}
+#view-app .rpt h2{font-size:var(--ts-bagian);font-weight:600;color:var(--p-d);border-bottom-color:var(--bd)}
+#view-app .rpt th,#view-app .rpt td{border-color:var(--bd);color:var(--tx)}
+#view-app .rpt th{background:var(--p-l);font-size:var(--ts-th);font-weight:600}
+#view-app .rpt td:first-child,#view-app .rpt td.r{white-space:nowrap}
+#view-app .rpt .sm{color:var(--tx2);font-size:var(--ts-kecil)}
+#view-app .rpt .kp{border-color:var(--bd);border-radius:10px}
+:root[data-theme="dark"] #view-app .rpt h2{color:#5ac8d4}
+:root[data-theme="dark"] #view-app .rpt th{background:rgba(90,200,212,.14)}
+:root[data-theme="dark"] #view-app .rpt .ok{color:#34d399}
+:root[data-theme="dark"] #view-app .rpt .warn{color:#fb923c}
+:root[data-theme="dark"] #view-app .rpt .crit{color:#f87171}
+/* Pola garis lingkaran tipis di latar setiap halaman (kanan atas & kiri bawah), tetap di tempat saat digulir */
+#view-app .shell{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720'%3E%3Cg fill='none' stroke='%230a7f8c' stroke-opacity='.09' stroke-width='.8'%3E%3Ccircle cx='360' cy='360' r='60'/%3E%3Ccircle cx='360' cy='360' r='96'/%3E%3Ccircle cx='360' cy='360' r='132'/%3E%3Ccircle cx='360' cy='360' r='168'/%3E%3Ccircle cx='360' cy='360' r='204'/%3E%3Ccircle cx='360' cy='360' r='240'/%3E%3Ccircle cx='360' cy='360' r='276'/%3E%3Ccircle cx='360' cy='360' r='312'/%3E%3Ccircle cx='360' cy='360' r='348'/%3E%3C/g%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720'%3E%3Cg fill='none' stroke='%230a7f8c' stroke-opacity='.09' stroke-width='.8'%3E%3Ccircle cx='360' cy='360' r='60'/%3E%3Ccircle cx='360' cy='360' r='96'/%3E%3Ccircle cx='360' cy='360' r='132'/%3E%3Ccircle cx='360' cy='360' r='168'/%3E%3Ccircle cx='360' cy='360' r='204'/%3E%3Ccircle cx='360' cy='360' r='240'/%3E%3Ccircle cx='360' cy='360' r='276'/%3E%3Ccircle cx='360' cy='360' r='312'/%3E%3Ccircle cx='360' cy='360' r='348'/%3E%3C/g%3E%3C/svg%3E");background-repeat:no-repeat;background-attachment:fixed;
+  background-position:right -200px top -220px,calc(var(--side) - 300px) calc(100% + 260px);background-size:720px 720px,620px 620px}
+:root[data-theme="dark"] #view-app .shell{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720'%3E%3Cg fill='none' stroke='%23d2ecf2' stroke-opacity='.05' stroke-width='.8'%3E%3Ccircle cx='360' cy='360' r='60'/%3E%3Ccircle cx='360' cy='360' r='96'/%3E%3Ccircle cx='360' cy='360' r='132'/%3E%3Ccircle cx='360' cy='360' r='168'/%3E%3Ccircle cx='360' cy='360' r='204'/%3E%3Ccircle cx='360' cy='360' r='240'/%3E%3Ccircle cx='360' cy='360' r='276'/%3E%3Ccircle cx='360' cy='360' r='312'/%3E%3Ccircle cx='360' cy='360' r='348'/%3E%3C/g%3E%3C/svg%3E"),url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='720' height='720' viewBox='0 0 720 720'%3E%3Cg fill='none' stroke='%23d2ecf2' stroke-opacity='.05' stroke-width='.8'%3E%3Ccircle cx='360' cy='360' r='60'/%3E%3Ccircle cx='360' cy='360' r='96'/%3E%3Ccircle cx='360' cy='360' r='132'/%3E%3Ccircle cx='360' cy='360' r='168'/%3E%3Ccircle cx='360' cy='360' r='204'/%3E%3Ccircle cx='360' cy='360' r='240'/%3E%3Ccircle cx='360' cy='360' r='276'/%3E%3Ccircle cx='360' cy='360' r='312'/%3E%3Ccircle cx='360' cy='360' r='348'/%3E%3C/g%3E%3C/svg%3E")}
+@media(max-width:1023px){#view-app .shell{background-position:right -260px top -260px,left -320px bottom -320px;background-size:560px 560px,520px 520px}}
 /* Pilihan periode (Dashboard, Review, Isi Data): dua dropdown, huruf normal; pemilih Bulan di bilah atas disembunyikan */
 .per-pick{display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap}
 .per-pick select{font-weight:400;width:auto;min-width:0}

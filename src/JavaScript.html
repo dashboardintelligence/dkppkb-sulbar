@@ -24,6 +24,9 @@
     { id: 'syncform', label: 'Sync Form', icon: 'sync_alt', group: 'Pengaturan', roles: ['admin', 'staf'] },
     { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Pengaturan' }
   ];
+  // Ikon bilah samping: Phosphor Thin (garis tipis, gaya Apple)
+  var IKON_SIDE = { dashboard: 'squares-four', review: 'clipboard-text', inputdata: 'pencil-simple-line', laporan: 'file-text', pengaturan: 'gear-six',
+    monitoring: 'seal-check', tambahindikator: 'target', pengguna: 'users', konten: 'image', syncform: 'arrows-clockwise', panduan: 'book-open' };
   var BOTTOM = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'review', label: 'Review', icon: 'fact_check' },
@@ -39,7 +42,7 @@
     { id: 'laporan', label: 'Laporan' },
     { label: 'Pengaturan', children: ['pengaturan', 'monitoring', 'tambahindikator', 'pengguna', 'konten', 'syncform', 'panduan'] }
   ];
-  var EMBLEM_SVG = '<svg viewBox="0 0 32 32" aria-hidden="true" focusable="false"><circle cx="16" cy="16" r="13.2" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.4"/><path d="M13 7h6v6h6v6h-6v6h-6v-6H7v-6h6z" fill="#fff"/></svg>';
+  var EMBLEM_SVG = '<svg viewBox="0 6 120 108" aria-hidden="true" focusable="false"><path d="M30 82h60a19 19 0 0 0 3-37.8A26 26 0 0 0 43 38a19 19 0 0 0-13 44Z" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/><path d="M34 64h12l5-10 8 20 7-16 6 6h4l8-12M78 52h6v6" fill="none" stroke="#bfe6e1" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M60 82v20M54 96l6 6 6-6M52 34v-6" fill="none" stroke="#d9b45a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="52" cy="24" r="4" fill="#d9b45a"/></svg>';
   var ROLE_LABEL = { admin: 'Administrator', staf: 'Staf Admin', pimpinan: 'Pimpinan', pic: 'PIC Bidang' };
 
   /* ---------- util ---------- */
@@ -501,22 +504,9 @@
       return navigateTo(awal, {}, segar ? { fresh: true } : undefined).then(function () { prefetchMenu(); startKeepAlive(); });
     });
   }
-  /* Logo resmi (opsional, dari Config LogoUrl). Tanpa URL, dipakai emblem hijau bawaan. */
-  function applyLogo(url) {
-    if (!/^https:\/\/[^\s"'<>]+$/.test(url || '') && !/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+\/=]+$/.test(url || '')) {
-      $$('.emblem[data-logo]').forEach(function (el) { el.removeAttribute('data-logo'); el.classList.remove('emblem-img'); el.innerHTML = EMBLEM_SVG; });
-      return;
-    }
-    $$('.emblem').forEach(function (el) {
-      if (el.getAttribute('data-logo') === url) return;
-      el.setAttribute('data-logo', url);
-      el.classList.add('emblem-img');
-      el.innerHTML = '';
-      var img = document.createElement('img');
-      img.alt = 'Logo'; img.decoding = 'async'; img.referrerPolicy = 'no-referrer';
-      img.onerror = function () { el.classList.remove('emblem-img'); el.removeAttribute('data-logo'); el.innerHTML = EMBLEM_SVG; };
-      img.src = url; el.appendChild(img);
-    });
+  /* Logo resmi aplikasi: Awan Denyut Data (bawaan). Logo unggahan lama di Config tidak dipakai lagi. */
+  function applyLogo() {
+    $$('.emblem').forEach(function (el) { if (el.classList.contains('emblem-img') || !el.querySelector('svg')) { el.removeAttribute('data-logo'); el.classList.remove('emblem-img'); el.innerHTML = EMBLEM_SVG; } });
   }
   /* Nama, subjudul, logo, dan ikon tab dari Pengaturan */
   var BRAND = { nama: 'DKPPKB Sulbar', sub: 'Intelligence' };
@@ -530,12 +520,7 @@
     BRAND.full = full;
     document.title = full;
   }
-  function applyFavicon(url) {
-    var l = document.querySelector('link[rel=icon]'); if (!l) return;
-    if (!url) { if (l.getAttribute('data-asli')) l.setAttribute('href', l.getAttribute('data-asli')); return; }
-    if (!l.getAttribute('data-asli')) l.setAttribute('data-asli', l.getAttribute('href'));
-    l.setAttribute('href', url);
-  }
+  function applyFavicon() { /* ikon tab tetap logo resmi bawaan (Index) */ }
   function buildChrome(d) {
     if (d.cfg) applyBrand(d.cfg.namaApp, d.cfg.subApp);
     applyFavicon(d.cfg && d.cfg.logo);
@@ -550,7 +535,7 @@
     var html = '', g = '';
     items.forEach(function (m) {
       if (m.group !== g) { g = m.group; html += '<div class="nav-label">' + esc(g) + '</div>'; }
-      html += '<button type="button" class="nav-item" data-nav="' + m.id + '" data-menu="' + m.id + '"><span class="ic" aria-hidden="true">' + m.icon + '</span><span>' + esc(m.label) + '</span>' +
+      html += '<button type="button" class="nav-item" data-nav="' + m.id + '" data-menu="' + m.id + '"><i class="ph-thin ph-' + (IKON_SIDE[m.id] || 'circle') + '" aria-hidden="true"></i><span>' + esc(m.label) + '</span>' +
         (m.badge ? '<span class="chip chip-warn nav-badge" id="nav-badge" hidden>0</span>' : '') + '</button>';
     });
     $('#nav-side').innerHTML = html;
@@ -1975,6 +1960,15 @@
   /* ---------- inisialisasi ---------- */
   function init() {
     $('#btn-logout-side').addEventListener('click', logout);
+    // Cari menu di bilah samping: sembunyikan item yang tidak cocok (dan judul kelompok yang kosong)
+    $('#nav-cari').addEventListener('input', function () {
+      var q = this.value.trim().toLowerCase(), label = null, ada = false;
+      $$('#nav-side > *').forEach(function (el) {
+        if (el.classList.contains('nav-label')) { if (label) label.hidden = !ada; label = el; ada = false; return; }
+        var cocok = !q || el.textContent.toLowerCase().indexOf(q) >= 0; el.hidden = !cocok; if (cocok) ada = true;
+      });
+      if (label) label.hidden = !ada;
+    });
     var tl = $('#btn-theme-login');
     if (tl) tl.addEventListener('click', function () { window.DkTheme.next(); toast(window.DkTheme.label()); });
     $('#btn-back').addEventListener('click', goBack);
