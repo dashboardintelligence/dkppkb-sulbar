@@ -1446,7 +1446,7 @@
     });
     if (!data.length) return;
     var btn = $('button[type=submit]', f); btn.disabled = true; btn.textContent = 'Menyimpan…';
-    api('apiSimpanIsianKabMassal', [{ tahun: Number(f.getAttribute('data-tahun')), tw: Number(f.getAttribute('data-tw')), data: data }])
+    api('apiSimpanIsianKabMassal', [{ tahun: Number(f.getAttribute('data-tahun')), tw: Number(f.getAttribute('data-tw')), data: data, dp: !!(ssgMeta() || {}).dp }])
       .then(function (r) {
         $$('.ssg-in', f).forEach(function (i) { i.setAttribute('data-o', i.value.trim()); i.classList.remove('chg'); });
         toast(r.tersimpan + ' isian tersimpan' + (r.lewat && r.lewat.length ? ' · dilewati ' + r.lewat.join(', ') : '') + '.', 'ok'); reload();
@@ -1482,9 +1482,9 @@
   function ssgTambah() {
     if (ssgKotor()) { toast('Simpan atau batalkan perubahan angka dulu.', 'err'); return; }
     var mt = ssgMeta() || {}, opt = function (a, v) { return a.map(function (x) { return '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join(''); };
-    openModal('Tambah indikator Sulbar Sehat', '<form id="form-ssg-ind" novalidate><p class="muted sm" style="margin:0 0 10px">Indikator baru langsung muncul sebagai baris di tabel dan siap diisi per kabupaten.</p>' +
+    openModal(mt.dp ? 'Tambah indikator Data Program' : 'Tambah indikator Sulbar Sehat', '<form id="form-ssg-ind" novalidate><p class="muted sm" style="margin:0 0 10px">Indikator baru langsung muncul sebagai baris di tabel dan siap diisi per kabupaten.</p>' +
       '<div class="field"><label for="ssgi-nama">Nama indikator</label><input class="input" id="ssgi-nama" name="nama" maxlength="200" required placeholder="mis. Remaja putri mendapat edukasi gizi"></div>' +
-      '<div class="form-grid"><div class="field"><label for="ssgi-grup">Kelompok</label><select class="input" id="ssgi-grup" name="grup">' + opt(mt.grup || [], '') + '<option>Lainnya</option></select></div>' +
+      '<div class="form-grid"><div class="field"><label for="ssgi-grup">' + (mt.dp ? 'Program' : 'Kelompok') + '</label><select class="input" id="ssgi-grup" name="grup">' + opt(mt.grup || [], '') + (mt.dp ? '' : '<option>Lainnya</option>') + '</select></div>' +
       '<div class="field"><label for="ssgi-bid">Bidang</label><select class="input" id="ssgi-bid" name="bidang">' + opt(mt.bidang || [], '') + '</select></div>' +
       '<div class="field"><label for="ssgi-sat">Satuan</label><select class="input" id="ssgi-sat" name="satuan">' + opt(['%', 'orang', 'desa', 'per 1.000', 'per 100.000 KH'], '%') + '</select></div>' +
       '<div class="field"><label for="ssgi-tgt">Target</label><input class="input" id="ssgi-tgt" name="target" inputmode="decimal" value="80"></div>' +
@@ -1496,7 +1496,9 @@
     if (String(o.nama || '').trim().length < 3) { msg.textContent = 'Tulis nama indikator.'; f.elements.nama.focus(); return; }
     var tgt = angkaKab(o.target); if (tgt === null || isNaN(tgt)) { msg.textContent = 'Target harus berupa angka.'; return; }
     btn.disabled = true;
-    api('apiSimpanIndikator', [{ baru: true, nama: o.nama, grup: o.grup, bidang: o.bidang, satuan: o.satuan, target: tgt, arah: o.arah, jenis: 'Sulbar Sehat', frekuensi: 'Triwulan' }])
+    var dp = !!(ssgMeta() || {}).dp;
+    api('apiSimpanIndikator', [dp ? { baru: true, nama: o.nama, bidang: o.bidang, satuan: o.satuan, target: tgt, arah: o.arah, jenis: o.grup, frekuensi: 'Triwulan' }
+      : { baru: true, nama: o.nama, grup: o.grup, bidang: o.bidang, satuan: o.satuan, target: tgt, arah: o.arah, jenis: 'Sulbar Sehat', frekuensi: 'Triwulan' }])
       .then(function (r) { closeModal(); toast('Indikator ' + r.id + ' ditambahkan.', 'ok'); reload(); })
       .catch(function (e) { btn.disabled = false; if (!e.handled) msg.textContent = e.message; });
   }
