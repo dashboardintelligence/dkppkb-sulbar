@@ -1881,6 +1881,12 @@
       case 'notif-close': closeNotif(); $('#btn-notif').focus(); break;
       case 'lbr-det': { var dt = $('#form-lbr tr[data-det="' + el.getAttribute('data-row') + '"]'); if (dt) { dt.hidden = !dt.hidden; if (!dt.hidden) { var ta = $('textarea', dt); if (ta) ta.focus(); } } break; }
       case 'lbr-batal': lbrBatal(); break;
+      case 'peta-mode': {
+        var kp = el.closest('.db-petac'), md = el.getAttribute('data-v');
+        $$('.db-pseg .seg-btn', kp).forEach(function (b) { b.classList.toggle('is-on', b === el); });
+        $$('.db-pblok', kp).forEach(function (b) { b.hidden = b.getAttribute('data-mode') !== md; });
+        break;
+      }
       case 'tbl-unduh': unduhTabel(el.getAttribute('data-nama')); break;
       case 'nav-induk': {
         var sub = $('.nav-subs', el.closest('.nav-grp')), bk = sub.hidden;
@@ -2116,6 +2122,26 @@
     ev.preventDefault();
     var n = ssgTempel(t, teks); ssgStatus();
     toast(n ? n + ' kotak terisi dari tempelan. Periksa lalu tekan Simpan.' : 'Tidak ada angka yang bisa ditempel di sini.', n ? 'ok' : 'err');
+  });
+  /* Peta Dashboard: sorot kabupaten saat kursor di peta atau di barisnya, dan tampilkan keterangan di dekat kursor */
+  function petaSorot(blok, k) {
+    $$('.db-pk', blok).forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-k') === k); });
+    $$('.db-bar[data-k]', blok).forEach(function (b) { b.classList.toggle('on', b.getAttribute('data-k') === k); });
+    var s = $('.db-peta', blok); if (s) s.classList.toggle('fokus', !!k);
+  }
+  document.addEventListener('mousemove', function (ev) {
+    var t = ev.target, blok = t.closest && t.closest('.db-pblok'); if (!blok) return;
+    var p = t.closest('.db-pk'), b = t.closest('.db-bar[data-k]'), tip = $('.db-tip', blok);
+    petaSorot(blok, p ? p.getAttribute('data-k') : b ? b.getAttribute('data-k') : null);
+    if (!p) { tip.hidden = true; return; }
+    var d = []; try { d = JSON.parse(p.getAttribute('data-tip')); } catch (e) { }
+    tip.innerHTML = '<b>' + esc(d[0] || '') + '</b>' + d.slice(1).map(function (x) { x = x.split('|'); return '<span>' + esc(x[0]) + '<em>' + esc(x[1] || '') + '</em></span>'; }).join('');
+    var r = $('.db-pw', blok).getBoundingClientRect();
+    tip.hidden = false; tip.style.left = Math.min(r.width - 170, ev.clientX - r.left + 12) + 'px'; tip.style.top = (ev.clientY - r.top + 12) + 'px';
+  });
+  document.addEventListener('mouseout', function (ev) {
+    var blok = ev.target.closest && ev.target.closest('.db-pblok'); if (!blok || (ev.relatedTarget && blok.contains(ev.relatedTarget))) return;
+    petaSorot(blok, null); $('.db-tip', blok).hidden = true;
   });
   document.addEventListener('input', function (ev) {
     if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
