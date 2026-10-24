@@ -14,8 +14,15 @@
   var MENU = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', group: 'Utama' },
     { id: 'review', label: 'Review', icon: 'fact_check', group: 'Utama' },
-    { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'pic', 'kab'] },
+    { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'pic'] },
     { id: 'laporan', label: 'Laporan', icon: 'description', group: 'Utama' },
+    // Menu induk (id diawali _) membuka sub-menu Isi Data dan Review; bila hanya satu sub-menu yang boleh, tampil sebagai satu menu biasa
+    { id: '_spbe', label: 'SPBE', icon: 'lan', group: 'Monev', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
+    { id: 'spbeisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf'] },
+    { id: 'spbe', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
+    { id: '_monev', label: 'Monev Kinerja', icon: 'rule', group: 'Monev', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
+    { id: 'monevisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_monev', roles: ['admin', 'staf', 'pic'] },
+    { id: 'monev', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_monev', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
     { id: 'pengaturan', label: 'Pengaturan', icon: 'settings', group: 'Pengaturan' },
     { id: 'monitoring', label: 'Verifikasi & Pengingat', icon: 'fact_check', group: 'Pengaturan', roles: ['admin', 'staf', 'pimpinan'] },
     { id: 'tambahindikator', label: 'Kelola Indikator', icon: 'add_circle', group: 'Pengaturan', roles: ['admin', 'staf'] },
@@ -23,7 +30,7 @@
     { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Pengaturan' }
   ];
   // Ikon bilah samping: Phosphor Thin (garis tipis, gaya Apple)
-  var IKON_SIDE = { dashboard: 'squares-four', review: 'clipboard-text', inputdata: 'pencil-simple-line', laporan: 'file-text', pengaturan: 'gear-six',
+  var IKON_SIDE = { dashboard: 'squares-four', review: 'clipboard-text', inputdata: 'pencil-simple-line', laporan: 'file-text', _spbe: 'cpu', _monev: 'chart-line-up', pengaturan: 'gear-six',
     monitoring: 'seal-check', tambahindikator: 'target', pengguna: 'users', panduan: 'book-open' };
   var BOTTOM = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -32,16 +39,18 @@
     { id: 'laporan', label: 'Laporan', icon: 'description' },
     { id: '_menu', label: 'Menu', icon: 'menu' }
   ];
-  /* Menu tab atas: Dashboard, Review, Isi Data, Laporan, Pengaturan. SPBE/Kinerja di Isi Data; Tindak Lanjut dan Permintaan Data di Laporan. */
+  /* Menu tab atas: Dashboard, Review, Isi Data, Laporan, SPBE, Monev Kinerja, Pengaturan. Tindak Lanjut dan Permintaan Data di Laporan. */
   var TOP = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'review', label: 'Review' },
     { id: 'inputdata', label: 'Isi Data' },
     { id: 'laporan', label: 'Laporan' },
+    { label: 'SPBE', children: ['spbeisi', 'spbe'] },
+    { label: 'Monev Kinerja', children: ['monevisi', 'monev'] },
     { label: 'Pengaturan', children: ['pengaturan', 'monitoring', 'tambahindikator', 'pengguna', 'panduan'] }
   ];
   var EMBLEM_SVG = '<svg viewBox="0 6 120 108" aria-hidden="true" focusable="false"><path d="M30 82h60a19 19 0 0 0 3-37.8A26 26 0 0 0 43 38a19 19 0 0 0-13 44Z" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/><path d="M34 64h12l5-10 8 20 7-16 6 6h4l8-12M78 52h6v6" fill="none" stroke="#bfe6e1" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M60 82v20M54 96l6 6 6-6M52 34v-6" fill="none" stroke="#d9b45a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="52" cy="24" r="4" fill="#d9b45a"/></svg>';
-  var ROLE_LABEL = { admin: 'Administrator', staf: 'Staf Admin', pimpinan: 'Pimpinan', pic: 'PIC Bidang', kab: 'PIC Kabupaten' };
+  var ROLE_LABEL = { admin: 'Administrator', staf: 'Staf Admin', pimpinan: 'Pimpinan', pic: 'PIC Bidang' };
 
   /* ---------- util ---------- */
   function $(s, r) { return (r || document).querySelector(s); }
@@ -182,16 +191,24 @@
       call('apiMerek', []).catch(function () { });
     }, 240000);
   }
-  /** Halaman tanpa menu sendiri disorot di menu induknya (SPBE/Kinerja di Isi Data, halaman lain di Laporan). */
+  /** Halaman tanpa menu sendiri disorot di menu induknya (Tindak Lanjut dan Permintaan Data di Laporan). */
   function menuInduk(page) {
-    var isi = AppState.user && ['admin', 'staf', 'pic'].indexOf(AppState.user.role) >= 0;
-    if (page === 'spbe' || page === 'monev') return isi ? 'inputdata' : 'laporan';
+    if (page === 'monev' && AppState.params && AppState.params.sasaran) return 'monevisi';   // rincian sasaran dibuka dari Isi Data Monev Kinerja
     return { sulbarsehat: 'laporan', permintaan: 'laporan' }[page] || page;
   }
   function markMenu(page) {
     page = menuInduk(page);
     $$('[data-menu]').forEach(function (b) { b.classList.toggle('active', b.getAttribute('data-menu') === page); });
     $$('.tn-group').forEach(function (g) { $('.tn-item', g).classList.toggle('active', !!$('.tn-sub.active', g)); });
+    tandaiInduk();
+  }
+  /** Menu induk di bilah samping ikut ditandai (dan dibuka) bila salah satu sub-menunya aktif. */
+  function tandaiInduk() {
+    $$('.nav-grp').forEach(function (g) {
+      var on = !!$('.nav-sub.active', g), b = $('.nav-induk', g);
+      b.classList.toggle('induk-on', on);
+      if (on) { b.setAttribute('aria-expanded', 'true'); $('.nav-subs', g).hidden = false; }
+    });
   }
   function closeTopMenus(except) {
     $$('.tn-group').forEach(function (g) {
@@ -511,7 +528,7 @@
   function panduanSingkat(paksa) {
     var u = AppState.user || {}, k = 'dkppkb_panduan_v1_' + u.role;
     try { if (!paksa && localStorage.getItem(k)) return; localStorage.setItem(k, '1'); } catch (e) { if (!paksa) return; }
-    var set = u.role === 'pic' || u.role === 'kab' ? PANDUAN.isi : u.role === 'pimpinan' ? PANDUAN.pimpinan : PANDUAN.admin;
+    var set = u.role === 'pic' ? PANDUAN.isi : u.role === 'pimpinan' ? PANDUAN.pimpinan : PANDUAN.admin;
     openModal('Selamat datang, ' + (u.nama || ''), '<ol class="pd-langkah">' + set.map(function (s) { return '<li><b>' + esc(s[0]) + '</b><span>' + esc(s[1]) + '</span></li>'; }).join('') + '</ol>' +
       '<div class="form-actions"><button type="button" class="btn btn-primary" data-act="close-modal">Mengerti</button></div>');
   }
@@ -544,10 +561,20 @@
     st.innerHTML = d.tahunList.map(function (t) { return '<option value="' + t + '"' + (t === d.cfg.tahun ? ' selected' : '') + '>' + t + '</option>'; }).join('');
     var items = MENU.filter(function (m) { return !m.roles || m.roles.indexOf(u.role) >= 0; });
     var html = '', g = '';
-    items.forEach(function (m) {
-      if (m.group !== g) { g = m.group; html += '<div class="nav-label">' + esc(g) + '</div>'; }
-      html += '<button type="button" class="nav-item" data-nav="' + m.id + '" data-menu="' + m.id + '"><i class="ph-thin ph-' + (IKON_SIDE[m.id] || 'circle') + '" aria-hidden="true"></i><span>' + esc(m.label) + '</span>' +
+    var tombol = function (m, ikon, label, cls) {
+      return '<button type="button" class="nav-item' + (cls || '') + '" data-nav="' + m.id + '" data-menu="' + m.id + '">' + (ikon ? '<i class="ph-thin ph-' + ikon + '" aria-hidden="true"></i>' : '') + '<span>' + esc(label) + '</span>' +
         (m.badge ? '<span class="chip chip-warn nav-badge" id="nav-badge" hidden>0</span>' : '') + '</button>';
+    };
+    items.forEach(function (m) {
+      if (m.induk) return;
+      if (m.group !== g) { g = m.group; html += '<div class="nav-label">' + esc(g) + '</div>'; }
+      var ikon = IKON_SIDE[m.id] || 'circle';
+      if (m.id.charAt(0) !== '_') { html += tombol(m, ikon, m.label); return; }
+      var anak = items.filter(function (x) { return x.induk === m.id; });
+      if (anak.length === 1) { html += tombol(anak[0], ikon, m.label); return; }
+      if (!anak.length) return;
+      html += '<div class="nav-grp"><button type="button" class="nav-item nav-induk" data-act="nav-induk" aria-expanded="true"><i class="ph-thin ph-' + ikon + '" aria-hidden="true"></i><span>' + esc(m.label) + '</span><i class="ph-thin ph-caret-right nav-car" aria-hidden="true"></i></button>' +
+        '<div class="nav-subs">' + anak.map(function (x) { return tombol(x, '', x.label, ' nav-sub'); }).join('') + '</div></div>';
     });
     $('#nav-side').innerHTML = html;
     var boleh = {}; items.forEach(function (m) { boleh[m.id] = m; });
@@ -558,6 +585,7 @@
       }
       var subs = t.children.filter(function (id) { return boleh[id]; });
       if (!subs.length) return '';
+      if (subs.length === 1 && boleh[subs[0]].induk) return '<button type="button" class="tn-item" data-nav="' + subs[0] + '" data-menu="' + subs[0] + '">' + esc(t.label) + '</button>';
       return '<div class="tn-group"><button type="button" class="tn-item" data-act="tn-toggle" aria-expanded="false" aria-controls="tn-menu-' + gi + '">' + esc(t.label) + '<span class="ic" aria-hidden="true">expand_more</span></button>' +
         '<div class="tn-menu" id="tn-menu-' + gi + '" hidden>' + subs.map(function (id) {
           var m = boleh[id];
@@ -765,6 +793,7 @@
     $('#topbar-title').textContent = title || '';
     document.title = (title ? title + ' · ' : '') + (BRAND.full || 'DKPPKB Sulbar Intelligence');
     $$('[data-menu]').forEach(function (b) { var on = b.getAttribute('data-menu') === menuInduk(page); b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
+    tandaiInduk();
     AppState.rendered = true; updBack();
     if (page === 'review') {
       dsbSaring();
@@ -965,7 +994,7 @@
     f._prog = $$('option[data-bidang]', ps).map(function (o) { return { v: o.value, t: o.textContent, b: o.getAttribute('data-bidang') }; });
     f._ikPilih = (d.indikator || []).slice();
     if (edit) {
-      ['nama', 'username', 'role', 'bidang', 'kabupaten', 'email', 'telepon'].forEach(function (k) { if (f.elements[k]) f.elements[k].value = d[k] == null ? '' : d[k]; });
+      ['nama', 'username', 'role', 'bidang', 'email', 'telepon'].forEach(function (k) { if (f.elements[k]) f.elements[k].value = d[k] == null ? '' : d[k]; });
       f.elements.aktif.value = String(d.aktif !== false);
       f.elements.username.readOnly = true;
     } else {
@@ -1015,7 +1044,6 @@
     ps.value = (f._prog || []).some(function (o) { return o.v === cur && o.b === bd; }) ? cur : '';
     show($('[data-program-wrap]', f), pic && !!bd);
     show($('[data-bidang-wrap]', f), pic);
-    show($('[data-kab-wrap]', f), f.elements.role.value === 'kab');
     syncIk(f);
     show($('[data-sandi-manual]', f), baru && f.elements.modeSandi.value === 'manual');
   }
@@ -1322,7 +1350,6 @@
     var o = {
       baru: baru, username: f.elements.username.value.trim().toLowerCase(), nama: f.elements.nama.value.trim(), role: f.elements.role.value,
       bidang: pic ? f.elements.bidang.value : '', program: pic ? f.elements.program.value : '', indikator: pic ? $$('input[name=ik]', f).filter(function (c) { return c.checked && !c.closest('[hidden]'); }).map(function (c) { return c.value; }) : [], email: f.elements.email.value.trim(), telepon: f.elements.telepon.value.trim(),
-      kabupaten: f.elements.role.value === 'kab' ? f.elements.kabupaten.value : '',
       aktif: f.elements.aktif.value !== 'false', modeSandi: f.elements.modeSandi.value,
       password: baru ? f.elements.password.value : f.elements.passwordUbah.value
     };
@@ -1330,7 +1357,6 @@
     $$('.invalid', f).forEach(function (el) { el.classList.remove('invalid'); });
     function bad(el, t) { if (el) el.classList.add('invalid'); msg.textContent = t; if (el) el.focus(); }
     if (!o.nama) return bad(f.elements.nama, 'Nama lengkap wajib diisi.');
-    if (o.role === 'kab' && !o.kabupaten) return bad(f.elements.kabupaten, 'Pilih kabupaten untuk PIC Kabupaten.');
     if (!/^[a-z0-9._\-]{3,40}$/.test(o.username)) return bad(f.elements.username, 'Nama pengguna 3–40 karakter: huruf kecil, angka, titik, atau strip.');
     if (pic && !o.bidang) return bad(f.elements.bidang, 'PIC wajib memilih bidang.');
     if (o.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(o.email)) return bad(f.elements.email, 'Format email tidak valid.');
@@ -1409,7 +1435,7 @@
   function ssgMeta() { var el = $('#ssg-meta'); try { return el ? JSON.parse(el.getAttribute('data-json')) : null; } catch (e) { return null; } }
   function ssgBaris() { return $$('form.ssg-form tbody tr[data-ind]').map(function (tr) { return $$('.ssg-in', tr); }); }
   function ssgKotak(ind, kab, f) { return $('#form-ssg tr[data-ind="' + ind + '"] .ssg-in[data-kab="' + kab + '"][data-f="' + f + '"]'); }
-  function ssgKotor() { return !!$('form.ssg-form .ssg-in.chg'); }
+  function ssgKotor() { return !!$('form.ssg-form .ssg-in.chg, #form-lbr .lbr-in.chg'); }
   function ssgCek(inp) {
     if (!inp.hasAttribute('data-t')) inp.setAttribute('data-t', inp.title || '');
     var v = angkaKab(inp.value), bad = isNaN(v), pesan = 'Bukan angka', tr = inp.closest('tr'), akum = tr.getAttribute('data-akum') || 'persentase', warn = '';
@@ -1514,6 +1540,53 @@
       toast(n ? n + ' kotak diisi dari templat. Periksa lalu tekan Simpan.' : 'Tidak ada angka baru di templat.', n ? 'ok' : 'err');
     };
     fr.readAsText(file);
+  }
+  /* ---------- lembar isian SPBE dan Monev Kinerja (#form-lbr): kotak berubah ditandai, disimpan sekaligus ---------- */
+  function lbrCek(el) {
+    el.classList.toggle('chg', el.value.trim() !== (el.getAttribute('data-o') || ''));
+    if (el.classList.contains('lbr-num')) { var v = el.value.trim().replace(/\s/g, '').replace(',', '.'); el.classList.toggle('bad', v !== '' && (isNaN(Number(v)) || Number(v) < 0)); }
+  }
+  function lbrStatus() {
+    var f = $('#form-lbr'), st = f && $('.lbr-st', f); if (!st) return;
+    var n = {}; $$('.lbr-in.chg', f).forEach(function (i) { n[i.getAttribute('data-row')] = 1; });
+    n = Object.keys(n).length; st.textContent = n ? n + ' baris diubah, belum disimpan' : 'Belum ada perubahan';
+  }
+  function lbrBatal() {
+    var f = $('#form-lbr'); if (!f) return;
+    $$('.lbr-in', f).forEach(function (i) { i.value = i.getAttribute('data-o') || ''; i.classList.remove('chg', 'bad'); });
+    lbrStatus();
+  }
+  function submitLembar(f) {
+    if ($('.lbr-in.bad', f)) { toast('Perbaiki kotak bergaris merah dulu.', 'err'); return; }
+    var baris = {}; $$('.lbr-in.chg', f).forEach(function (i) { baris[i.getAttribute('data-row')] = 1; });
+    var isi = Object.keys(baris).map(function (row) {
+      var o = { row: row, nilai: {}, ubah: [], ids: {} };
+      $$('.lbr-in', f).filter(function (i) { return i.getAttribute('data-row') === row; }).forEach(function (i) {
+        var k = i.getAttribute('data-f'); o.nilai[k] = i.value.trim();
+        if (i.classList.contains('chg')) o.ubah.push(k);
+        if (i.getAttribute('data-id')) o.ids[k] = i.getAttribute('data-id');
+      });
+      return o;
+    });
+    if (!isi.length) return;
+    var btn = $('button[type=submit]', f); btn.disabled = true; btn.textContent = 'Menyimpan…';
+    api(f.getAttribute('data-api'), [{ tahun: Number(f.getAttribute('data-tahun')), tw: Number(f.getAttribute('data-tw')), isi: isi }])
+      .then(function (r) {
+        $$('.lbr-in', f).forEach(function (i) { i.classList.remove('chg'); });
+        if (r.gagal && r.gagal.length) toast(r.tersimpan + ' tersimpan, ' + r.gagal.length + ' gagal: ' + r.gagal[0].pesan, 'err');
+        else toast(r.tersimpan + ' isian tersimpan.', 'ok');
+        reload();
+      })
+      .catch(function (e) { btn.disabled = false; btn.textContent = 'Simpan'; if (!e.handled) toast(e.message, 'err'); });
+  }
+  /** Unduh tabel Review (table[data-unduh]) apa adanya sebagai CSV untuk Excel; baris judul kelompok ikut sebagai satu sel. */
+  function unduhTabel(nama) {
+    var t = $('#app-container table[data-unduh]'); if (!t) return;
+    var q = function (s) { s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+    var out = $$('tr', t).map(function (tr) { return $$('th,td', tr).map(function (x) { return q(x.innerText); }).join(';'); });
+    var blob = new Blob(['\ufeffsep=;\n' + out.join('\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = (nama || 'Review') + '.csv';
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
   function submitSsg(f) {
     if ($('.ssg-in.bad', f)) { toast('Perbaiki kotak bergaris merah dulu.', 'err'); return; }
@@ -1806,6 +1879,14 @@
       }
       case 'open-drawer': openDrawer(); break;
       case 'notif-close': closeNotif(); $('#btn-notif').focus(); break;
+      case 'lbr-det': { var dt = $('#form-lbr tr[data-det="' + el.getAttribute('data-row') + '"]'); if (dt) { dt.hidden = !dt.hidden; if (!dt.hidden) { var ta = $('textarea', dt); if (ta) ta.focus(); } } break; }
+      case 'lbr-batal': lbrBatal(); break;
+      case 'tbl-unduh': unduhTabel(el.getAttribute('data-nama')); break;
+      case 'nav-induk': {
+        var sub = $('.nav-subs', el.closest('.nav-grp')), bk = sub.hidden;
+        sub.hidden = !bk; el.setAttribute('aria-expanded', String(bk));
+        break;
+      }
       case 'tn-toggle': {
         var grp = el.closest('.tn-group'), menu = $('.tn-menu', grp), buka = menu.hidden;
         closeTopMenus(grp);
@@ -2040,6 +2121,7 @@
     if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
     if (ev.target && ev.target.id === 'is-real' && ev.target.form) cekIsian(ev.target.form);
     if (ev.target && ev.target.classList && ev.target.classList.contains('ssg-in')) { ssgCekBaris(ev.target); ssgStatus(); }
+    if (ev.target && ev.target.classList && ev.target.classList.contains('lbr-in')) { lbrCek(ev.target); lbrStatus(); }
     var t = ev.target;
     if (t.matches && t.matches('.tgt-in')) {
       var f = t.form, n = $$('.tgt-in', f).filter(function (el) { return el.value.trim() !== el.getAttribute('data-orig'); }).length;
@@ -2051,6 +2133,7 @@
     var t = ev.target;
     if (t.classList && t.classList.contains('dsb-sel')) { dsbSaring(); return; }
     if (t.classList && t.classList.contains('ssg-prog')) { ssgSaringProg(); return; }
+    if (t.classList && t.classList.contains('lbr-in')) { lbrCek(t); lbrStatus(); return; }
     if (t.classList && t.classList.contains('rv-kab')) { var rm = rvMeta(); navigateTo('review', Object.assign({ per: rm.per }, t.value ? { kab: t.value } : {})); return; }
     if (t.form && t.form.id === 'form-rv-cetak') { rvcSync(); return; }
     if (t.id === 'ssg-file' && t.files && t.files[0]) { ssgUnggah(t.files[0]); t.value = ''; return; }
@@ -2089,6 +2172,7 @@
     if (fid === 'form-pmt-review') return submitPmtReview(f);
     if (fid === 'form-isian') return submitIsian(f);
     if (fid === 'form-ssg') return submitSsg(f);
+    if (fid === 'form-lbr') return submitLembar(f);
     if (fid === 'form-ssg-cat') return submitSsgCat(f);
     if (fid === 'form-ssg-ind') return submitSsgInd(f);
     if (fid === 'form-tl') return submitTl(f);
