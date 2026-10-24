@@ -1607,7 +1607,7 @@
     var msg = $('.form-msg', f), btn = $('button[type=submit]', f);
     if (String(f.elements.konfirmasi.value).trim() !== 'HAPUS') { msg.textContent = 'Ketik HAPUS (huruf besar) untuk melanjutkan.'; return; }
     btn.disabled = true; btn.textContent = 'Memproses… (bisa 1–2 menit)';
-    api('apiGantiDaftarIndikator', []).then(function (r) { closeModal(); toast(r.dihapus + ' indikator lama dihapus, ' + r.ditambah + ' indikator baru dipasang, ' + (r.ditautkan || 0) + ' indikator Sulbar Sehat disatukan. Cadangan: ' + r.cadangan, 'ok'); reload(); })
+    api('apiGantiDaftarIndikator', []).then(function (r) { closeModal(); toast(r.dihapus + ' indikator lama dihapus, ' + r.ditambah + ' indikator baru dipasang, ' + (r.ditautkan || 0) + ' indikator Sulbar Sehat disatukan, ' + (r.timKerja || 0) + ' Tim Kerja dipasang. Cadangan: ' + r.cadangan, 'ok'); reload(); })
       .catch(function (e) { btn.disabled = false; btn.textContent = 'Ganti sekarang'; if (!e.handled) msg.textContent = e.message; });
   }
   function submitHapusInd(f) {
@@ -1880,6 +1880,12 @@
       case 'rvc-semua': $$('#form-rv-cetak .ik-item').forEach(function (l) { if (!l.hidden) $('input', l).checked = el.getAttribute('data-v') === '1'; }); rvcSync(); break;
       case 'ssg-unggah': if (ssgKotor() && !confirm('Ada angka yang belum disimpan. Lanjut mengisi dari templat?')) break; $('#ssg-file').click(); break;
       case 'ss-tl-baru': rvTlBaru(el); break;
+      case 'tim-pasang': {
+        el.disabled = true;
+        api('apiPasangTimKerja', []).then(function (r) { toast(r.ditambah + ' Tim Kerja dipasang.', 'ok'); reload(); })
+          .catch(function (e) { el.disabled = false; if (!e.handled) toast(e.message, 'err'); });
+        break;
+      }
       case 'ganti-ind': {
         openModal('Ganti daftar indikator', '<form id="form-ganti-ind" novalidate><p style="margin:0 0 10px">Tindakan ini memasang ' + esc(el.getAttribute('data-total')) + ' indikator baru dan <b>menghapus permanen ' + esc(el.getAttribute('data-lama')) +
           ' indikator Isi Data lama</b> beserta isian, target, catatan, dan bukti dukungnya. Cadangan lengkap spreadsheet dibuat lebih dulu dan menjadi satu-satunya jalan kembali.</p>' +
@@ -2127,7 +2133,7 @@
         });
         break;
       }
-      case 'edit-ind': { var di = JSON.parse(el.getAttribute('data-json') || '{}'); fillForm('form-indikator', di); var fi = $('#form-indikator'); if (fi && fi.id) fi.elements.id.readOnly = !!di.id; if (fi && !di.id) { fi.elements.satuan.value = '%'; fi.elements.id.readOnly = false; } break; }
+      case 'edit-ind': { var di = JSON.parse(el.getAttribute('data-json') || '{}'); fillForm('form-indikator', di); if ($('#form-indikator')) filterBidangOpts($('#form-indikator').elements.program, $('#form-indikator').elements.bidang.value); var fi = $('#form-indikator'); if (fi && fi.id) fi.elements.id.readOnly = !!di.id; if (fi && !di.id) { fi.elements.satuan.value = '%'; fi.elements.id.readOnly = false; } break; }
       case 'verif':
         el.disabled = true;
         api('apiVerifikasi', [{ indikatorId: el.dataset.id, bulan: Number(el.dataset.bulan), tahun: periode().tahun, setuju: el.dataset.setuju === '1' }])
@@ -2257,6 +2263,7 @@
     if (t.form && t.form.id === 'form-user-modal' && (t.name === 'role' || t.name === 'modeSandi' || t.name === 'bidang')) { syncUserForm(t.form); return; }
     if (t.form && t.form.getAttribute('id') === 'form-user-modal' && (t.name === 'ik' || t.name === 'program')) { syncIk(t.form); return; }
     if (t.form && t.form.getAttribute('id') === 'form-ind-baru' && t.name === 'bidang') { syncIndBaru(t.form); return; }
+    if (t.form && t.form.getAttribute('id') === 'form-indikator' && t.name === 'bidang') { filterBidangOpts(t.form.elements.program, t.value); return; }
     if (t.form && t.form.getAttribute('id') === 'form-tarik') { syncTarik(t.form); return; }
     if (t.id === 'logo-file' && t.files && t.files[0]) {
       var info = $('#logo-info'), fcfg = $('#form-config');
