@@ -1607,8 +1607,23 @@
     var msg = $('.form-msg', f), btn = $('button[type=submit]', f);
     if (String(f.elements.konfirmasi.value).trim() !== 'HAPUS') { msg.textContent = 'Ketik HAPUS (huruf besar) untuk melanjutkan.'; return; }
     btn.disabled = true; btn.textContent = 'Memproses… (bisa 1–2 menit)';
-    api('apiGantiDaftarIndikator', []).then(function (r) { closeModal(); toast(r.dihapus + ' indikator lama dihapus, ' + r.ditambah + ' indikator baru dipasang. Cadangan: ' + r.cadangan, 'ok'); reload(); })
+    api('apiGantiDaftarIndikator', []).then(function (r) { closeModal(); toast(r.dihapus + ' indikator lama dihapus, ' + r.ditambah + ' indikator baru dipasang, ' + (r.ditautkan || 0) + ' indikator Sulbar Sehat disatukan. Cadangan: ' + r.cadangan, 'ok'); reload(); })
       .catch(function (e) { btn.disabled = false; btn.textContent = 'Ganti sekarang'; if (!e.handled) msg.textContent = e.message; });
+  }
+  function submitHapusInd(f) {
+    var msg = $('.form-msg', f), btn = $('button[type=submit]', f);
+    if (String(f.elements.konfirmasi.value).trim() !== 'HAPUS') { msg.textContent = 'Ketik HAPUS (huruf besar) untuk melanjutkan.'; return; }
+    btn.disabled = true; btn.textContent = 'Menghapus…';
+    api('apiHapusIndikator', [f.getAttribute('data-id')]).then(function (r) { closeModal(); toast('Indikator ' + r.id + ' dihapus (' + r.isian + ' isian). Cadangan: ' + r.cadangan, 'ok'); reload(); })
+      .catch(function (e) { btn.disabled = false; btn.textContent = 'Hapus indikator'; if (!e.handled) msg.textContent = e.message; });
+  }
+  function submitHapusBidang(f) {
+    var msg = $('.form-msg', f), btn = $('button[type=submit]', f), tj = f.elements.tujuan ? f.elements.tujuan.value : '';
+    if (f.elements.tujuan && !tj) { msg.textContent = 'Pilih bidang tujuan lebih dulu.'; return; }
+    if (String(f.elements.konfirmasi.value).trim() !== 'HAPUS') { msg.textContent = 'Ketik HAPUS (huruf besar) untuk melanjutkan.'; return; }
+    btn.disabled = true;
+    api('apiHapusBidang', [f.getAttribute('data-nama'), tj]).then(function (r) { closeModal(); toast('Bidang ' + r.dihapus + ' dihapus' + (r.dipindah ? '; ' + r.dipindah + ' data dipindah ke ' + r.tujuan : '') + '.', 'ok'); reload(); })
+      .catch(function (e) { btn.disabled = false; if (!e.handled) msg.textContent = e.message; });
   }
   function submitBidang(f) {
     var msg = $('.form-msg', f), btn = $('button[type=submit]', f);
@@ -1872,6 +1887,16 @@
           '<div class="form-actions"><button class="btn btn-primary" type="submit">Ganti sekarang</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
         break;
       }
+      case 'hapus-ind': {
+        var hn = Number(el.getAttribute('data-n')) || 0, kb = el.getAttribute('data-kembar') === '1';
+        openModal('Hapus indikator', '<form id="form-hapus-ind" novalidate data-id="' + esc(el.getAttribute('data-id')) + '"><p style="margin:0 0 8px"><b>' + esc(el.getAttribute('data-id')) + ' · ' + esc(el.getAttribute('data-nama')) + '</b></p>' +
+          '<p style="margin:0 0 10px">' + (kb ? 'Indikator Sulbar Sehat ini memakai isian bersama dengan indikator Isi Data; yang dihapus hanya daftarnya, isiannya tetap ada di Isi Data.'
+            : 'Indikator dihapus <b>permanen</b> beserta ' + hn + ' isian, target, catatan tindak lanjut, dan bukti dukungnya. Cadangan lengkap spreadsheet dibuat lebih dulu.') +
+          ' Bila hanya ingin menyembunyikannya, pakai <b>Ubah › Status: Nonaktif</b>.</p>' +
+          '<div class="field"><label for="hi-konf">Ketik <b>HAPUS</b> untuk melanjutkan</label><input class="input" id="hi-konf" name="konfirmasi" autocomplete="off"></div>' +
+          '<div class="form-actions"><button class="btn btn-primary" type="submit">Hapus indikator</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
+        break;
+      }
       case 'bidang-ubah': {
         var bl = el.getAttribute('data-lama') || '';
         openModal(bl ? 'Ubah nama bidang' : 'Tambah bidang', '<form id="form-bidang" novalidate><input type="hidden" name="lama" value="' + esc(bl) + '">' +
@@ -1881,11 +1906,15 @@
         break;
       }
       case 'bidang-hapus': {
-        var bn = el.getAttribute('data-nama');
-        if (!confirm('Hapus bidang ' + bn + '?')) break;
-        el.disabled = true;
-        api('apiHapusBidang', [bn]).then(function () { toast('Bidang ' + bn + ' dihapus.', 'ok'); reload(); })
-          .catch(function (e) { el.disabled = false; if (!e.handled) toast(e.message, 'err'); });
+        var bn = el.getAttribute('data-nama'), bni = Number(el.getAttribute('data-ni')) || 0, bnu = Number(el.getAttribute('data-nu')) || 0, blain = []; try { blain = JSON.parse(el.getAttribute('data-lain') || '[]'); } catch (e) { }
+        var bpakai = bni + bnu > 0;
+        openModal('Hapus bidang ' + bn, '<form id="form-hapus-bidang" novalidate data-nama="' + esc(bn) + '">' + (bpakai ?
+          '<div class="hb-ringkas"><div><b>' + bni + '</b><span>indikator</span></div><div><b>' + bnu + '</b><span>akun PIC</span></div></div>' +
+          '<p style="margin:0 0 10px">Bidang ini masih dipakai. Pilih bidang tujuan; semua indikator, akun PIC, dan program di atas dipindahkan ke sana sebelum <b>' + esc(bn) + '</b> dihapus. Isian indikator tidak berubah.</p>' +
+          '<div class="field"><label for="hb-tuju">Pindahkan ke bidang</label><select class="input" id="hb-tuju" name="tujuan"><option value="">— Pilih bidang tujuan —</option>' + blain.map(function (x) { return '<option>' + esc(x) + '</option>'; }).join('') + '</select></div>'
+          : '<p style="margin:0 0 10px">Bidang <b>' + esc(bn) + '</b> tidak dipakai indikator maupun akun PIC, jadi langsung dihapus.</p>') +
+          '<div class="field"><label for="hb-konf">Ketik <b>HAPUS</b> untuk melanjutkan</label><input class="input" id="hb-konf" name="konfirmasi" autocomplete="off"></div>' +
+          '<div class="form-actions"><button class="btn btn-primary" type="submit">' + (bpakai ? 'Pindahkan &amp; hapus' : 'Hapus bidang') + '</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
         break;
       }
       case 'ss-pasang': {
@@ -2261,6 +2290,8 @@
     if (fid === 'form-lbr') return submitLembar(f);
     if (fid === 'form-ganti-ind') return submitGantiInd(f);
     if (fid === 'form-bidang') return submitBidang(f);
+    if (fid === 'form-hapus-ind') return submitHapusInd(f);
+    if (fid === 'form-hapus-bidang') return submitHapusBidang(f);
     if (fid === 'form-ssg-cat') return submitSsgCat(f);
     if (fid === 'form-ssg-ind') return submitSsgInd(f);
     if (fid === 'form-tl') return submitTl(f);
