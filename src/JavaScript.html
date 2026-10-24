@@ -17,6 +17,9 @@
     { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'pic'] },
     { id: 'laporan', label: 'Laporan', icon: 'description', group: 'Utama' },
     // Menu induk (id diawali _) membuka sub-menu Isi Data dan Review; bila hanya satu sub-menu yang boleh, tampil sebagai satu menu biasa
+    { id: '_ss', label: 'Sulbar Sehat', icon: 'monitor_heart', group: 'Monev', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
+    { id: 'ssisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_ss', roles: ['admin', 'staf', 'pic'] },
+    { id: 'ssreview', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_ss', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
     { id: '_spbe', label: 'SPBE', icon: 'lan', group: 'Monev', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
     { id: 'spbeisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf'] },
     { id: 'spbe', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
@@ -30,7 +33,7 @@
     { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Pengaturan' }
   ];
   // Ikon bilah samping: Phosphor Thin (garis tipis, gaya Apple)
-  var IKON_SIDE = { dashboard: 'squares-four', review: 'clipboard-text', inputdata: 'pencil-simple-line', laporan: 'file-text', _spbe: 'cpu', _monev: 'chart-line-up', pengaturan: 'gear-six',
+  var IKON_SIDE = { dashboard: 'squares-four', review: 'clipboard-text', inputdata: 'pencil-simple-line', laporan: 'file-text', _ss: 'heartbeat', _spbe: 'cpu', _monev: 'chart-line-up', pengaturan: 'gear-six',
     monitoring: 'seal-check', tambahindikator: 'target', pengguna: 'users', panduan: 'book-open' };
   var BOTTOM = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -39,12 +42,13 @@
     { id: 'laporan', label: 'Laporan', icon: 'description' },
     { id: '_menu', label: 'Menu', icon: 'menu' }
   ];
-  /* Menu tab atas: Dashboard, Review, Isi Data, Laporan, SPBE, Monev Kinerja, Pengaturan. Tindak Lanjut dan Permintaan Data di Laporan. */
+  /* Menu tab atas: Dashboard, Review, Isi Data, Laporan, Sulbar Sehat, SPBE, Monev Kinerja, Pengaturan. Tindak Lanjut dan Permintaan Data di Laporan. */
   var TOP = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'review', label: 'Review' },
     { id: 'inputdata', label: 'Isi Data' },
     { id: 'laporan', label: 'Laporan' },
+    { label: 'Sulbar Sehat', children: ['ssisi', 'ssreview'] },
     { label: 'SPBE', children: ['spbeisi', 'spbe'] },
     { label: 'Monev Kinerja', children: ['monevisi', 'monev'] },
     { label: 'Pengaturan', children: ['pengaturan', 'monitoring', 'tambahindikator', 'pengguna', 'panduan'] }
@@ -625,7 +629,7 @@
   /* ---------- pilihan periode (Dashboard, Review, Isi Data) ----------
    * per = b1–b12 | tw1–tw4 | s1–s2; angka kumulatif, jadi periode dibaca di bulan akhirnya. Pilihan diingat antarhalaman,
    * dan pemilih Bulan di bilah atas disembunyikan di halaman ini karena sudah digantikan. */
-  var PER_HAL = ['dashboard', 'review', 'inputdata'];
+  var PER_HAL = ['dashboard', 'review', 'inputdata', 'ssisi', 'ssreview'];
   function perSimpan(v) { try { if (v) localStorage.setItem('dkppkb_per', v); } catch (e) { } }
   function perIngat() { try { return localStorage.getItem('dkppkb_per') || ''; } catch (e) { return ''; } }
   function perAkhir(per) {
@@ -795,7 +799,7 @@
     $$('[data-menu]').forEach(function (b) { var on = b.getAttribute('data-menu') === menuInduk(page); b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     tandaiInduk();
     AppState.rendered = true; updBack();
-    if (page === 'review') {
+    if (page === 'review' || page === 'ssreview') {
       dsbSaring();
       var job = null; try { job = JSON.parse(sessionStorage.getItem('dkppkb_cetak') || 'null'); sessionStorage.removeItem('dkppkb_cetak'); } catch (e) { }
       if (job && $('#rv-cetak-meta')) setTimeout(function () { rvCetakJalan(job); }, 200);
@@ -1456,6 +1460,20 @@
   function ssgCekBaris(inp) {
     ssgCek(inp);
     if (inp.getAttribute('data-f') === 's') { var r = ssgKotak(inp.closest('tr').getAttribute('data-ind'), inp.getAttribute('data-kab'), 'r'); if (r) ssgCek(r); }
+    ssgWarna(inp.closest('tr'));
+  }
+  /** Warna ubin satu baris (sama dengan server): persentase = realisasi ÷ sasaran; jumlah/angka dibanding nilai tertinggi; negatif dibalik. */
+  function ssgWarna(tr) {
+    if (!tr || !$('.ssg-ub', tr)) return;
+    var akum = tr.getAttribute('data-akum') || 'persentase', neg = tr.hasAttribute('data-neg'), ub = $$('.ssg-ub[data-kab]', tr);
+    var nilai = ub.map(function (u) { var s = $('[data-f=s]', u), r = $('[data-f=r]', u); return { u: u, s: s ? angkaKab(s.value) : null, r: r ? angkaKab(r.value) : null }; });
+    var maks = Math.max.apply(null, nilai.map(function (x) { return x.r > 0 ? x.r : 0; }).concat([0]));
+    nilai.forEach(function (x) {
+      var v = x.r === null || isNaN(x.r) ? null : akum === 'persentase' ? (x.s > 0 ? x.r / x.s * 100 : null) : (maks > 0 ? x.r / maks * 100 : null);
+      if (v !== null && neg) v = Math.max(0, 100 - v);
+      var k = v === null ? -1 : v < 50 ? 0 : v < 65 ? 1 : v < 80 ? 2 : v < 90 ? 3 : 4;
+      x.u.className = x.u.className.replace(/\bu-?\d\b/g, '').trim() + ' u' + k;
+    });
   }
   function ssgStatus() {
     var f = $('form.ssg-form'); if (!f) return;
@@ -1469,9 +1487,15 @@
     ssgStatus();
   }
   function ssgPindah(inp, arah) {
-    var rows = ssgBaris(), r = -1, c = -1;
-    rows.some(function (row, i) { var k = row.indexOf(inp); if (k >= 0) { r = i; c = k; return true; } return false; });
-    var t = rows[r + arah]; if (t && t[c]) { t[c].focus(); t[c].select(); }
+    // pindah ke kotak kabupaten & jenis yang sama di baris atas/bawah; lewati kotak yang tidak bisa diisi
+    var rows = ssgBaris(), r = -1;
+    rows.some(function (row, i) { if (row.indexOf(inp) >= 0) { r = i; return true; } return false; });
+    var kab = inp.getAttribute('data-kab'), f = inp.getAttribute('data-f');
+    for (var i = r + arah; i >= 0 && i < rows.length; i += arah) {
+      var t = rows[i].filter(function (x) { return !x.disabled && x.getAttribute('data-kab') === kab; });
+      var el = t.filter(function (x) { return x.getAttribute('data-f') === f; })[0] || t[t.length - 1];
+      if (el && !el.closest('tr').hidden) { el.focus(); el.select(); return; }
+    }
   }
   function ssgTempel(inp, teks) {
     var mt = ssgMeta() || { kab: [], excel: [] };
@@ -1578,6 +1602,19 @@
         reload();
       })
       .catch(function (e) { btn.disabled = false; btn.textContent = 'Simpan'; if (!e.handled) toast(e.message, 'err'); });
+  }
+  function submitGantiInd(f) {
+    var msg = $('.form-msg', f), btn = $('button[type=submit]', f);
+    if (String(f.elements.konfirmasi.value).trim() !== 'HAPUS') { msg.textContent = 'Ketik HAPUS (huruf besar) untuk melanjutkan.'; return; }
+    btn.disabled = true; btn.textContent = 'Memproses… (bisa 1–2 menit)';
+    api('apiGantiDaftarIndikator', []).then(function (r) { closeModal(); toast(r.dihapus + ' indikator lama dihapus, ' + r.ditambah + ' indikator baru dipasang. Cadangan: ' + r.cadangan, 'ok'); reload(); })
+      .catch(function (e) { btn.disabled = false; btn.textContent = 'Ganti sekarang'; if (!e.handled) msg.textContent = e.message; });
+  }
+  function submitBidang(f) {
+    var msg = $('.form-msg', f), btn = $('button[type=submit]', f);
+    btn.disabled = true;
+    api('apiSimpanBidang', [{ lama: f.elements.lama.value, nama: f.elements.nama.value }]).then(function (r) { closeModal(); toast('Bidang ' + r.nama + ' disimpan.', 'ok'); reload(); })
+      .catch(function (e) { btn.disabled = false; if (!e.handled) msg.textContent = e.message; });
   }
   /** Unduh tabel Review (table[data-unduh]) apa adanya sebagai CSV untuk Excel; baris judul kelompok ikut sebagai satu sel. */
   function unduhTabel(nama) {
@@ -1715,7 +1752,7 @@
     closeModal();
     if (per !== mt.per) {   // periode lain: muat Review periode itu dulu, lalu cetak
       try { sessionStorage.setItem('dkppkb_cetak', JSON.stringify(job)); } catch (e) { }
-      perSimpan(per); navigateTo('review', Object.assign({ per: per }, mt.kab ? { kab: mt.kab } : {}));
+      perSimpan(per); navigateTo(AppState.page === 'ssreview' ? 'ssreview' : 'review', Object.assign({ per: per }, mt.kab ? { kab: mt.kab } : {}));
       return;
     }
     rvCetakJalan(job);
@@ -1828,6 +1865,29 @@
       case 'rvc-semua': $$('#form-rv-cetak .ik-item').forEach(function (l) { if (!l.hidden) $('input', l).checked = el.getAttribute('data-v') === '1'; }); rvcSync(); break;
       case 'ssg-unggah': if (ssgKotor() && !confirm('Ada angka yang belum disimpan. Lanjut mengisi dari templat?')) break; $('#ssg-file').click(); break;
       case 'ss-tl-baru': rvTlBaru(el); break;
+      case 'ganti-ind': {
+        openModal('Ganti daftar indikator', '<form id="form-ganti-ind" novalidate><p style="margin:0 0 10px">Tindakan ini memasang ' + esc(el.getAttribute('data-total')) + ' indikator baru dan <b>menghapus permanen ' + esc(el.getAttribute('data-lama')) +
+          ' indikator Isi Data lama</b> beserta isian, target, catatan, dan bukti dukungnya. Cadangan lengkap spreadsheet dibuat lebih dulu dan menjadi satu-satunya jalan kembali.</p>' +
+          '<div class="field"><label for="gi-konf">Ketik <b>HAPUS</b> untuk melanjutkan</label><input class="input" id="gi-konf" name="konfirmasi" autocomplete="off"></div>' +
+          '<div class="form-actions"><button class="btn btn-primary" type="submit">Ganti sekarang</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
+        break;
+      }
+      case 'bidang-ubah': {
+        var bl = el.getAttribute('data-lama') || '';
+        openModal(bl ? 'Ubah nama bidang' : 'Tambah bidang', '<form id="form-bidang" novalidate><input type="hidden" name="lama" value="' + esc(bl) + '">' +
+          (bl ? '<p class="muted sm" style="margin:0 0 10px">Nama baru otomatis dipakai di semua indikator, akun PIC, dan program bidang ' + esc(bl) + '.</p>' : '') +
+          '<div class="field"><label for="bd-nama">Nama bidang</label><input class="input" id="bd-nama" name="nama" maxlength="40" value="' + esc(bl) + '" required></div>' +
+          '<div class="form-actions"><button class="btn btn-primary" type="submit">Simpan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
+        break;
+      }
+      case 'bidang-hapus': {
+        var bn = el.getAttribute('data-nama');
+        if (!confirm('Hapus bidang ' + bn + '?')) break;
+        el.disabled = true;
+        api('apiHapusBidang', [bn]).then(function () { toast('Bidang ' + bn + ' dihapus.', 'ok'); reload(); })
+          .catch(function (e) { el.disabled = false; if (!e.handled) toast(e.message, 'err'); });
+        break;
+      }
       case 'ss-pasang': {
         el.disabled = true; el.textContent = 'Memasang…';
         api('apiPasangSulbarSehat').then(function (r) { toast(r.ditambah + ' indikator Sulbar Sehat dipasang.', 'ok'); reload(); })
@@ -2160,7 +2220,7 @@
     if (t.classList && t.classList.contains('dsb-sel')) { dsbSaring(); return; }
     if (t.classList && t.classList.contains('ssg-prog')) { ssgSaringProg(); return; }
     if (t.classList && t.classList.contains('lbr-in')) { lbrCek(t); lbrStatus(); return; }
-    if (t.classList && t.classList.contains('rv-kab')) { var rm = rvMeta(); navigateTo('review', Object.assign({ per: rm.per }, t.value ? { kab: t.value } : {})); return; }
+    if (t.classList && t.classList.contains('rv-kab')) { var rm = rvMeta(); navigateTo(AppState.page === 'ssreview' ? 'ssreview' : 'review', Object.assign({ per: rm.per }, t.value ? { kab: t.value } : {})); return; }
     if (t.form && t.form.id === 'form-rv-cetak') { rvcSync(); return; }
     if (t.id === 'ssg-file' && t.files && t.files[0]) { ssgUnggah(t.files[0]); t.value = ''; return; }
     if (t.classList && (t.classList.contains('per-jn') || t.classList.contains('per-no'))) { perGanti(t); return; }
@@ -2199,6 +2259,8 @@
     if (fid === 'form-isian') return submitIsian(f);
     if (fid === 'form-ssg') return submitSsg(f);
     if (fid === 'form-lbr') return submitLembar(f);
+    if (fid === 'form-ganti-ind') return submitGantiInd(f);
+    if (fid === 'form-bidang') return submitBidang(f);
     if (fid === 'form-ssg-cat') return submitSsgCat(f);
     if (fid === 'form-ssg-ind') return submitSsgInd(f);
     if (fid === 'form-tl') return submitTl(f);

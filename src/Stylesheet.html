@@ -1689,6 +1689,47 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .mv-sas .tung-main:focus-visible{outline:none;box-shadow:var(--ring)}
 :root[data-theme="dark"] .ssg tr.ssg-z td,:root[data-theme="dark"] .ssg tr.ssg-z .ssg-fz{background:#1b2832}
 :root[data-theme="dark"] .ssg-in.chg{background:#16384d}
+/* Isi Data bergaya peta panas: tiap kotak kabupaten berupa ubin membulat, realisasi (besar) di atas sasaran (kecil); warna = capaian */
+.ssg-panas{--u-kosong:#efede6;--u0:#d9efee;--u1:#a9dad8;--u2:#6fbcbf;--u3:#2f8f97;--u4:#0b5f68}
+:root[data-theme="dark"] .ssg-panas{--u-kosong:#2b3640}
+.ssg-panas .ssg{border-spacing:5px;font-size:12.5px}
+.ssg-panas .ssg td{border:0;background:transparent;padding:0}
+.ssg-panas .ssg th{border-bottom:0;padding:6px 4px}
+.ssg-panas .ssg th.c{border-left:0;text-align:center;min-width:84px}
+.ssg-panas .ssg th.ssg-pv{background:var(--card);min-width:116px;color:var(--tx)}
+.ssg-panas .ssg .ssg-fz{min-width:260px;max-width:none;width:100%;box-shadow:none;padding:2px 10px 2px 4px}
+.ssg-panas .ssg-nm{display:block;font-weight:600;line-height:1.3}
+.ssg-panas .ssg-ket{display:block;font-weight:400;font-size:11px;color:var(--mute);line-height:1.3}
+.ssg-neg{font-weight:700;font-size:10.5px;color:#b3261e;background:#fbe9e7;border-radius:99px;padding:1px 7px}
+:root[data-theme="dark"] .ssg-neg{background:#4a1f1b;color:#ffb4a9}
+.ki-grup{display:block;font-size:11px;color:var(--mute)}
+.ganti-ind{border:1px solid #f0c48a;background:linear-gradient(180deg,#fff8ee,var(--card))}
+:root[data-theme="dark"] .ganti-ind{border-color:#6b4e1f;background:var(--card)}
+.ssg-bid{font-weight:600;letter-spacing:0;text-transform:none;color:var(--tx2);background:var(--rail);border-radius:99px;padding:1px 8px;margin-left:4px}
+.ssg-panas .ssg tr.ssg-g td{padding:12px 4px 0;color:var(--p-d);background:transparent}
+.ssg-ub{position:relative;width:84px;min-height:44px;border-radius:10px;display:flex;flex-direction:column-reverse;justify-content:center;align-items:center;padding:3px 2px;background:var(--u-kosong);color:var(--mute)}
+.ssg-ub.u0{background:var(--u0);color:#1d1d1f}.ssg-ub.u1{background:var(--u1);color:#1d1d1f}.ssg-ub.u2{background:var(--u2);color:#1d1d1f}.ssg-ub.u3{background:var(--u3);color:#fff}.ssg-ub.u4{background:var(--u4);color:#fff}
+.ssg-ub .ssg-in{min-width:0;height:auto;padding:0;text-align:center;color:inherit;background:transparent;border:0;border-radius:4px}
+.ssg-ub .ssg-in:hover{background:rgba(255,255,255,.18)}
+.ssg-ub .ssg-in:focus{box-shadow:none;background:rgba(255,255,255,.28)}
+.ssg-ub .ssg-r{font-size:14px;font-weight:700;line-height:20px}
+.ssg-ub .ssg-s{font-size:10.5px;line-height:14px;opacity:.78}
+.ssg-ub .ssg-in::placeholder{color:inherit;opacity:.55}
+.ssg-ub1 .ssg-s{display:none}
+.ssg-ub:focus-within{box-shadow:0 0 0 2px var(--p-d)}
+.ssg-ub .ssg-in.chg,.ssg-ub .ssg-in.warn{background:transparent}
+.ssg-ub:has(.chg)::after{content:'';position:absolute;top:5px;left:5px;width:7px;height:7px;border-radius:50%;background:var(--p-d);box-shadow:0 0 0 1.5px var(--card)}
+.ssg-ub:has(.warn)::before{content:'!';position:absolute;top:3px;right:5px;width:14px;height:14px;border-radius:50%;background:#e3b341;color:#3b2a00;font-size:9.5px;font-weight:800;display:grid;place-items:center}
+.ssg-ub:has(.bad){box-shadow:0 0 0 2px var(--crit)}
+.ssg-panas .ssg .ssg-pv{background:transparent}
+.ssg-ub.pv{width:116px;box-shadow:inset 0 0 0 1.5px currentColor;flex-direction:column;cursor:default}
+.ssg-ub.pv b{font-size:14.5px;line-height:20px}.ssg-ub.pv small{font-size:10px;opacity:.7}
+.ssg-panas td.ssg-pv>.ssg-ub:not(.pv){width:116px}
+.ssg-provonly{text-align:center;font-size:12px;color:var(--mute);border-radius:10px !important;border:1px dashed var(--bd) !important;background:repeating-linear-gradient(135deg,transparent 0 8px,rgba(118,118,128,.06) 8px 16px) !important}
+.ssg-leg{display:flex;flex-wrap:wrap;align-items:center;gap:6px 14px;font-size:12px;color:var(--tx2);margin:10px 2px 0}
+.ssg-skala{display:inline-flex;gap:3px}.ssg-skala i{width:24px;height:11px;border-radius:4px}
+.ssg-skala .u0{background:var(--u0)}.ssg-skala .u1{background:var(--u1)}.ssg-skala .u2{background:var(--u2)}.ssg-skala .u3{background:var(--u3)}.ssg-skala .u4{background:var(--u4)}
+@media (max-width:760px){.ssg-ub{width:76px}.ssg-ub.pv,.ssg-panas td.ssg-pv>.ssg-ub:not(.pv){width:104px}.ssg-panas .ssg .ssg-fz{min-width:170px}}
 /* Penanda "Belum diisi": titik kecil + teks abu-abu, tanpa latar berwarna */
 
 
