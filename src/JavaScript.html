@@ -1282,18 +1282,7 @@
   function mvkMeta() { var el = $('#mvk-meta'); if (!el) return {}; try { return JSON.parse(el.getAttribute('data-json') || '{}'); } catch (e) { return {}; } }
   function mvkBaca(s) { s = angkaId(s); return s === '' || isNaN(Number(s)) ? null : Number(s); }
   function mvkPersen(v) { return v === null ? '—' : v.toFixed(1).replace('.', ',') + '%'; }
-  /** Capaian (realisasi ÷ target) di bawah setiap kotak realisasi satu baris IK. */
-  function mvkHitung(tr) {
-    var tg = $$('td.tgt', tr), re = $$('td.real', tr);
-    re.forEach(function (td, i) {
-      var sm = $('.mvk-cap', td); if (!sm) return;
-      var nilai = function (c) { var x = $('input', c); return mvkBaca(x ? x.value : ($('.mvk-v', c) || {}).textContent || ''); };
-      var r = nilai(td), t = tg[i] ? nilai(tg[i]) : null;
-      if (r === null || !t) { sm.textContent = ''; sm.className = 'mvk-cap'; return; }
-      var c = r / t * 100; sm.textContent = mvkPersen(c); sm.className = 'mvk-cap ' + (c >= 100 ? 'ok' : 'lo');
-    });
-  }
-  function mvkSiap() { $$('.mvk-t tr[data-ik]').forEach(mvkHitung); $$('.mvk-t textarea').forEach(mvkPas); }
+  function mvkSiap() { $$('.mvk-t textarea').forEach(mvkPas); }
   /** Kotak tulisan lembar Monev setinggi isinya, jadi tidak ada gulir di dalam sel. */
   function mvkPas(t) { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }
   function mvkNamaIk(tr) { var td = $('td.ik', tr); if (!td) return ''; var ta = $('textarea', td); return ta ? ta.value.trim() : td.textContent.trim(); }
@@ -1443,7 +1432,6 @@
           var el = f && $('[data-f="' + f + '"]', tr), v = String(c[j] == null ? '' : c[j]).trim();
           if (el && !el.disabled && v !== el.value.trim()) { el.value = v; lbrCek(el); n++; }
         });
-        mvkHitung(tr);
       });
       lbrStatus();
       toast(n ? n + ' kotak diisi dari templat' + (tak ? ', ' + tak + ' IK tidak dikenali' : '') + '. Periksa lalu tekan Simpan.' : 'Tidak ada angka baru di templat' + (tak ? ' (' + tak + ' IK tidak dikenali)' : '') + '.', n ? 'ok' : 'err');
@@ -1546,20 +1534,6 @@
         g.ik.map(function (k) { var c = mvkCap(k, q), s = c === null ? 'na' : c >= 100 ? 'ok' : 'lo'; return '<button type="button" class="kk k-' + s + (MVK.det === k.key ? ' on' : '') + (MVK.sorot && MVK.sorot !== g.p.id ? ' redup' : '') + '" data-mk="' + esc(k.key) + '" title="' + esc(k.n + ' · ' + mvkPersen(c)) + '" aria-label="' + esc(k.n + ', capaian ' + mvkPersen(c)) + '"></button>'; }).join('') +
         '</div><span class="muted sm">' + mm.ok + '/' + g.ik.length + ' capai</span></div>'; }).join('') + '</div>' +
       '<div class="mvk-leg"><span><i style="background:var(--mvk-ok)"></i>Capai target</span><span><i style="background:#e0857a"></i>Di bawah target</span><span><i style="background:var(--mute2)"></i>Belum diisi</span></div>';
-    // perlu perhatian
-    var pp = [];
-    ik.forEach(function (k) {
-      var c = mvkCap(k, q), c0 = mvkCap(k, q - 1), w = [];
-      if (c !== null && c < 100) w.push(['Di bawah target', 's-krit']);
-      if (c !== null && c0 !== null && c < c0) w.push(['Turun dari TW ' + R[q - 2], 's-warn']);
-      if (k.tg[q - 1] && k.re[q - 1] === null) w.push(['Belum diisi', 's-na']);
-      if (k.re[q - 1] !== null && !k.bk[q - 1]) w.push(['Tanpa bukti dukung', 's-warn']);
-      if (w.length) pp.push({ k: k, w: w });
-    });
-    pp.sort(function (a, b) { return b.w.length - a.w.length; });
-    $('#mvk-pp').innerHTML = pp.slice(0, 6).map(function (x) {
-      return '<button type="button" class="mvk-pi" data-mk="' + esc(x.k.key) + '"><b>' + esc(x.k.n) + '</b><span class="why">' + x.w.map(function (w) { return '<span class="mvk-chip ' + w[1] + '">' + w[0] + '</span>'; }).join('') + '<span class="mvk-chip s-na">' + esc(U(x.k.u)) + '</span></span>' + (x.k.cat ? '<span class="cat">“' + esc(x.k.cat) + '”</span>' : '') + '</button>';
-    }).join('') || '<p class="muted sm">Tidak ada IK yang perlu perhatian.</p>';
     // peta panas IK × triwulan
     var h = '<thead><tr><th class="k">IK</th>' + R.map(function (r, i) { return '<th' + (i + 1 === q ? ' class="now"' : '') + '>TW ' + r + '</th>'; }).join('') + '</tr></thead><tbody>';
     P.forEach(function (p) {
@@ -1568,14 +1542,6 @@
       di.forEach(function (k) { h += '<tr><td class="n"><button type="button" data-mk="' + esc(k.key) + '">' + esc(k.n) + '</button><small>' + esc(U(k.u)) + '</small></td>' + [1, 2, 3, 4].map(function (t) { var c = mvkCap(k, t); return '<td class="t u' + mvkKl(c) + '" title="target ' + esc(mvkFv(k.tg[t - 1], k.sat)) + '">' + mvkPersen(c) + '<small>' + esc(mvkFv(k.re[t - 1], k.sat)) + '</small></td>'; }).join('') + '</tr>'; });
     });
     $('#mvk-hm').innerHTML = h + '</tbody>';
-    // rapor per Unit Tim Kerja (terendah di atas)
-    var unit = uniq(ik.map(function (k) { return k.u || '-'; })).concat(ik.some(function (k) { return !k.u; }) ? ['-'] : []).filter(function (x, i, a) { return a.indexOf(x) === i; }).map(function (u) {
-      var ks = ik.filter(function (k) { return (k.u || '-') === u; }), c = ks.map(function (k) { return mvkCap(k, q); }).filter(function (x) { return x !== null; });
-      return { t: u === '-' ? 'Belum ditetapkan' : U(u), n: ks.length, r: avg(c), lo: c.filter(function (x) { return x < 100; }).length, bk: ks.filter(function (k) { return k.re[q - 1] !== null && k.bk[q - 1] > 0; }).length, isi: ks.filter(function (k) { return k.re[q - 1] !== null; }).length };
-    }).sort(function (a, b) { return (a.r === null ? -1 : a.r) - (b.r === null ? -1 : b.r); });
-    $('#mvk-ru').innerHTML = '<thead><tr><th>Unit Tim Kerja</th><th class="r">IK</th><th>Rata-rata capaian</th><th class="r"></th><th class="r">Di bawah target</th><th class="r">Bukti dukung</th></tr></thead><tbody>' + unit.map(function (x) {
-      return '<tr><td>' + esc(x.t) + '</td><td class="r">' + x.n + '</td><td><div class="mvk-bt"><i class="u' + mvkKl(x.r) + '" style="width:' + Math.min(100, x.r || 0) + '%"></i></div></td><td class="r"><b>' + mvkPersen(x.r) + '</b></td><td class="r">' + (x.lo ? '<span class="mvk-chip s-krit">' + x.lo + '</span>' : '0') + '</td><td class="r">' + x.bk + ' / ' + x.isi + '</td></tr>';
-    }).join('') + '</tbody>';
     mvkDetail(q);
   }
   /** Rincian satu IK: angka TW I–IV dan batang peluru (batang = realisasi, garis = target). */
@@ -2642,7 +2608,7 @@
     if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
     if (ev.target && ev.target.id === 'is-real' && ev.target.form) cekIsian(ev.target.form);
     if (ev.target && ev.target.classList && ev.target.classList.contains('ssg-in')) { ssgCekBaris(ev.target); ssgStatus(); }
-    if (ev.target && ev.target.classList && ev.target.classList.contains('lbr-in')) { lbrCek(ev.target); lbrStatus(); if (ev.target.classList.contains('mvk-n')) mvkHitung(ev.target.closest('tr')); if (ev.target.tagName === 'TEXTAREA' && ev.target.closest('.mvk-t')) mvkPas(ev.target); }
+    if (ev.target && ev.target.classList && ev.target.classList.contains('lbr-in')) { lbrCek(ev.target); lbrStatus(); if (ev.target.tagName === 'TEXTAREA' && ev.target.closest('.mvk-t')) mvkPas(ev.target); }
     var t = ev.target;
     if (t.matches && t.matches('.tgt-in')) {
       var f = t.form, n = $$('.tgt-in', f).filter(function (el) { return el.value.trim() !== el.getAttribute('data-orig'); }).length;
