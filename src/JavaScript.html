@@ -1507,26 +1507,45 @@
     var unitKosong = uniq(ik.filter(function (k) { return k.tg[q - 1] && k.re[q - 1] === null; }).map(function (k) { return k.u; })).length, unitSemua = uniq(ik.map(function (k) { return k.u; })).length;
     var d = rata !== null && lalu !== null ? rata - lalu : null, R = MVK_ROM, U = function (u) { return (MVK.unit || {})[u] || 'Belum ditetapkan'; };
     var stak = function (parts) { return '<div class="mvk-stak">' + parts.map(function (p) { return '<i style="flex:' + p[0] + ';background:' + p[1] + '"></i>'; }).join('') + '</div>'; };
-    $('#mvk-kpi').innerHTML =
-      '<div class="card card-pad"><div class="mvk-lbl">Rata-rata capaian IK · TW ' + R[q - 1] + '</div><div class="mvk-big">' + (rata === null ? '—' : rata.toFixed(1).replace('.', ',')) + '<small>%</small></div>' + (d === null ? '' : '<span class="' + (d >= 0 ? 'mvk-naik' : 'mvk-turun') + '">' + (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d).toFixed(1).replace('.', ',') + ' poin dari TW ' + R[q - 2] + '</span>') + '</div>' +
-      '<div class="card card-pad"><div class="mvk-lbl">Status IK</div><div class="mvk-big">' + ok + '<small>capai · ' + lo + ' di bawah · ' + na + ' belum</small></div>' + stak([[ok, 'var(--mvk-ok)'], [lo, '#e0857a'], [na, 'var(--mute2)']]) + '</div>' +
-      '<div class="card card-pad"><div class="mvk-lbl">Kelengkapan bukti dukung</div><div class="mvk-big">' + bukti + '<small>dari ' + wajib.length + ' IK berisi</small></div>' + stak([[bukti, '#0a7f8c'], [wajib.length - bukti, 'var(--mute2)']]) + '</div>' +
-      '<div class="card card-pad"><div class="mvk-lbl">Unit Tim Kerja belum mengisi</div><div class="mvk-big">' + unitKosong + '<small>dari ' + unitSemua + ' unit</small></div></div>';
-    // pohon: empat kolom tetap; tiap kartu menempati baris sebanyak cabang ujungnya agar sejajar dengan induk dan anaknya
-    var P = MVK.P, LV = ['tujuan', 'sasaran', 'program', 'turunan'], anak = function (id) { return P.filter(function (p) { return p.ind === id; }); };
-    var daun = function (p) { var a = anak(p.id); return a.length ? a.reduce(function (n, x) { return n + daun(x); }, 0) : 1; };
     var keys = {}; ik.forEach(function (k) { keys[k.key] = k; });
-    var capNode = function (p) { var c = p.ik.map(function (k, i) { return keys[p.id + '-' + i] ? mvkCap(k, q) : null; }).filter(function (x) { return x !== null; }); return c.length ? Math.min.apply(null, c) : null; };
-    var sel = '', baris = 2, WR = { ok: 'var(--mvk-ok)', warn: '#e3b341', krit: '#e0857a', na: 'var(--mute2)' };
-    var tata = function (p) {
-      var c = capNode(p), s = mvkSt(c), nIk = p.ik.filter(function (k, i) { return keys[p.id + '-' + i]; }).length;
-      sel += '<button type="button" class="mvk-kartu b-' + s + (MVK.det && MVK.det.indexOf(p.id + '-') === 0 ? ' on' : '') + '"' + (p.ik.length ? ' data-mk="' + esc(p.id) + '-0"' : '') + ' data-id="' + esc(p.id) + '" style="grid-column:' + (Math.max(0, LV.indexOf(p.j)) + 1) + ';grid-row:' + baris + ' / span ' + daun(p) + '">' +
-        '<span class="tx">' + esc(p.t) + '</span><span class="bwh"><span class="mvk-bar"><i style="width:' + Math.min(100, c || 0) + '%;background:' + WR[s] + '"></i></span><span class="mvk-cp s-' + s + '">' + mvkPersen(c) + '</span></span><span class="ik">' + nIk + ' IK</span></button>';
-      if (anak(p.id).length) anak(p.id).forEach(tata); else baris++;
-    };
-    anak(null).forEach(tata);
-    $('#mvk-pohon').innerHTML = '<div class="mvk-alur">' + LV.map(function (l, i) { return '<div class="kol-h" style="grid-column:' + (i + 1) + ';grid-row:1">' + mvkNamaJ(l) + '</div>'; }).join('') + sel + '</div><svg class="mvk-sb" aria-hidden="true"></svg>';
-    mvkSambung();
+    var c120 = function (a) { return avg(a.map(function (x) { return Math.min(x, 120); })); };   // capaian satu IK dibatasi 120% saat dirata-rata
+    var rata120 = c120(cs), lalu120 = c120(cp), d120 = rata120 !== null && lalu120 !== null ? rata120 - lalu120 : null, belum = ik.length - cs.length, isi = ik.filter(function (k) { return k.re[q - 1] !== null; }).length;
+    $('#mvk-kpi').innerHTML =
+      '<div class="card card-pad"><div class="mvk-lbl">Rata-rata capaian IK · TW ' + R[q - 1] + '</div><div class="mvk-big">' + (rata120 === null ? '—' : rata120.toFixed(1).replace('.', ',')) + '<small>%</small></div>' + (d120 === null ? '' : '<span class="' + (d120 >= 0 ? 'mvk-naik' : 'mvk-turun') + '">' + (d120 >= 0 ? '▲ ' : '▼ ') + Math.abs(d120).toFixed(1).replace('.', ',') + ' poin dari TW ' + R[q - 2] + '</span>') + '</div>' +
+      '<div class="card card-pad"><div class="mvk-lbl">IK capai target</div><div class="mvk-big">' + ok + '<small>dari ' + ik.length + ' IK</small></div></div>' +
+      '<div class="card card-pad"><div class="mvk-lbl">Di bawah target</div><div class="mvk-big">' + lo + '<small>IK</small></div></div>' +
+      '<div class="card card-pad"><div class="mvk-lbl">Kelengkapan pengisian</div><div class="mvk-big">' + (ik.length ? Math.round(isi / ik.length * 100) : 0) + '<small>% · ' + isi + ' IK berisi</small></div></div>';
+    // kelompok baris: setiap sasaran (beserta program di bawahnya) dan setiap tujuan yang punya IK sendiri
+    var P = MVK.P, anak = function (id) { return P.filter(function (p) { return p.ind === id; }); };
+    var ikGrup = function (p) { var o = p.ik.map(function (k, i) { return keys[p.id + '-' + i]; }).filter(Boolean); anak(p.id).forEach(function (a) { if (a.j !== 'sasaran' && a.j !== 'tujuan') o = o.concat(ikGrup(a)); }); return o; };
+    var grup = [], jalan = function (id, diSasaran) { anak(id).forEach(function (p) {
+      if (p.j === 'sasaran') grup.push({ p: p, ik: ikGrup(p) });
+      else if (!diSasaran && p.ik.length) grup.push({ p: p, ik: ikGrup(p), atas: true });
+      jalan(p.id, diSasaran || p.j === 'sasaran');
+    }); };
+    jalan(null, false);
+    grup = grup.filter(function (g) { return g.ik.length; });
+    var capG = function (g, t) { return c120(g.ik.map(function (k) { return mvkCap(k, t); }).filter(function (x) { return x !== null; })); };
+    var komp = function (a, t) { var c = a.map(function (k) { return mvkCap(k, t); }); return { ok: c.filter(function (x) { return x !== null && x >= 100; }).length, lo: c.filter(function (x) { return x !== null && x < 100; }).length, na: c.filter(function (x) { return x === null; }).length }; };
+    var label = function (g) { return (g.atas ? mvkNamaJ(g.p.j) + ' · ' : '') + g.p.t; };
+    // matriks kelompok × triwulan
+    $('#mvk-mx').innerHTML = '<h2 class="h3">Capaian per sasaran × triwulan</h2><p class="muted sm mvk-hint">Warna = rata-rata capaian IK; angka kecil = IK yang sudah berisi. Klik sel untuk mengganti triwulan, klik nama untuk menyorot kotak IK-nya.</p><div class="tbl-wrap"><table class="mvk-hm mvk-mx"><thead><tr><th class="k">Sasaran</th>' +
+      R.map(function (r, i) { return '<th' + (i + 1 === q ? ' class="now"' : '') + '>TW ' + r + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      grup.map(function (g) { return '<tr' + (MVK.sorot === g.p.id ? ' class="on"' : '') + '><td class="n"><button type="button" data-act="mvk-sorot" data-id="' + esc(g.p.id) + '">' + esc(label(g)) + '</button><small>' + g.ik.length + ' IK</small></td>' +
+        [1, 2, 3, 4].map(function (t) { var c = capG(g, t), n = g.ik.filter(function (k) { return k.re[t - 1] !== null; }).length; return '<td class="t u' + mvkKl(c) + (t === q ? ' on' : '') + '" data-act="mvk-tw-pilih" data-q="' + t + '">' + mvkPersen(c) + '<small>' + n + ' dari ' + g.ik.length + ' IK</small></td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table></div>' +
+      '<div class="mvk-leg"><span><i class="u0"></i>&lt;80%</span><span><i class="u1"></i>80–90%</span><span><i class="u2"></i>90–100%</span><span><i class="u3"></i>100%</span><span><i class="u4"></i>&gt;100%</span><span><i class="u-1"></i>belum ada angka</span></div>';
+    // donat status IK
+    var m = komp(ik, q), tot = ik.length || 1, bag = [[m.ok, 'var(--mvk-ok)', 'Capai target'], [m.lo, '#e0857a', 'Di bawah target'], [m.na, 'var(--mute2)', 'Belum diisi']];
+    var C = 85, Rr = 62, K = 2 * Math.PI * Rr, o = 0, busur = bag.map(function (b) { if (!b[0]) return ''; var L = K * b[0] / tot, s = '<circle cx="' + C + '" cy="' + C + '" r="' + Rr + '" fill="none" stroke="' + b[1] + '" stroke-width="22" stroke-dasharray="' + L.toFixed(2) + ' ' + (K - L).toFixed(2) + '" stroke-dashoffset="' + (-o).toFixed(2) + '" transform="rotate(-90 ' + C + ' ' + C + ')"><title>' + b[2] + ': ' + b[0] + '</title></circle>'; o += L; return s; }).join('');
+    $('#mvk-dn').innerHTML = '<h2 class="h3">Status IK · TW ' + R[q - 1] + '</h2><div class="mvk-donat"><svg width="170" height="170" viewBox="0 0 170 170" role="img" aria-label="' + m.ok + ' capai target, ' + m.lo + ' di bawah target, ' + m.na + ' belum diisi"><circle cx="' + C + '" cy="' + C + '" r="' + Rr + '" fill="none" stroke="var(--rail)" stroke-width="22"/>' + busur +
+      '<text x="' + C + '" y="' + (C + 2) + '" text-anchor="middle" font-size="22" font-weight="700" fill="var(--tx)">' + Math.round(m.ok / tot * 100) + '%</text><text x="' + C + '" y="' + (C + 18) + '" text-anchor="middle" font-size="10.5" fill="var(--tx2)">IK capai target</text></svg>' +
+      '<div class="mvk-dleg">' + bag.map(function (b) { return '<div><i style="background:' + b[1] + '"></i><span>' + b[2] + '</span><b>' + b[0] + ' · ' + Math.round(b[0] / tot * 100) + '%</b></div>'; }).join('') + '</div></div>';
+    // kotak IK: satu kotak = satu IK
+    $('#mvk-wf').innerHTML = '<h2 class="h3">Setiap IK · TW ' + R[q - 1] + '</h2><p class="muted sm mvk-hint">Satu kotak = satu IK. Arahkan kursor untuk nama dan capaiannya; klik untuk membuka rinciannya.</p><div class="mvk-waf">' +
+      grup.map(function (g) { var mm = komp(g.ik, q); return '<div class="rw' + (MVK.sorot === g.p.id ? ' on' : '') + '"><span title="' + esc(label(g)) + '">' + esc(label(g)) + '</span><div class="kt">' +
+        g.ik.map(function (k) { var c = mvkCap(k, q), s = c === null ? 'na' : c >= 100 ? 'ok' : 'lo'; return '<button type="button" class="kk k-' + s + (MVK.det === k.key ? ' on' : '') + (MVK.sorot && MVK.sorot !== g.p.id ? ' redup' : '') + '" data-mk="' + esc(k.key) + '" title="' + esc(k.n + ' · ' + mvkPersen(c)) + '" aria-label="' + esc(k.n + ', capaian ' + mvkPersen(c)) + '"></button>'; }).join('') +
+        '</div><span class="muted sm">' + mm.ok + '/' + g.ik.length + ' capai</span></div>'; }).join('') + '</div>' +
+      '<div class="mvk-leg"><span><i style="background:var(--mvk-ok)"></i>Capai target</span><span><i style="background:#e0857a"></i>Di bawah target</span><span><i style="background:var(--mute2)"></i>Belum diisi</span></div>';
     // perlu perhatian
     var pp = [];
     ik.forEach(function (k) {
@@ -1559,17 +1578,6 @@
     }).join('') + '</tbody>';
     mvkDetail(q);
   }
-  function mvkSambung() {
-    var lane = $('#mvk-pohon'), sb = lane && $('.mvk-sb', lane); if (!sb || !MVK) return;
-    var r0 = lane.getBoundingClientRect(), h = '';
-    MVK.P.forEach(function (p) {
-      if (!p.ind) return;
-      var a = $('[data-id="' + p.ind + '"]', lane), b = $('[data-id="' + p.id + '"]', lane); if (!a || !b) return;
-      var A = a.getBoundingClientRect(), B = b.getBoundingClientRect(), x1 = A.right - r0.left, y1 = A.top + A.height / 2 - r0.top, x2 = B.left - r0.left, y2 = B.top + B.height / 2 - r0.top, mx = (x1 + x2) / 2;
-      h += '<path d="M' + x1 + ' ' + y1 + ' C' + mx + ' ' + y1 + ' ' + mx + ' ' + y2 + ' ' + x2 + ' ' + y2 + '"/>';
-    });
-    sb.innerHTML = h;
-  }
   /** Rincian satu IK: angka TW I–IV dan batang peluru (batang = realisasi, garis = target). */
   function mvkDetail(q) {
     var el = $('#mvk-det'); if (!el) return;
@@ -1598,7 +1606,6 @@
     });
     mvkSimpanBerkas(mvkCsv(rows), 'Review Monev Kinerja TW ' + MVK_ROM[q - 1] + ' ' + MVK.tahun + '.csv');
   }
-  window.addEventListener('resize', function () { if (MVK && $('#mvk-pohon')) mvkSambung(); });
 
   /* ---------- logo: unggah gambar dan perkecil di browser ---------- */
   function perkecilLogo(file, selesai, gagal) {
@@ -2320,6 +2327,8 @@
       case 'mvk-templat': mvkTemplat(); break;
       case 'mvk-unduh': mvkUnduh(); break;
       case 'mvk-det-tutup': MVK.det = null; mvkGambar(); break;
+      case 'mvk-tw-pilih': { var tws = $('#mvk-tw'); if (tws && MVK) { tws.value = el.getAttribute('data-q'); MVK.det = null; mvkGambar(); } break; }
+      case 'mvk-sorot': if (MVK) { MVK.sorot = MVK.sorot === el.getAttribute('data-id') ? null : el.getAttribute('data-id'); mvkGambar(); } break;
       case 'peta-mode': {
         var kp = el.closest('.db-petac'), md = el.getAttribute('data-v');
         $$('.db-pseg .seg-btn', kp).forEach(function (b) { b.classList.toggle('is-on', b === el); });
