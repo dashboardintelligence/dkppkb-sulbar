@@ -14,21 +14,21 @@
   var MENU = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', group: 'Utama' },
     { id: 'review', label: 'Review', icon: 'fact_check', group: 'Utama' },
-    { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'pic'] },
+    { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'admindata', 'pic'] },
     { id: 'laporan', label: 'Laporan', icon: 'description', group: 'Utama' },
     // Menu induk (id diawali _) membuka sub-menu Isi Data dan Review; bila hanya satu sub-menu yang boleh, tampil sebagai satu menu biasa
-    { id: '_ss', label: 'Sulbar Sehat', icon: 'monitor_heart', group: 'Monev', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
-    { id: 'ssisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_ss', roles: ['admin', 'staf', 'pic'] },
-    { id: 'ssreview', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_ss', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
-    { id: '_spbe', label: 'SPBE', icon: 'lan', group: 'Monev', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
-    { id: 'spbeisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf'] },
-    { id: 'spbe', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
-    { id: '_monev', label: 'Monev Kinerja', icon: 'rule', group: 'Monev', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
-    { id: 'monevisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_monev', roles: ['admin', 'staf', 'pic'] },
-    { id: 'monev', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_monev', roles: ['admin', 'staf', 'pic', 'pimpinan'] },
+    { id: '_ss', label: 'Sulbar Sehat', icon: 'monitor_heart', group: 'Monev', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
+    { id: 'ssisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_ss', roles: ['admin', 'staf', 'admindata', 'pic'] },
+    { id: 'ssreview', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_ss', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
+    { id: '_spbe', label: 'SPBE', icon: 'lan', group: 'Monev', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
+    { id: 'spbeisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf', 'adminspbe'] },
+    { id: 'spbe', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
+    { id: '_monev', label: 'Monev Kinerja', icon: 'rule', group: 'Monev', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
+    { id: 'monevisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_monev', roles: ['admin', 'staf', 'adminmonev', 'pic'] },
+    { id: 'monev', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_monev', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
     { id: 'pengaturan', label: 'Pengaturan', icon: 'settings', group: 'Pengaturan' },
-    { id: 'monitoring', label: 'Verifikasi & Pengingat', icon: 'fact_check', group: 'Pengaturan', roles: ['admin', 'staf', 'pimpinan'] },
-    { id: 'tambahindikator', label: 'Kelola Indikator', icon: 'add_circle', group: 'Pengaturan', roles: ['admin', 'staf'] },
+    { id: 'monitoring', label: 'Verifikasi & Pengingat', icon: 'fact_check', group: 'Pengaturan', roles: ['admin', 'staf', 'admindata', 'pimpinan'] },
+    { id: 'tambahindikator', label: 'Kelola Indikator', icon: 'add_circle', group: 'Pengaturan', roles: ['admin', 'staf', 'admindata', 'adminspbe'] },
     { id: 'pengguna', label: 'Kelola Pengguna', icon: 'group', group: 'Pengaturan', roles: ['admin'] },
     { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Pengaturan' }
   ];
@@ -1292,7 +1292,49 @@
       var c = r / t * 100; sm.textContent = mvkPersen(c); sm.className = 'mvk-cap ' + (c >= 100 ? 'ok' : 'lo');
     });
   }
-  function mvkSiap() { $$('.mvk-t tr[data-ik]').forEach(mvkHitung); }
+  function mvkSiap() { $$('.mvk-t tr[data-ik]').forEach(mvkHitung); $$('.mvk-t textarea').forEach(mvkPas); }
+  /** Kotak tulisan lembar Monev setinggi isinya, jadi tidak ada gulir di dalam sel. */
+  function mvkPas(t) { t.style.height = 'auto'; t.style.height = t.scrollHeight + 'px'; }
+  function mvkNamaIk(tr) { var td = $('td.ik', tr); if (!td) return ''; var ta = $('textarea', td); return ta ? ta.value.trim() : td.textContent.trim(); }
+  /** Ubah baris langsung (admin): tambah IK baru di baris, tandai IK atau baris untuk dihapus. Tersimpan saat menekan Simpan. */
+  function mvkBarisNode(id) { return $$('.mvk-t tbody tr').filter(function (tr) { return tr.getAttribute('data-node') === id; }); }
+  function mvkRowspan(tr0, d) { ['td.mvk-lvc', 'td.aksi-c'].forEach(function (s) { var td = $(s, tr0); if (td) td.rowSpan = Math.max(1, td.rowSpan + d); }); }
+  function mvkIkBaru(node) {
+    var rows = mvkBarisNode(node), tpl = $('#mvk-tpl-ik'); if (!rows.length || !tpl) return;
+    var n = $$('.mvk-t tr[data-ik^="baru:' + node + ':"]').length + 1, key = 'baru:' + node + ':' + n, tr0 = rows[0], kosong = $('td.mvk-kosong', tr0), tr;
+    var isi = document.importNode(tpl.content, true);
+    $$('[data-f]', isi).forEach(function (el) { el.setAttribute('data-row', key); });
+    if (kosong) { tr = tr0; tr.insertBefore(isi, kosong); kosong.remove(); }
+    else { tr = document.createElement('tr'); tr.className = tr0.className; tr.setAttribute('data-node', node); var tdn = document.createElement('td'); tdn.className = 'no'; tdn.textContent = '+'; tr.appendChild(tdn); tr.appendChild(isi); rows[rows.length - 1].after(tr); mvkRowspan(tr0, 1); }
+    tr.setAttribute('data-ik', key); tr.classList.add('mvk-baru');
+    $$('textarea', tr).forEach(mvkPas); $('textarea', $('td.ik', tr)).focus();
+  }
+  function mvkIkX(el) {
+    var tr = el.closest('tr'), key = tr.getAttribute('data-ik') || '';
+    if (key.indexOf('baru:') === 0) {
+      var node = tr.getAttribute('data-node'), rows = mvkBarisNode(node), tr0 = rows[0];
+      if (tr === tr0) { if (rows.length > 1) { reload(); return; } $$('td', tr).filter(function (td) { return !td.matches('td.no,td.mvk-lvc,td.aksi-c'); }).forEach(function (td) { td.remove(); });
+        var k = document.createElement('td'); k.className = 'ik muted mvk-kosong'; k.colSpan = 17; k.textContent = 'Belum ada IK. Klik “+ IK”.'; tr.insertBefore(k, $('td.aksi-c', tr)); tr.removeAttribute('data-ik'); tr.classList.remove('mvk-baru'); }
+      else { tr.remove(); mvkRowspan(tr0, -1); }
+      lbrStatus(); return;
+    }
+    var h = $('.mvk-hps', el.closest('td')); h.value = h.value ? '' : '1'; lbrCek(h);
+    tr.classList.toggle('mvk-dihapus', !!h.value); el.title = h.value ? 'Batalkan hapus' : 'Hapus IK ini'; lbrStatus();
+  }
+  function mvkHapusBaris(el) {
+    var node = el.getAttribute('data-node'), rows = mvkBarisNode(node), h = $('td.mvk-lvc .mvk-hps', rows[0]); if (!h) return;
+    h.value = h.value ? '' : '1'; lbrCek(h);
+    rows.forEach(function (tr) { tr.classList.toggle('mvk-dihapus', !!h.value); });
+    el.textContent = h.value ? 'Batal hapus' : 'Hapus baris'; lbrStatus();
+  }
+  /** Cek sebelum menyimpan lembar Monev: tulisan baris dan nama IK minimal 5 huruf. */
+  function mvkCekSimpan(f) {
+    var salah = $$('.mvk-ed', f).filter(function (t) { var tr = t.closest('tr'); return !tr.classList.contains('mvk-dihapus') && (t.classList.contains('chg') || (tr.classList.contains('mvk-baru') && $$('.lbr-in.chg', tr).length)) && t.value.trim().length < 5; });
+    if (salah.length) { salah[0].focus(); toast('Tulisan baris dan nama IK minimal 5 huruf.', 'err'); return false; }
+    var hapus = $$('.mvk-hps', f).filter(function (h) { return h.value === '1'; }).length;
+    if (hapus && !f.getAttribute('data-yakin')) { f.setAttribute('data-yakin', '1'); toast(hapus + ' baris/IK akan dihapus beserta angka dan bukti dukungnya. Tekan Simpan sekali lagi untuk melanjutkan.', 'err'); return false; }
+    return true;
+  }
   function mvkTimOpsi(tim, val) {
     var grp = {}; (tim || []).forEach(function (t) { (grp[t.b || 'Lainnya'] = grp[t.b || 'Lainnya'] || []).push(t); });
     return '<option value="">— Pilih Tim Kerja —</option>' + Object.keys(grp).map(function (b) { return '<optgroup label="' + esc(b) + '">' + grp[b].map(function (t) { return '<option value="' + esc(t.v) + '"' + (t.v === val ? ' selected' : '') + '>' + esc(t.t.replace(/^Tim Kerja /, '')) + '</option>'; }).join('') + '</optgroup>'; }).join('');
@@ -1354,7 +1396,7 @@
         '<div class="field"><label for="mb-cat">Keterangan (opsional)</label><input class="input" id="mb-cat" name="catatan" maxlength="300" autocomplete="off"></div>' +
         '<div class="form-actions"><button class="btn btn-primary" type="submit">Unggah Bukti</button><button type="button" class="btn btn-ghost" data-act="close-modal">Tutup</button></div><p class="form-msg" role="alert"></p></form>'
         : '<div class="form-actions"><button type="button" class="btn btn-ghost" data-act="close-modal">Tutup</button></div>');
-    var tr = $('.mvk-t tr[data-ik="' + ik + '"]'), nm = tr ? $('td.ik', tr).firstChild.textContent : ik;
+    var tr = $('.mvk-t tr[data-ik="' + ik + '"]'), nm = tr ? mvkNamaIk(tr) : ik;
     openModal('Bukti dukung TW ' + tw, '<p class="muted sm">' + esc(nm) + '</p>' + h);
   }
   function mvkCsv(rows) { var q = function (s) { s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }; return '﻿sep=;\n' + rows.map(function (r) { return r.map(q).join(';'); }).join('\n'); }
@@ -1362,16 +1404,16 @@
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([isi], { type: 'text/csv;charset=utf-8' })); a.download = nama;
     document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
-  var MVK_KOLOM = ['NO', 'TUJUAN SASARAN PROGRAM TURUNAN', 'IK TUJUAN SASARAN PROGRAM', 'TARGET TW1', 'TARGET TW2', 'TARGET TW3', 'TARGET TW4', 'REALISASI TW1', 'REALISASI TW2', 'REALISASI TW3', 'REALISASI TW4',
+  var MVK_KOLOM = ['NO', 'TUJUAN SASARAN PROGRAM TURUNAN', 'IK TUJUAN SASARAN PROGRAM', 'SATUAN', 'TARGET TW1', 'TARGET TW2', 'TARGET TW3', 'TARGET TW4', 'REALISASI TW1', 'REALISASI TW2', 'REALISASI TW3', 'REALISASI TW4',
     'BUKTI DUKUNG TW1', 'BUKTI DUKUNG TW2', 'BUKTI DUKUNG TW3', 'BUKTI DUKUNG TW4', 'UNIT TIM KERJA', 'CATATAN', 'KETERANGAN'];
   /** Templat Excel lembar resmi (CSV titik koma) berisi isi lembar saat ini, susunan kolom sama dengan format kantor. */
   function mvkTemplat() {
     var rows = [MVK_KOLOM], no = '', lv = '';
     $$('.mvk-t tbody tr').forEach(function (tr) {
-      var tdNo = $('td.no', tr), tdLv = $('td.mvk-lvc', tr); if (tdNo) { no = tdNo.textContent; lv = tdLv.textContent; }
+      var tdNo = $('td.no', tr), tdLv = $('td.mvk-lvc', tr); no = tdNo ? tdNo.textContent : ''; if (tdLv) { var tl = $('textarea', tdLv); lv = tl ? tl.value : tdLv.textContent; }
       if (!tr.getAttribute('data-ik')) { rows.push([no, lv, '']); return; }
       var nilai = function (td) { var x = $('input,textarea,select', td); if (x && x.tagName === 'SELECT') return x.value ? x.options[x.selectedIndex].text : ''; return x ? x.value : ((($('.mvk-v,.mvk-tx', td) || td).textContent || '').replace(/^—$/, '')); };
-      var r = [tdNo ? no : '', tdNo ? lv : '', $('td.ik', tr).firstChild.textContent];
+      var ts = $('td.mvk-satc', tr), r = [no, tdLv ? lv : '', mvkNamaIk(tr), ts ? nilai(ts) || ts.textContent.trim() : ''];
       $$('td.tgt', tr).concat($$('td.real', tr)).forEach(function (td) { r.push(nilai(td)); });
       $$('td.mvk-bkc', tr).forEach(function (td) { var b = $('.bk-ada', td); r.push(b ? b.textContent.replace(/\D/g, '') + ' berkas' : ''); });
       r.push(nilai($('td.tim', tr))); $$('td', tr).slice(-3).forEach(function (td) { if (!td.classList.contains('aksi-c')) r.push(nilai(td)); });
@@ -1388,9 +1430,10 @@
       var pisah = baris.length && baris[0].indexOf(';') >= 0 ? ';' : ',';
       var cel = function (l) { var out = [], cur = '', dq = false; for (var i = 0; i < l.length; i++) { var ch = l[i]; if (dq) { if (ch === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') dq = false; else cur += ch; } else if (ch === '"') dq = true; else if (ch === pisah) { out.push(cur); cur = ''; } else cur += ch; } out.push(cur); return out; };
       var head = baris.length ? cel(baris[0]).map(function (h) { return h.trim().toUpperCase().replace(/\s+/g, ' '); }) : [], kIk = head.indexOf('IK TUJUAN SASARAN PROGRAM');
+      if (head.indexOf('KODE BARIS') >= 0 && head.indexOf('JENIS') >= 0) { mvkImpor(head, baris.slice(1).map(cel)); return; }
       if (kIk < 0) { toast('Berkas bukan templat Monev Kinerja (kolom IK TUJUAN SASARAN PROGRAM tidak ada).', 'err'); return; }
       var norm = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); }, peta = {};
-      $$('.mvk-t tr[data-ik]').forEach(function (tr) { peta[norm($('td.ik', tr).firstChild.textContent)] = tr; });
+      $$('.mvk-t tr[data-ik]').forEach(function (tr) { peta[norm(mvkNamaIk(tr))] = tr; });
       var n = 0, tak = 0;
       baris.slice(1).forEach(function (l) {
         var c = cel(l), tr = peta[norm(c[kIk])]; if (!c[kIk] || !c[kIk].trim()) return; if (!tr) { tak++; return; }
@@ -1405,6 +1448,34 @@
       toast(n ? n + ' kotak diisi dari templat' + (tak ? ', ' + tak + ' IK tidak dikenali' : '') + '. Periksa lalu tekan Simpan.' : 'Tidak ada angka baru di templat' + (tak ? ' (' + tak + ' IK tidak dikenali)' : '') + '.', n ? 'ok' : 'err');
     };
     fr.readAsText(file);
+  }
+
+  /** Berkas impor (berisi KODE BARIS, JENIS, INDUK): membuat baris berjenjang dan IK sekaligus. Ditampilkan ringkasannya dulu. */
+  var MVK_IMPOR = null;
+  function mvkImpor(head, rows) {
+    var k = function (n) { return head.indexOf(n); }, ambil = function (c, n) { var i = k(n); return i < 0 ? '' : String(c[i] == null ? '' : c[i]).trim(); };
+    var JN = { tujuan: 'tujuan', sasaran: 'sasaran', program: 'program', 'program turunan': 'turunan', turunan: 'turunan' }, baris = [], ada = {}, ik = [];
+    rows.forEach(function (c) {
+      var kode = ambil(c, 'KODE BARIS'); if (!kode) return;
+      if (!ada[kode]) { ada[kode] = 1; baris.push({ kode: kode, jenis: JN[ambil(c, 'JENIS').toLowerCase()] || '', induk: ambil(c, 'INDUK'), teks: ambil(c, 'TUJUAN SASARAN PROGRAM TURUNAN') }); }
+      var nama = ambil(c, 'IK TUJUAN SASARAN PROGRAM'); if (!nama) return;
+      ik.push({ kode: kode, nama: nama, satuan: ambil(c, 'SATUAN') || '%', tg: [1, 2, 3, 4].map(function (q) { return angkaId(ambil(c, 'TARGET TW' + q)); }), re: [1, 2, 3, 4].map(function (q) { return angkaId(ambil(c, 'REALISASI TW' + q)); }), cat: ambil(c, 'CATATAN'), ket: ambil(c, 'KETERANGAN') });
+    });
+    if (baris.some(function (b) { return !b.jenis; })) { toast('Kolom JENIS harus Tujuan, Sasaran, Program, atau Program turunan.', 'err'); return; }
+    var meta = mvkMeta(), hit = function (j) { return baris.filter(function (b) { return b.jenis === j; }).length; };
+    MVK_IMPOR = { tahun: Number(meta.tahun) || periode().tahun, baris: baris, ik: ik };
+    openModal('Impor data Monev Kinerja', '<p>Berkas berisi <b>' + hit('tujuan') + ' tujuan, ' + hit('sasaran') + ' sasaran, ' + hit('program') + ' program, ' + hit('turunan') + ' program turunan</b>, dan <b>' + ik.length + ' IK</b> untuk tahun <b>' + MVK_IMPOR.tahun + '</b>.</p>' +
+      '<ul class="langkah"><li>Cadangan seluruh spreadsheet dibuat lebih dulu.</li><li>Baris dan IK yang tulisannya sudah ada dipakai ulang, tidak dobel.</li><li>Target, realisasi, catatan, dan keterangan tahun ' + MVK_IMPOR.tahun + ' untuk IK di berkas diganti isi berkas.</li></ul>' +
+      '<div class="form-actions"><button type="button" class="btn btn-primary" data-act="mvk-impor-ya">Impor sekarang</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>');
+  }
+  function mvkImporJalan(btn) {
+    if (!MVK_IMPOR) return;
+    var msg = $('.form-msg', btn.closest('.modal') || document); btn.disabled = true; btn.textContent = 'Mengimpor… (bisa 1–2 menit)';
+    api('apiImporMonev', [MVK_IMPOR]).then(function (r) {
+      closeModal(); MVK_IMPOR = null;
+      toast(r.barisBaru + ' baris baru, ' + r.barisDiubah + ' baris diperbarui, ' + r.ik + ' IK (' + r.ikBaru + ' baru), ' + r.angka + ' angka.' + (r.gagal.length ? ' ' + r.gagal.length + ' angka ditolak: ' + r.gagal[0] : '') + ' Cadangan: ' + r.cadangan, r.gagal.length ? 'err' : 'ok');
+      reload();
+    }).catch(function (e) { btn.disabled = false; btn.textContent = 'Impor sekarang'; if (!e.handled && msg) msg.textContent = e.message; });
   }
 
   /* Review Monev Kinerja: digambar dari #mvk-data; triwulan dan unit dipilih tanpa memuat ulang halaman. */
@@ -1518,11 +1589,11 @@
   /** Unduh Review sebagai CSV format resmi (semua IK, TW I–IV, capaian triwulan terpilih). */
   function mvkUnduh() {
     if (!MVK) return;
-    var q = Number(($('#mvk-tw') || {}).value) || MVK.tw, rows = [MVK_KOLOM.slice(0, 11).concat(['CAPAIAN TW' + q, 'UNIT TIM KERJA', 'CATATAN', 'KETERANGAN'])], no = 0, keys = {};
+    var q = Number(($('#mvk-tw') || {}).value) || MVK.tw, rows = [MVK_KOLOM.slice(0, 12).concat(['CAPAIAN TW' + q, 'UNIT TIM KERJA', 'CATATAN', 'KETERANGAN'])], no = 0, keys = {};
     mvkIks().forEach(function (k) { keys[k.key] = 1; });
     MVK.P.forEach(function (p) {
       var di = p.ik.map(function (k, i) { return keys[p.id + '-' + i] ? k : null; }).filter(Boolean); if (!di.length) return; no++;
-      di.forEach(function (k, i) { var c = mvkCap(k, q); rows.push([i ? '' : no, i ? '' : p.t, k.n].concat(k.tg.map(function (v) { return v === null ? '' : String(v).replace('.', ','); }), k.re.map(function (v) { return v === null ? '' : String(v).replace('.', ','); }), [c === null ? '' : c.toFixed(1).replace('.', ',') + '%', (MVK.unit || {})[k.u] || '', k.cat, k.ket])); });
+      di.forEach(function (k, i) { var c = mvkCap(k, q); rows.push([i ? '' : no, i ? '' : p.t, k.n, k.sat].concat(k.tg.map(function (v) { return v === null ? '' : String(v).replace('.', ','); }), k.re.map(function (v) { return v === null ? '' : String(v).replace('.', ','); }), [c === null ? '' : c.toFixed(1).replace('.', ',') + '%', (MVK.unit || {})[k.u] || '', k.cat, k.ket])); });
     });
     mvkSimpanBerkas(mvkCsv(rows), 'Review Monev Kinerja TW ' + MVK_ROM[q - 1] + ' ' + MVK.tahun + '.csv');
   }
@@ -1836,6 +1907,7 @@
   }
   function submitLembar(f) {
     if ($('.lbr-in.bad', f)) { toast('Perbaiki kotak bergaris merah dulu.', 'err'); return; }
+    if (f.classList.contains('mvk-form') && !mvkCekSimpan(f)) return;
     var baris = {}; $$('.lbr-in.chg', f).forEach(function (i) { baris[i.getAttribute('data-row')] = 1; });
     var isi = Object.keys(baris).map(function (row) {
       var o = { row: row, nilai: {}, ubah: [], ids: {} };
@@ -2234,7 +2306,11 @@
       case 'open-drawer': openDrawer(); break;
       case 'notif-close': closeNotif(); $('#btn-notif').focus(); break;
       case 'lbr-det': { var dt = $('#form-lbr tr[data-det="' + el.getAttribute('data-row') + '"]'); if (dt) { dt.hidden = !dt.hidden; if (!dt.hidden) { var ta = $('textarea', dt); if (ta) ta.focus(); } } break; }
-      case 'lbr-batal': lbrBatal(); mvkSiap(); break;
+      case 'lbr-batal': if ($('.mvk-t tr.mvk-baru')) { reload(); break; } lbrBatal(); $$('.mvk-t tr.mvk-dihapus').forEach(function (tr) { tr.classList.remove('mvk-dihapus'); }); $$('[data-act=mvk-hapus-baris]').forEach(function (b) { b.textContent = 'Hapus baris'; }); mvkSiap(); break;
+      case 'mvk-ik-baru': mvkIkBaru(el.getAttribute('data-node')); break;
+      case 'mvk-impor-ya': mvkImporJalan(el); break;
+      case 'mvk-ik-x': mvkIkX(el); break;
+      case 'mvk-hapus-baris': mvkHapusBaris(el); break;
       case 'mvk-tambah': mvkFormBaris(''); break;
       case 'mvk-ubah': mvkFormBaris(el.getAttribute('data-id')); break;
       case 'mvk-ik-tambah': { var fb = el.closest('form'), w = $('.mvk-iks', fb); w.insertAdjacentHTML('beforeend', mvkIkBaris(mvkMeta(), {}, w.children.length)); mvkIkTombol(fb); $('[name=ikn]', w.lastElementChild).focus(); break; }
@@ -2556,7 +2632,7 @@
     if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
     if (ev.target && ev.target.id === 'is-real' && ev.target.form) cekIsian(ev.target.form);
     if (ev.target && ev.target.classList && ev.target.classList.contains('ssg-in')) { ssgCekBaris(ev.target); ssgStatus(); }
-    if (ev.target && ev.target.classList && ev.target.classList.contains('lbr-in')) { lbrCek(ev.target); lbrStatus(); if (ev.target.classList.contains('mvk-n')) mvkHitung(ev.target.closest('tr')); }
+    if (ev.target && ev.target.classList && ev.target.classList.contains('lbr-in')) { lbrCek(ev.target); lbrStatus(); if (ev.target.classList.contains('mvk-n')) mvkHitung(ev.target.closest('tr')); if (ev.target.tagName === 'TEXTAREA' && ev.target.closest('.mvk-t')) mvkPas(ev.target); }
     var t = ev.target;
     if (t.matches && t.matches('.tgt-in')) {
       var f = t.form, n = $$('.tgt-in', f).filter(function (el) { return el.value.trim() !== el.getAttribute('data-orig'); }).length;
