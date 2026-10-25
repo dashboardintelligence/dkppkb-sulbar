@@ -1830,4 +1830,99 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .acc-cols .an-c .chip{font-size:10.5px;padding:0 6px}
 .acc-cols .h3{margin-bottom:4px}
 @media(max-width:900px){.acc-cols{grid-template-columns:1fr}}
+
+/* ---------- Monev Kinerja: lembar resmi (Isi Data) ---------- */
+.mvk-form,.mvk-r,.modal{--mvk-ok:#1f8a5b;--h-umum:#c8efd1;--h-tgt:#cfe9f7;--h-real:#f8cdb6;--h-bukti:#c3eba6;--h-tx:#1d3b2a;--c-tgt:#f6fbfe;--c-real:#fff9f5;--c-bk:#f8fcf4;--c-gr:#fafcfb;--c-chg:#fff6d6;--mvk-gr:#c9d6cf}
+:root[data-theme="dark"] .mvk-form,:root[data-theme="dark"] .mvk-r,:root[data-theme="dark"] .modal{--mvk-ok:#4cc38a;--h-umum:#1f3d2a;--h-tgt:#173447;--h-real:#47291c;--h-bukti:#26401a;--h-tx:#dfeee5;--c-tgt:#15242f;--c-real:#231c18;--c-bk:#18241a;--c-gr:#1a2731;--c-chg:#3a3214;--mvk-gr:#2f4250}
+.mvk-card{padding:0;overflow:hidden}
+.mvk-wrap{overflow:auto;max-height:72vh}
+.mvk-t{border-collapse:separate;border-spacing:0;font-size:12px;line-height:1.4;min-width:100%}
+.mvk-t th,.mvk-t td{border-right:1px solid var(--mvk-gr);border-bottom:1px solid var(--mvk-gr);vertical-align:top}
+.mvk-t thead th{position:sticky;top:0;z-index:2;font-size:10.5px;font-weight:700;text-transform:uppercase;letter-spacing:.02em;padding:6px;text-align:center;vertical-align:middle;color:var(--h-tx)}
+.mvk-t thead tr:nth-child(2) th{top:29px;font-size:10px}
+.mvk-t .hu{background:var(--h-umum)}.mvk-t .ht{background:var(--h-tgt)}.mvk-t .hr{background:var(--h-real)}.mvk-t .hb{background:var(--h-bukti)}
+.mvk-t td{padding:0;background:var(--card)}
+.mvk-t tr.gr td{background:var(--c-gr)}
+.mvk-t td.no{padding:7px 6px;text-align:center;vertical-align:middle;color:var(--tx2);width:34px}
+.mvk-t td.mvk-lvc{padding:7px 10px;min-width:240px;max-width:300px;text-align:left;vertical-align:middle}
+.mvk-t td.ik{padding:7px 9px;min-width:230px;max-width:280px;font-weight:500}
+.mvk-t td.ik .sat{display:block;font-size:10.5px;color:var(--mute);font-weight:400}
+.mvk-t td.tgt{background:var(--c-tgt)}.mvk-t td.real{background:var(--c-real)}.mvk-t td.mvk-bkc{background:var(--c-bk);padding:5px;text-align:center;min-width:64px;vertical-align:middle}
+.mvk-t input.mvk-n{width:62px !important;border:0;padding:7px 6px;text-align:right;font-variant-numeric:tabular-nums;background:transparent;border-radius:0}
+.mvk-t .mvk-v{display:block;padding:7px 6px;text-align:right;font-variant-numeric:tabular-nums;color:var(--tx2)}
+.mvk-t .mvk-tx{display:block;padding:7px 8px;color:var(--tx2);max-width:220px;white-space:pre-wrap}
+.mvk-t input:focus,.mvk-t textarea:focus,.mvk-t select:focus{outline:none;box-shadow:inset 0 0 0 2px #0a7f8c;background:var(--card);border-radius:0}
+.mvk-t .lbr-in.chg{background:var(--c-chg)}.mvk-t .lbr-in.bad{box-shadow:inset 0 0 0 2px var(--crit)}
+.mvk-cap{display:block;font-size:10px;text-align:right;padding:0 6px 4px;color:var(--mute)}.mvk-cap.ok{color:var(--mvk-ok)}.mvk-cap.lo{color:#c0392b}
+.mvk-t .bk-ada{display:inline-flex;align-items:center;gap:2px;font-size:10.5px;color:var(--mvk-ok);background:transparent;border:1px solid currentColor;border-radius:99px;padding:1px 7px;white-space:nowrap}
+.mvk-t .bk-ada .ic{font-size:13px}
+.mvk-t .bk-btn{border:1px dashed var(--mvk-ok);background:transparent;border-radius:8px;padding:2px 7px;font-size:10.5px;color:var(--mvk-ok);white-space:nowrap}
+.mvk-t select.mvk-u{border:0;padding:7px 6px;background:transparent;max-width:200px;font-size:12px}
+.mvk-t .mvk-lama{display:block;padding:0 6px 5px;font-size:10.5px}
+.mvk-t textarea.mvk-ta{border:0;padding:7px 8px;width:210px;min-height:46px;resize:vertical;background:transparent;font-size:12px;display:block}
+.mvk-t td.aksi-c{vertical-align:middle;text-align:center;padding:6px}
+.mvk-t .mvk-ubah{white-space:nowrap;font-size:12px}
+.mvk-iks{display:flex;flex-direction:column;gap:8px;margin:4px 0 8px}
+.mvk-ikr{display:flex;gap:8px;align-items:flex-end}.mvk-ikr .field:first-child{flex:1}.mvk-ikr .mvk-sat{flex:0 0 110px}
+.mvk-ikx{color:var(--crit)}
+.mvk-ik-tambah{align-self:flex-start;margin-bottom:8px}
+/* ---------- Monev Kinerja: Review ---------- */
+.mvk-r{display:flex;flex-direction:column;gap:14px;margin-top:14px}
+.mvk-r .card-pad{padding:16px 18px}
+.mvk-hint{margin:2px 0 10px}
+.mvk-kpi{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.mvk-lbl{font-size:12px;color:var(--tx2)}
+.mvk-big{font-size:28px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;line-height:1.2}
+.mvk-big small{font-size:12px;color:var(--tx2);font-weight:400;margin-left:3px;letter-spacing:0}
+.mvk-naik{color:var(--mvk-ok);font-size:12px;font-weight:600}.mvk-turun{color:#c0392b;font-size:12px;font-weight:600}
+.mvk-stak{display:flex;height:8px;border-radius:6px;overflow:hidden;margin-top:8px;background:var(--rail)}.mvk-stak i{display:block}
+.mvk-scroll{overflow-x:auto;padding-bottom:4px}
+.mvk-lane{position:relative}
+.mvk-alur{display:grid;grid-template-columns:repeat(4,minmax(210px,1fr));gap:12px 40px;min-width:920px;align-items:center}
+.mvk-alur .kol-h{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;color:var(--tx2);padding-bottom:8px;border-bottom:1px solid var(--bd)}
+.mvk-kartu{align-self:center;text-align:left;background:var(--card);border:0;border-radius:12px;padding:9px 11px;box-shadow:0 1px 3px rgba(0,0,0,.08),0 0 0 1px var(--bd);display:flex;flex-direction:column;gap:6px;font:inherit;color:inherit}
+.mvk-kartu[data-mk]{cursor:pointer}.mvk-kartu[data-mk]:hover{box-shadow:0 0 0 2px rgba(10,127,140,.35)}.mvk-kartu.on{box-shadow:0 0 0 2px #0a7f8c}
+.mvk-kartu .tx{font-size:12px;font-weight:600;line-height:1.3}
+.mvk-kartu .bwh{display:flex;justify-content:space-between;align-items:center;gap:6px}
+.mvk-kartu .mvk-bar{flex:1;height:6px;border-radius:6px;background:var(--rail);overflow:hidden}.mvk-kartu .mvk-bar i{display:block;height:100%;border-radius:6px}
+.mvk-kartu .ik{font-size:10.5px;color:var(--mute)}
+.mvk-kartu.b-ok{border-top:4px solid var(--mvk-ok)}.mvk-kartu.b-warn{border-top:4px solid #e3b341}.mvk-kartu.b-krit{border-top:4px solid #c0392b}.mvk-kartu.b-na{border-top:4px solid var(--mute2)}
+.mvk-cp{font-weight:700;font-variant-numeric:tabular-nums;border-radius:99px;padding:1px 8px;font-size:11.5px}
+.mvk-r .s-ok{background:rgba(31,138,91,.14);color:var(--mvk-ok)}.mvk-r .s-warn{background:rgba(227,179,65,.2);color:#8a6200}.mvk-r .s-krit{background:rgba(192,57,43,.13);color:#c0392b}.mvk-r .s-na{background:var(--rail);color:var(--tx2)}
+:root[data-theme="dark"] .mvk-r .s-warn{color:#f0c96a}:root[data-theme="dark"] .mvk-r .s-krit,:root[data-theme="dark"] .mvk-turun,:root[data-theme="dark"] .mvk-cap.lo{color:#f08a7e}
+svg.mvk-sb{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
+svg.mvk-sb path{fill:none;stroke:var(--mute2);stroke-width:1.6}
+.mvk-pp{display:flex;flex-direction:column;gap:8px}
+.mvk-pi{display:block;width:100%;text-align:left;border-radius:12px;padding:9px 11px;background:var(--card);border:1px solid var(--bd);font:inherit;color:inherit;cursor:pointer}
+.mvk-pi:hover{border-color:#0a7f8c}
+.mvk-pi b{display:block;font-size:12.5px}
+.mvk-pi .why{display:flex;gap:6px;flex-wrap:wrap;margin:5px 0}
+.mvk-pi .cat{display:block;font-size:11.5px;color:var(--tx2);font-style:italic}
+.mvk-chip{font-size:10.5px;font-weight:600;border-radius:99px;padding:1px 8px}
+.mvk-hm{width:100%;border-collapse:separate;border-spacing:4px}
+.mvk-hm th{font-size:11px;color:var(--tx2);font-weight:600;text-align:center;padding:2px 4px}.mvk-hm th.k{text-align:left}.mvk-hm th.now{color:#0a7f8c}
+.mvk-hm td.n{font-size:12.5px;padding:4px 8px 4px 0;min-width:260px}
+.mvk-hm td.n button{border:0;background:none;padding:0;font:inherit;color:inherit;text-align:left;cursor:pointer}.mvk-hm td.n button:hover{color:#0a7f8c;text-decoration:underline}
+.mvk-hm td.n small{display:block;color:var(--mute);font-size:11px}
+.mvk-hm td.t{width:96px;height:40px;border-radius:9px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums;font-size:12.5px}
+.mvk-hm td.t small{display:block;font-weight:400;font-size:10px;opacity:.8}
+.mvk-hm tr.g td{font-size:11px;font-weight:700;color:#0a7f8c;padding-top:8px;text-transform:uppercase;letter-spacing:.04em}
+.mvk-r .u0{background:#fbd5cf;color:#7a1d15}.mvk-r .u1{background:#fde6c2;color:#6b4600}.mvk-r .u2{background:#d9efee;color:#164b4f}.mvk-r .u3{background:#6fbcbf;color:#fff}.mvk-r .u4{background:#0b5f68;color:#fff}.mvk-r .u-1{background:var(--rail);color:var(--mute)}
+.mvk-leg{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:11.5px;color:var(--tx2);margin-top:6px}
+.mvk-leg i{display:inline-block;width:18px;height:10px;border-radius:3px;margin-right:4px;vertical-align:-1px}.mvk-leg i.garis{width:3px;background:var(--tx)}
+.mvk-ru{width:100%;border-collapse:collapse;font-size:13px}
+.mvk-ru th,.mvk-ru td{padding:8px 10px;border-top:1px solid var(--bd);text-align:left}.mvk-ru th{border-top:0;font-size:11.5px;color:var(--tx2);font-weight:600}
+.mvk-ru .r{text-align:right;font-variant-numeric:tabular-nums}
+.mvk-bt{height:8px;border-radius:6px;background:var(--rail);overflow:hidden;min-width:110px}.mvk-bt i{display:block;height:100%;border-radius:6px}
+.mvk-dk{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.mvk-di{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:18px;align-items:center;margin-top:10px}
+.mvk-info div{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px solid var(--bd);font-size:12.5px}.mvk-info span{color:var(--tx2)}
+.mvk-bul{display:flex;flex-direction:column;gap:10px}
+.mvk-bul .rw{display:grid;grid-template-columns:44px 1fr 74px;gap:8px;align-items:center;font-size:12px}
+.mvk-bul .rw.now>span:first-child{color:#0a7f8c;font-weight:700}
+.mvk-bul .tr{position:relative;height:16px;border-radius:5px;background:var(--rail)}
+.mvk-bul .tr i{position:absolute;left:0;top:4px;height:8px;border-radius:4px}
+.mvk-bul .tr b{position:absolute;top:-3px;bottom:-3px;width:2.5px;margin-left:-1px;background:var(--tx);border-radius:2px}
+.mvk-bul .rw>span:last-child{text-align:right;font-weight:700;font-variant-numeric:tabular-nums}
+@media (max-width:900px){.mvk-kpi{grid-template-columns:repeat(2,minmax(0,1fr))}.mvk-di{grid-template-columns:1fr}}
 </style>

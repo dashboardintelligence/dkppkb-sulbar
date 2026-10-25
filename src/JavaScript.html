@@ -805,6 +805,8 @@
       if (job && $('#rv-cetak-meta')) setTimeout(function () { rvCetakJalan(job); }, 200);
     }
     if ($('.ssg-prog')) ssgSaringProg();
+    if ($('.mvk-t')) mvkSiap();
+    mvkReview();
     window.scrollTo(0, keepY);
     if (!(opts && opts.keep)) { try { $('#main').focus({ preventScroll: true }); } catch (e) { } }
     applyImLayout();
@@ -1267,12 +1269,264 @@
     fr.onerror = function () { msg.textContent = 'Berkas tidak dapat dibaca.'; btn.disabled = false; btn.textContent = label; };
     fr.onload = function () {
       var b64 = String(fr.result).split(',')[1] || '';
-      api('apiUnggahBuktiMonev', [{ ikId: f.elements.ikId.value, tahun: periode().tahun, tw: f.elements.tw.value, nama: file.name, base64: b64, catatan: f.elements.catatan.value }])
+      api('apiUnggahBuktiMonev', [{ ikId: f.elements.ikId.value, tahun: Number(f.elements.tahun && f.elements.tahun.value) || periode().tahun, tw: f.elements.tw.value, nama: file.name, base64: b64, catatan: f.elements.catatan.value }])
         .then(function () { closeModal(); toast('Bukti diunggah.', 'ok'); reload(); })
         .catch(function (e) { if (e.handled) return; msg.textContent = e.message; btn.disabled = false; btn.textContent = label; });
     };
     fr.readAsDataURL(file);
   }
+
+  /* ---------- Monev Kinerja: lembar resmi (Isi Data) dan Review ---------- */
+  var MVK_JENIS = [{ v: 'tujuan', t: 'Tujuan' }, { v: 'sasaran', t: 'Sasaran' }, { v: 'program', t: 'Program' }, { v: 'turunan', t: 'Program turunan' }], MVK_ROM = ['I', 'II', 'III', 'IV'];
+  function mvkMeta() { var el = $('#mvk-meta'); if (!el) return {}; try { return JSON.parse(el.getAttribute('data-json') || '{}'); } catch (e) { return {}; } }
+  function mvkBaca(s) { s = angkaId(s); return s === '' || isNaN(Number(s)) ? null : Number(s); }
+  function mvkPersen(v) { return v === null ? '—' : v.toFixed(1).replace('.', ',') + '%'; }
+  /** Capaian (realisasi ÷ target) di bawah setiap kotak realisasi satu baris IK. */
+  function mvkHitung(tr) {
+    var tg = $$('td.tgt', tr), re = $$('td.real', tr);
+    re.forEach(function (td, i) {
+      var sm = $('.mvk-cap', td); if (!sm) return;
+      var nilai = function (c) { var x = $('input', c); return mvkBaca(x ? x.value : ($('.mvk-v', c) || {}).textContent || ''); };
+      var r = nilai(td), t = tg[i] ? nilai(tg[i]) : null;
+      if (r === null || !t) { sm.textContent = ''; sm.className = 'mvk-cap'; return; }
+      var c = r / t * 100; sm.textContent = mvkPersen(c); sm.className = 'mvk-cap ' + (c >= 100 ? 'ok' : 'lo');
+    });
+  }
+  function mvkSiap() { $$('.mvk-t tr[data-ik]').forEach(mvkHitung); }
+  function mvkTimOpsi(tim, val) {
+    var grp = {}; (tim || []).forEach(function (t) { (grp[t.b || 'Lainnya'] = grp[t.b || 'Lainnya'] || []).push(t); });
+    return '<option value="">— Pilih Tim Kerja —</option>' + Object.keys(grp).map(function (b) { return '<optgroup label="' + esc(b) + '">' + grp[b].map(function (t) { return '<option value="' + esc(t.v) + '"' + (t.v === val ? ' selected' : '') + '>' + esc(t.t.replace(/^Tim Kerja /, '')) + '</option>'; }).join('') + '</optgroup>'; }).join('');
+  }
+  function mvkIndukOpsi(meta, jenis, val, kecuali) {
+    var lv = MVK_JENIS.map(function (j) { return j.v; }).indexOf(jenis);
+    var ops = (meta.node || []).filter(function (n) { return n.v !== kecuali && MVK_JENIS.map(function (j) { return j.v; }).indexOf(n.j) < lv; });
+    return (lv <= 1 ? '<option value="">— Tingkat teratas —</option>' : '<option value="">— Pilih induk —</option>') +
+      ops.map(function (n) { var nm = (MVK_JENIS.filter(function (j) { return j.v === n.j; })[0] || {}).t; return '<option value="' + esc(n.v) + '"' + (n.v === val ? ' selected' : '') + '>' + esc(nm + ' · ' + (n.t.length > 80 ? n.t.slice(0, 79) + '…' : n.t)) + '</option>'; }).join('');
+  }
+  function mvkIkBaris(meta, ik, i) {
+    return '<div class="mvk-ikr" data-id="' + esc(ik.id || '') + '"><div class="field"><label>IK ' + (i + 1) + '</label><input class="input" name="ikn" maxlength="300" value="' + esc(ik.nama || '') + '" placeholder="mis. Persentase persalinan di fasilitas kesehatan"></div>' +
+      '<div class="field mvk-sat"><label>Satuan</label><select class="input" name="iks">' + (meta.satuan || ['%']).map(function (s) { return '<option' + (s === (ik.satuan || '%') ? ' selected' : '') + '>' + esc(s) + '</option>'; }).join('') + '</select></div>' +
+      '<button type="button" class="btn btn-ghost btn-sm mvk-ikx" data-act="mvk-ik-hapus" aria-label="Hapus IK ' + (i + 1) + '">✕</button></div>';
+  }
+  /** Formulir Tambah Sasaran (id kosong) atau Ubah baris: jenis, induk, tulisan, dan IK beserta satuannya. */
+  function mvkFormBaris(id) {
+    var meta = mvkMeta(), b = id ? (meta.baris || {})[id] : null; if (id && !b) return;
+    var jenis = b ? b.jenis : 'sasaran';
+    var h = '<form id="form-mvk-baris" data-id="' + esc(id || '') + '" novalidate><div class="form-grid">' +
+      '<div class="field"><label for="mvk-jenis">Jenis</label><select class="input" id="mvk-jenis" name="jenis">' + MVK_JENIS.map(function (j) { return '<option value="' + j.v + '"' + (j.v === jenis ? ' selected' : '') + '>' + j.t + '</option>'; }).join('') + '</select></div>' +
+      '<div class="field"><label for="mvk-induk">Di bawah (induk)</label><select class="input" id="mvk-induk" name="induk">' + mvkIndukOpsi(meta, jenis, b ? b.induk : '', id) + '</select></div></div>' +
+      '<div class="field"><label for="mvk-teks">Tujuan / Sasaran / Program</label><textarea class="input input-area" id="mvk-teks" name="teks" rows="2" maxlength="300" placeholder="mis. Meningkatnya cakupan pelayanan kesehatan ibu dan anak">' + esc(b ? b.teks : '') + '</textarea></div>' +
+      '<div class="mvk-iks">' + (b ? b.ik : [{}]).map(function (k, i) { return mvkIkBaris(meta, k, i); }).join('') + '</div>' +
+      '<button type="button" class="btn btn-ghost btn-sm mvk-ik-tambah" data-act="mvk-ik-tambah">+ Tambah IK</button>' +
+      (id ? '' : '<div class="field"><label for="mvk-tim">Unit Tim Kerja</label><select class="input" id="mvk-tim" name="tim">' + mvkTimOpsi(meta.tim, '') + '</select></div>') +
+      '<div class="form-actions"><button class="btn btn-primary" type="submit">' + (id ? 'Simpan perubahan' : 'Simpan Sasaran') + '</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>' +
+      '<p class="muted sm">' + (id ? 'Angka target, realisasi, dan bukti dukung tidak berubah. IK yang dihapus ikut menghapus angka dan bukti dukungnya.' : 'IK berikutnya bisa ditambahkan lewat “Ubah baris” setelah tersimpan.') + '</p></form>';
+    openModal(id ? 'Ubah baris' : 'Tambah Sasaran', h);
+    var f = $('#form-mvk-baris'); f.setAttribute('data-ik-awal', JSON.stringify((b ? b.ik : []).map(function (k) { return k.id; })));
+    mvkIkTombol(f);
+  }
+  function mvkIkTombol(f) { var r = $$('.mvk-ikr', f); r.forEach(function (d, i) { $('label', d).textContent = 'IK ' + (i + 1); $('.mvk-ikx', d).hidden = r.length < 2 && !d.getAttribute('data-id'); }); }
+  function submitMvkBaris(f) {
+    var msg = $('.form-msg', f), btn = $('button[type=submit]', f), id = f.getAttribute('data-id');
+    var ik = $$('.mvk-ikr', f).map(function (d) { return { id: d.getAttribute('data-id') || '', nama: $('[name=ikn]', d).value.trim(), satuan: $('[name=iks]', d).value }; });
+    var awal = []; try { awal = JSON.parse(f.getAttribute('data-ik-awal') || '[]'); } catch (e) { }
+    var hapus = awal.filter(function (x) { return !ik.some(function (k) { return k.id === x; }); });
+    var o = { id: id, jenis: f.elements.jenis.value, induk: f.elements.induk.value, teks: f.elements.teks.value.trim(), ik: ik, hapusIk: hapus, tim: f.elements.tim ? f.elements.tim.value : '', tahun: Number((mvkMeta().tahun) || periode().tahun) };
+    msg.textContent = '';
+    if (o.teks.length < 5) { msg.textContent = 'Tulis tujuan / sasaran / program (minimal 5 huruf).'; return; }
+    if (!id && !ik.length) { msg.textContent = 'Tulis minimal satu IK.'; return; }
+    if (ik.some(function (k) { return k.nama.length < 5; })) { msg.textContent = 'Nama setiap IK minimal 5 huruf.'; return; }
+    if (hapus.length && !f.getAttribute('data-yakin')) { f.setAttribute('data-yakin', '1'); msg.textContent = hapus.length + ' IK akan dihapus beserta angka dan bukti dukungnya. Tekan Simpan sekali lagi untuk melanjutkan.'; return; }
+    btn.disabled = true; btn.textContent = 'Menyimpan…';
+    api('apiSimpanBarisMonev', [o]).then(function () { closeModal(); toast(id ? 'Baris diubah.' : 'Sasaran ditambahkan.', 'ok'); reload(); })
+      .catch(function (e) { btn.disabled = false; btn.textContent = id ? 'Simpan perubahan' : 'Simpan Sasaran'; if (!e.handled) msg.textContent = e.message; });
+  }
+  /** Bukti dukung satu IK pada satu triwulan: daftar berkas dan unggah berkas baru. */
+  function mvkBukti(ik, tw) {
+    var meta = mvkMeta(), li = (meta.bukti || {})[ik + '|' + tw] || [], boleh = (meta.boleh || {})[ik];
+    var h = (li.length ? '<ul class="bk-list">' + li.map(function (b) {
+      return '<li class="bk-item"><span class="bk-ext">' + esc(b.tipe) + '</span><div class="bk-main"><b>' + esc(b.nama) + '</b><span class="muted sm">' + esc(b.oleh) + ' · ' + esc(b.pada) + '</span>' + (b.cat ? '<span class="sm">' + esc(b.cat) + '</span>' : '') + '</div>' +
+        '<div class="bk-act">' + (['pdf', 'jpg', 'jpeg', 'png', 'webp', 'txt', 'csv'].indexOf(String(b.tipe).toLowerCase()) >= 0 ? '<button type="button" class="btn btn-ghost btn-sm" data-act="mbukti-lihat" data-id="' + esc(b.id) + '">Pratinjau</button>' : '') +
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="mbukti-unduh" data-id="' + esc(b.id) + '">Unduh</button>' + (b.hapus ? '<button type="button" class="btn btn-ghost btn-sm" data-act="mbukti-hapus" data-id="' + esc(b.id) + '">Hapus</button>' : '') + '</div></li>';
+    }).join('') + '</ul>' : '') +
+      (boleh ? '<form id="form-mbukti" novalidate><input type="hidden" name="ikId" value="' + esc(ik) + '"><input type="hidden" name="tw" value="TW' + tw + '"><input type="hidden" name="tahun" value="' + esc(meta.tahun || '') + '">' +
+        '<div class="field"><label for="mb-file">' + (li.length ? 'Tambah berkas' : 'Berkas') + ' (PDF, gambar, Word, Excel, PowerPoint, CSV, TXT; maks. 8 MB)</label><input class="input" id="mb-file" type="file" accept=".pdf,.jpg,.jpeg,.png,.webp,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.csv,.txt" required></div>' +
+        '<div class="field"><label for="mb-cat">Keterangan (opsional)</label><input class="input" id="mb-cat" name="catatan" maxlength="300" autocomplete="off"></div>' +
+        '<div class="form-actions"><button class="btn btn-primary" type="submit">Unggah Bukti</button><button type="button" class="btn btn-ghost" data-act="close-modal">Tutup</button></div><p class="form-msg" role="alert"></p></form>'
+        : '<div class="form-actions"><button type="button" class="btn btn-ghost" data-act="close-modal">Tutup</button></div>');
+    var tr = $('.mvk-t tr[data-ik="' + ik + '"]'), nm = tr ? $('td.ik', tr).firstChild.textContent : ik;
+    openModal('Bukti dukung TW ' + tw, '<p class="muted sm">' + esc(nm) + '</p>' + h);
+  }
+  function mvkCsv(rows) { var q = function (s) { s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }; return '﻿sep=;\n' + rows.map(function (r) { return r.map(q).join(';'); }).join('\n'); }
+  function mvkSimpanBerkas(isi, nama) {
+    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([isi], { type: 'text/csv;charset=utf-8' })); a.download = nama;
+    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+  var MVK_KOLOM = ['NO', 'TUJUAN SASARAN PROGRAM TURUNAN', 'IK TUJUAN SASARAN PROGRAM', 'TARGET TW1', 'TARGET TW2', 'TARGET TW3', 'TARGET TW4', 'REALISASI TW1', 'REALISASI TW2', 'REALISASI TW3', 'REALISASI TW4',
+    'BUKTI DUKUNG TW1', 'BUKTI DUKUNG TW2', 'BUKTI DUKUNG TW3', 'BUKTI DUKUNG TW4', 'UNIT TIM KERJA', 'CATATAN', 'KETERANGAN'];
+  /** Templat Excel lembar resmi (CSV titik koma) berisi isi lembar saat ini, susunan kolom sama dengan format kantor. */
+  function mvkTemplat() {
+    var rows = [MVK_KOLOM], no = '', lv = '';
+    $$('.mvk-t tbody tr').forEach(function (tr) {
+      var tdNo = $('td.no', tr), tdLv = $('td.mvk-lvc', tr); if (tdNo) { no = tdNo.textContent; lv = tdLv.textContent; }
+      if (!tr.getAttribute('data-ik')) { rows.push([no, lv, '']); return; }
+      var nilai = function (td) { var x = $('input,textarea,select', td); if (x && x.tagName === 'SELECT') return x.value ? x.options[x.selectedIndex].text : ''; return x ? x.value : ((($('.mvk-v,.mvk-tx', td) || td).textContent || '').replace(/^—$/, '')); };
+      var r = [tdNo ? no : '', tdNo ? lv : '', $('td.ik', tr).firstChild.textContent];
+      $$('td.tgt', tr).concat($$('td.real', tr)).forEach(function (td) { r.push(nilai(td)); });
+      $$('td.mvk-bkc', tr).forEach(function (td) { var b = $('.bk-ada', td); r.push(b ? b.textContent.replace(/\D/g, '') + ' berkas' : ''); });
+      r.push(nilai($('td.tim', tr))); $$('td', tr).slice(-3).forEach(function (td) { if (!td.classList.contains('aksi-c')) r.push(nilai(td)); });
+      while (r.length > MVK_KOLOM.length) r.pop();
+      rows.push(r);
+    });
+    mvkSimpanBerkas(mvkCsv(rows), 'Templat Monev Kinerja ' + (mvkMeta().tahun || '') + '.csv');
+  }
+  /** Isikan templat yang diunggah ke kotak lembar (dicocokkan menurut nama IK); tersimpan setelah menekan Simpan. */
+  function mvkUnggah(file) {
+    var fr = new FileReader();
+    fr.onload = function () {
+      var teks = String(fr.result).replace(/^﻿/, '').replace(/\r/g, ''), baris = teks.split('\n').filter(function (l) { return l.trim() && !/^sep=/.test(l); });
+      var pisah = baris.length && baris[0].indexOf(';') >= 0 ? ';' : ',';
+      var cel = function (l) { var out = [], cur = '', dq = false; for (var i = 0; i < l.length; i++) { var ch = l[i]; if (dq) { if (ch === '"' && l[i + 1] === '"') { cur += '"'; i++; } else if (ch === '"') dq = false; else cur += ch; } else if (ch === '"') dq = true; else if (ch === pisah) { out.push(cur); cur = ''; } else cur += ch; } out.push(cur); return out; };
+      var head = baris.length ? cel(baris[0]).map(function (h) { return h.trim().toUpperCase().replace(/\s+/g, ' '); }) : [], kIk = head.indexOf('IK TUJUAN SASARAN PROGRAM');
+      if (kIk < 0) { toast('Berkas bukan templat Monev Kinerja (kolom IK TUJUAN SASARAN PROGRAM tidak ada).', 'err'); return; }
+      var norm = function (s) { return String(s || '').toLowerCase().replace(/\s+/g, ' ').trim(); }, peta = {};
+      $$('.mvk-t tr[data-ik]').forEach(function (tr) { peta[norm($('td.ik', tr).firstChild.textContent)] = tr; });
+      var n = 0, tak = 0;
+      baris.slice(1).forEach(function (l) {
+        var c = cel(l), tr = peta[norm(c[kIk])]; if (!c[kIk] || !c[kIk].trim()) return; if (!tr) { tak++; return; }
+        head.forEach(function (h, j) {
+          var m = /^(TARGET|REALISASI) TW([1-4])$/.exec(h), f = m ? m[1].toLowerCase() + '|TW' + m[2] : (h === 'CATATAN' ? 'catatan' : h === 'KETERANGAN' ? 'keterangan' : '');
+          var el = f && $('[data-f="' + f + '"]', tr), v = String(c[j] == null ? '' : c[j]).trim();
+          if (el && !el.disabled && v !== el.value.trim()) { el.value = v; lbrCek(el); n++; }
+        });
+        mvkHitung(tr);
+      });
+      lbrStatus();
+      toast(n ? n + ' kotak diisi dari templat' + (tak ? ', ' + tak + ' IK tidak dikenali' : '') + '. Periksa lalu tekan Simpan.' : 'Tidak ada angka baru di templat' + (tak ? ' (' + tak + ' IK tidak dikenali)' : '') + '.', n ? 'ok' : 'err');
+    };
+    fr.readAsText(file);
+  }
+
+  /* Review Monev Kinerja: digambar dari #mvk-data; triwulan dan unit dipilih tanpa memuat ulang halaman. */
+  var MVK = null;
+  function mvkCap(k, q) { if (q < 1) return null; var r = k.re[q - 1], t = k.tg[q - 1]; return r === null || !t ? null : r / t * 100; }
+  function mvkKl(c) { return c === null ? -1 : c < 80 ? 0 : c < 90 ? 1 : c < 100 ? 2 : c <= 100.0001 ? 3 : 4; }
+  function mvkSt(c) { return c === null ? 'na' : c >= 100 ? 'ok' : c >= 90 ? 'warn' : 'krit'; }
+  function mvkFv(v, s) { return v === null || v === undefined ? '—' : String(v).replace('.', ',') + (s === '%' ? '%' : ' ' + s); }
+  function mvkNamaJ(j) { return (MVK_JENIS.filter(function (x) { return x.v === j; })[0] || {}).t || j; }
+  function mvkReview() {
+    var el = $('#mvk-data'); if (!el) { MVK = null; return; }
+    try { MVK = JSON.parse(el.getAttribute('data-json')); } catch (e) { MVK = null; return; }
+    MVK.det = null; mvkGambar();
+  }
+  function mvkIks() {
+    var u = ($('#mvk-unit') || {}).value || '', out = [];
+    MVK.P.forEach(function (p) { p.ik.forEach(function (k, i) { if (!u || k.u === u) out.push(Object.assign({}, k, { key: p.id + '-' + i, node: p })); }); });
+    return out;
+  }
+  function mvkGambar() {
+    if (!MVK || !$('#mvk-kpi')) return;
+    var q = Number(($('#mvk-tw') || {}).value) || MVK.tw, ik = mvkIks(), avg = function (a) { return a.length ? a.reduce(function (x, y) { return x + y; }, 0) / a.length : null; };
+    var cs = ik.map(function (k) { return mvkCap(k, q); }).filter(function (x) { return x !== null; }), cp = ik.map(function (k) { return mvkCap(k, q - 1); }).filter(function (x) { return x !== null; });
+    var rata = avg(cs), lalu = avg(cp), ok = cs.filter(function (c) { return c >= 100; }).length, lo = cs.length - ok;
+    var na = ik.filter(function (k) { return k.tg[q - 1] && k.re[q - 1] === null; }).length;
+    var wajib = ik.filter(function (k) { return k.re[q - 1] !== null; }), bukti = wajib.filter(function (k) { return k.bk[q - 1] > 0; }).length;
+    var uniq = function (a) { return a.filter(function (x, i) { return x && a.indexOf(x) === i; }); };
+    var unitKosong = uniq(ik.filter(function (k) { return k.tg[q - 1] && k.re[q - 1] === null; }).map(function (k) { return k.u; })).length, unitSemua = uniq(ik.map(function (k) { return k.u; })).length;
+    var d = rata !== null && lalu !== null ? rata - lalu : null, R = MVK_ROM, U = function (u) { return (MVK.unit || {})[u] || 'Belum ditetapkan'; };
+    var stak = function (parts) { return '<div class="mvk-stak">' + parts.map(function (p) { return '<i style="flex:' + p[0] + ';background:' + p[1] + '"></i>'; }).join('') + '</div>'; };
+    $('#mvk-kpi').innerHTML =
+      '<div class="card card-pad"><div class="mvk-lbl">Rata-rata capaian IK · TW ' + R[q - 1] + '</div><div class="mvk-big">' + (rata === null ? '—' : rata.toFixed(1).replace('.', ',')) + '<small>%</small></div>' + (d === null ? '' : '<span class="' + (d >= 0 ? 'mvk-naik' : 'mvk-turun') + '">' + (d >= 0 ? '▲ ' : '▼ ') + Math.abs(d).toFixed(1).replace('.', ',') + ' poin dari TW ' + R[q - 2] + '</span>') + '</div>' +
+      '<div class="card card-pad"><div class="mvk-lbl">Status IK</div><div class="mvk-big">' + ok + '<small>capai · ' + lo + ' di bawah · ' + na + ' belum</small></div>' + stak([[ok, 'var(--mvk-ok)'], [lo, '#e0857a'], [na, 'var(--mute2)']]) + '</div>' +
+      '<div class="card card-pad"><div class="mvk-lbl">Kelengkapan bukti dukung</div><div class="mvk-big">' + bukti + '<small>dari ' + wajib.length + ' IK berisi</small></div>' + stak([[bukti, '#0a7f8c'], [wajib.length - bukti, 'var(--mute2)']]) + '</div>' +
+      '<div class="card card-pad"><div class="mvk-lbl">Unit Tim Kerja belum mengisi</div><div class="mvk-big">' + unitKosong + '<small>dari ' + unitSemua + ' unit</small></div></div>';
+    // pohon: empat kolom tetap; tiap kartu menempati baris sebanyak cabang ujungnya agar sejajar dengan induk dan anaknya
+    var P = MVK.P, LV = ['tujuan', 'sasaran', 'program', 'turunan'], anak = function (id) { return P.filter(function (p) { return p.ind === id; }); };
+    var daun = function (p) { var a = anak(p.id); return a.length ? a.reduce(function (n, x) { return n + daun(x); }, 0) : 1; };
+    var keys = {}; ik.forEach(function (k) { keys[k.key] = k; });
+    var capNode = function (p) { var c = p.ik.map(function (k, i) { return keys[p.id + '-' + i] ? mvkCap(k, q) : null; }).filter(function (x) { return x !== null; }); return c.length ? Math.min.apply(null, c) : null; };
+    var sel = '', baris = 2, WR = { ok: 'var(--mvk-ok)', warn: '#e3b341', krit: '#e0857a', na: 'var(--mute2)' };
+    var tata = function (p) {
+      var c = capNode(p), s = mvkSt(c), nIk = p.ik.filter(function (k, i) { return keys[p.id + '-' + i]; }).length;
+      sel += '<button type="button" class="mvk-kartu b-' + s + (MVK.det && MVK.det.indexOf(p.id + '-') === 0 ? ' on' : '') + '"' + (p.ik.length ? ' data-mk="' + esc(p.id) + '-0"' : '') + ' data-id="' + esc(p.id) + '" style="grid-column:' + (Math.max(0, LV.indexOf(p.j)) + 1) + ';grid-row:' + baris + ' / span ' + daun(p) + '">' +
+        '<span class="tx">' + esc(p.t) + '</span><span class="bwh"><span class="mvk-bar"><i style="width:' + Math.min(100, c || 0) + '%;background:' + WR[s] + '"></i></span><span class="mvk-cp s-' + s + '">' + mvkPersen(c) + '</span></span><span class="ik">' + nIk + ' IK</span></button>';
+      if (anak(p.id).length) anak(p.id).forEach(tata); else baris++;
+    };
+    anak(null).forEach(tata);
+    $('#mvk-pohon').innerHTML = '<div class="mvk-alur">' + LV.map(function (l, i) { return '<div class="kol-h" style="grid-column:' + (i + 1) + ';grid-row:1">' + mvkNamaJ(l) + '</div>'; }).join('') + sel + '</div><svg class="mvk-sb" aria-hidden="true"></svg>';
+    mvkSambung();
+    // perlu perhatian
+    var pp = [];
+    ik.forEach(function (k) {
+      var c = mvkCap(k, q), c0 = mvkCap(k, q - 1), w = [];
+      if (c !== null && c < 100) w.push(['Di bawah target', 's-krit']);
+      if (c !== null && c0 !== null && c < c0) w.push(['Turun dari TW ' + R[q - 2], 's-warn']);
+      if (k.tg[q - 1] && k.re[q - 1] === null) w.push(['Belum diisi', 's-na']);
+      if (k.re[q - 1] !== null && !k.bk[q - 1]) w.push(['Tanpa bukti dukung', 's-warn']);
+      if (w.length) pp.push({ k: k, w: w });
+    });
+    pp.sort(function (a, b) { return b.w.length - a.w.length; });
+    $('#mvk-pp').innerHTML = pp.slice(0, 6).map(function (x) {
+      return '<button type="button" class="mvk-pi" data-mk="' + esc(x.k.key) + '"><b>' + esc(x.k.n) + '</b><span class="why">' + x.w.map(function (w) { return '<span class="mvk-chip ' + w[1] + '">' + w[0] + '</span>'; }).join('') + '<span class="mvk-chip s-na">' + esc(U(x.k.u)) + '</span></span>' + (x.k.cat ? '<span class="cat">“' + esc(x.k.cat) + '”</span>' : '') + '</button>';
+    }).join('') || '<p class="muted sm">Tidak ada IK yang perlu perhatian.</p>';
+    // peta panas IK × triwulan
+    var h = '<thead><tr><th class="k">IK</th>' + R.map(function (r, i) { return '<th' + (i + 1 === q ? ' class="now"' : '') + '>TW ' + r + '</th>'; }).join('') + '</tr></thead><tbody>';
+    P.forEach(function (p) {
+      var di = p.ik.map(function (k, i) { return keys[p.id + '-' + i]; }).filter(Boolean); if (!di.length) return;
+      h += '<tr class="g"><td colspan="5">' + esc(mvkNamaJ(p.j)) + ' · ' + esc(p.t) + '</td></tr>';
+      di.forEach(function (k) { h += '<tr><td class="n"><button type="button" data-mk="' + esc(k.key) + '">' + esc(k.n) + '</button><small>' + esc(U(k.u)) + '</small></td>' + [1, 2, 3, 4].map(function (t) { var c = mvkCap(k, t); return '<td class="t u' + mvkKl(c) + '" title="target ' + esc(mvkFv(k.tg[t - 1], k.sat)) + '">' + mvkPersen(c) + '<small>' + esc(mvkFv(k.re[t - 1], k.sat)) + '</small></td>'; }).join('') + '</tr>'; });
+    });
+    $('#mvk-hm').innerHTML = h + '</tbody>';
+    // rapor per Unit Tim Kerja (terendah di atas)
+    var unit = uniq(ik.map(function (k) { return k.u || '-'; })).concat(ik.some(function (k) { return !k.u; }) ? ['-'] : []).filter(function (x, i, a) { return a.indexOf(x) === i; }).map(function (u) {
+      var ks = ik.filter(function (k) { return (k.u || '-') === u; }), c = ks.map(function (k) { return mvkCap(k, q); }).filter(function (x) { return x !== null; });
+      return { t: u === '-' ? 'Belum ditetapkan' : U(u), n: ks.length, r: avg(c), lo: c.filter(function (x) { return x < 100; }).length, bk: ks.filter(function (k) { return k.re[q - 1] !== null && k.bk[q - 1] > 0; }).length, isi: ks.filter(function (k) { return k.re[q - 1] !== null; }).length };
+    }).sort(function (a, b) { return (a.r === null ? -1 : a.r) - (b.r === null ? -1 : b.r); });
+    $('#mvk-ru').innerHTML = '<thead><tr><th>Unit Tim Kerja</th><th class="r">IK</th><th>Rata-rata capaian</th><th class="r"></th><th class="r">Di bawah target</th><th class="r">Bukti dukung</th></tr></thead><tbody>' + unit.map(function (x) {
+      return '<tr><td>' + esc(x.t) + '</td><td class="r">' + x.n + '</td><td><div class="mvk-bt"><i class="u' + mvkKl(x.r) + '" style="width:' + Math.min(100, x.r || 0) + '%"></i></div></td><td class="r"><b>' + mvkPersen(x.r) + '</b></td><td class="r">' + (x.lo ? '<span class="mvk-chip s-krit">' + x.lo + '</span>' : '0') + '</td><td class="r">' + x.bk + ' / ' + x.isi + '</td></tr>';
+    }).join('') + '</tbody>';
+    mvkDetail(q);
+  }
+  function mvkSambung() {
+    var lane = $('#mvk-pohon'), sb = lane && $('.mvk-sb', lane); if (!sb || !MVK) return;
+    var r0 = lane.getBoundingClientRect(), h = '';
+    MVK.P.forEach(function (p) {
+      if (!p.ind) return;
+      var a = $('[data-id="' + p.ind + '"]', lane), b = $('[data-id="' + p.id + '"]', lane); if (!a || !b) return;
+      var A = a.getBoundingClientRect(), B = b.getBoundingClientRect(), x1 = A.right - r0.left, y1 = A.top + A.height / 2 - r0.top, x2 = B.left - r0.left, y2 = B.top + B.height / 2 - r0.top, mx = (x1 + x2) / 2;
+      h += '<path d="M' + x1 + ' ' + y1 + ' C' + mx + ' ' + y1 + ' ' + mx + ' ' + y2 + ' ' + x2 + ' ' + y2 + '"/>';
+    });
+    sb.innerHTML = h;
+  }
+  /** Rincian satu IK: angka TW I–IV dan batang peluru (batang = realisasi, garis = target). */
+  function mvkDetail(q) {
+    var el = $('#mvk-det'); if (!el) return;
+    var k = MVK.det ? mvkIks().filter(function (x) { return x.key === MVK.det; })[0] : null;
+    if (!k) { el.hidden = true; return; }
+    var R = MVK_ROM, vals = k.tg.concat(k.re).filter(function (v) { return v !== null; }), mx = (vals.length ? Math.max.apply(null, vals) : 0) * 1.1 || 1;
+    var bul = '<div class="mvk-bul">' + [0, 1, 2, 3].map(function (i) {
+      var t = k.tg[i], v = k.re[i], c = mvkCap(k, i + 1);
+      return '<div class="rw' + (i + 1 === q ? ' now' : '') + '"><span>TW ' + R[i] + '</span><div class="tr">' + (v === null ? '' : '<i style="width:' + Math.min(100, v / mx * 100) + '%;background:' + (c !== null && c >= 100 ? 'var(--mvk-ok)' : '#0a7f8c') + '"></i>') +
+        (t === null ? '' : '<b style="left:' + Math.min(100, t / mx * 100) + '%" title="target ' + esc(mvkFv(t, k.sat)) + '"></b>') + '</div><span>' + esc(mvkFv(v, k.sat)) + '</span></div>';
+    }).join('') + '</div>';
+    el.innerHTML = '<div class="mvk-dk"><div><h2 class="h3">' + esc(k.n) + '</h2><p class="muted sm">' + esc(mvkNamaJ(k.node.j)) + ' · ' + esc(k.node.t) + ' · ' + esc((MVK.unit || {})[k.u] || 'Unit belum ditetapkan') + '</p></div><button type="button" class="btn btn-ghost btn-sm" data-act="mvk-det-tutup" aria-label="Tutup rincian">✕</button></div>' +
+      '<div class="mvk-di"><div class="mvk-info">' + [1, 2, 3, 4].map(function (t) { var c = mvkCap(k, t); return '<div><span>TW ' + R[t - 1] + ' · target ' + esc(mvkFv(k.tg[t - 1], k.sat)) + ' · realisasi ' + esc(mvkFv(k.re[t - 1], k.sat)) + '</span><b class="' + (c === null ? '' : c >= 100 ? 'mvk-naik' : 'mvk-turun') + '">' + mvkPersen(c) + (k.bk[t - 1] ? ' · ' + k.bk[t - 1] + ' bukti' : '') + '</b></div>'; }).join('') +
+      (k.cat ? '<div><span>Catatan</span><span>“' + esc(k.cat) + '”</span></div>' : '') + (k.ket ? '<div><span>Keterangan</span><span>' + esc(k.ket) + '</span></div>' : '') + '</div>' +
+      '<div>' + bul + '<div class="mvk-leg"><span><i style="background:#0a7f8c"></i>Realisasi</span><span><i style="background:var(--mvk-ok)"></i>Realisasi capai target</span><span><i class="garis"></i>Target</span></div></div></div>';
+    el.hidden = false;
+  }
+  /** Unduh Review sebagai CSV format resmi (semua IK, TW I–IV, capaian triwulan terpilih). */
+  function mvkUnduh() {
+    if (!MVK) return;
+    var q = Number(($('#mvk-tw') || {}).value) || MVK.tw, rows = [MVK_KOLOM.slice(0, 11).concat(['CAPAIAN TW' + q, 'UNIT TIM KERJA', 'CATATAN', 'KETERANGAN'])], no = 0, keys = {};
+    mvkIks().forEach(function (k) { keys[k.key] = 1; });
+    MVK.P.forEach(function (p) {
+      var di = p.ik.map(function (k, i) { return keys[p.id + '-' + i] ? k : null; }).filter(Boolean); if (!di.length) return; no++;
+      di.forEach(function (k, i) { var c = mvkCap(k, q); rows.push([i ? '' : no, i ? '' : p.t, k.n].concat(k.tg.map(function (v) { return v === null ? '' : String(v).replace('.', ','); }), k.re.map(function (v) { return v === null ? '' : String(v).replace('.', ','); }), [c === null ? '' : c.toFixed(1).replace('.', ',') + '%', (MVK.unit || {})[k.u] || '', k.cat, k.ket])); });
+    });
+    mvkSimpanBerkas(mvkCsv(rows), 'Review Monev Kinerja TW ' + MVK_ROM[q - 1] + ' ' + MVK.tahun + '.csv');
+  }
+  window.addEventListener('resize', function () { if (MVK && $('#mvk-pohon')) mvkSambung(); });
 
   /* ---------- logo: unggah gambar dan perkecil di browser ---------- */
   function perkecilLogo(file, selesai, gagal) {
@@ -1980,7 +2234,15 @@
       case 'open-drawer': openDrawer(); break;
       case 'notif-close': closeNotif(); $('#btn-notif').focus(); break;
       case 'lbr-det': { var dt = $('#form-lbr tr[data-det="' + el.getAttribute('data-row') + '"]'); if (dt) { dt.hidden = !dt.hidden; if (!dt.hidden) { var ta = $('textarea', dt); if (ta) ta.focus(); } } break; }
-      case 'lbr-batal': lbrBatal(); break;
+      case 'lbr-batal': lbrBatal(); mvkSiap(); break;
+      case 'mvk-tambah': mvkFormBaris(''); break;
+      case 'mvk-ubah': mvkFormBaris(el.getAttribute('data-id')); break;
+      case 'mvk-ik-tambah': { var fb = el.closest('form'), w = $('.mvk-iks', fb); w.insertAdjacentHTML('beforeend', mvkIkBaris(mvkMeta(), {}, w.children.length)); mvkIkTombol(fb); $('[name=ikn]', w.lastElementChild).focus(); break; }
+      case 'mvk-ik-hapus': { var fh = el.closest('form'); el.closest('.mvk-ikr').remove(); fh.removeAttribute('data-yakin'); mvkIkTombol(fh); break; }
+      case 'mvk-bukti': mvkBukti(el.getAttribute('data-ik'), el.getAttribute('data-tw')); break;
+      case 'mvk-templat': mvkTemplat(); break;
+      case 'mvk-unduh': mvkUnduh(); break;
+      case 'mvk-det-tutup': MVK.det = null; mvkGambar(); break;
       case 'peta-mode': {
         var kp = el.closest('.db-petac'), md = el.getAttribute('data-v');
         $$('.db-pseg .seg-btn', kp).forEach(function (b) { b.classList.toggle('is-on', b === el); });
@@ -2190,6 +2452,8 @@
       navigateTo(nav.getAttribute('data-nav'), params);
       return;
     }
+    var mk = t.closest && t.closest('[data-mk]');
+    if (mk && MVK) { MVK.det = mk.getAttribute('data-mk'); mvkGambar(); var dt = $('#mvk-det'); if (dt) dt.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
     var a = t.closest && t.closest('[data-act]');
     if (a && !(a.tagName === 'A' && a.getAttribute('href') && a.getAttribute('href') !== 'javascript:void(0)')) {
       // Kartu indikator: abaikan klik pada tombol di dalamnya (mereka punya aksi sendiri)
@@ -2292,7 +2556,7 @@
     if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
     if (ev.target && ev.target.id === 'is-real' && ev.target.form) cekIsian(ev.target.form);
     if (ev.target && ev.target.classList && ev.target.classList.contains('ssg-in')) { ssgCekBaris(ev.target); ssgStatus(); }
-    if (ev.target && ev.target.classList && ev.target.classList.contains('lbr-in')) { lbrCek(ev.target); lbrStatus(); }
+    if (ev.target && ev.target.classList && ev.target.classList.contains('lbr-in')) { lbrCek(ev.target); lbrStatus(); if (ev.target.classList.contains('mvk-n')) mvkHitung(ev.target.closest('tr')); }
     var t = ev.target;
     if (t.matches && t.matches('.tgt-in')) {
       var f = t.form, n = $$('.tgt-in', f).filter(function (el) { return el.value.trim() !== el.getAttribute('data-orig'); }).length;
@@ -2309,6 +2573,9 @@
     if (t.classList && t.classList.contains('rv-kab')) { var rm = rvMeta(); navigateTo(AppState.page === 'ssreview' ? 'ssreview' : 'review', Object.assign({ per: rm.per }, t.value ? { kab: t.value } : {})); return; }
     if (t.form && t.form.id === 'form-rv-cetak') { rvcSync(); return; }
     if (t.id === 'ssg-file' && t.files && t.files[0]) { ssgUnggah(t.files[0]); t.value = ''; return; }
+    if (t.id === 'mvk-file' && t.files && t.files[0]) { mvkUnggah(t.files[0]); t.value = ''; return; }
+    if (t.id === 'mvk-tw' || t.id === 'mvk-unit') { if (MVK) { MVK.det = null; mvkGambar(); } return; }
+    if (t.id === 'mvk-jenis' && t.form) { var fm = t.form; fm.elements.induk.innerHTML = mvkIndukOpsi(mvkMeta(), t.value, fm.elements.induk.value, fm.getAttribute('data-id')); return; }
     if (t.classList && (t.classList.contains('per-jn') || t.classList.contains('per-no'))) { perGanti(t); return; }
     if (t.form && t.form.getAttribute('id') === 'form-isian' && t.name === 'keterangan') { sinkIsian(t.form); cekIsian(t.form); return; }
     if (t.form && t.form.id === 'form-user-modal' && (t.name === 'role' || t.name === 'modeSandi' || t.name === 'bidang')) { syncUserForm(t.form); return; }
@@ -2360,6 +2627,7 @@
     if (fid === 'form-target') return submitTarget(f);
     if (fid === 'form-bukti') return submitBukti(f);
     if (fid === 'form-monev') return submitMonev(f);
+    if (fid === 'form-mvk-baris') return submitMvkBaris(f);
     if (fid === 'form-mbukti') return submitMonevBukti(f);
     if (fid === 'form-galeri') return submitGaleri(f);
     if (fid === 'form-tarik') return;
