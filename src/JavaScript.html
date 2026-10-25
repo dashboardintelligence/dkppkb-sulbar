@@ -67,9 +67,10 @@
   var API_URL = (typeof window.DKPPKB_API === 'string' && /^https:\/\/script\.google\.com\/[^\s"'<>]+$/.test(window.DKPPKB_API)) ? window.DKPPKB_API : '';
   var SESI_KEY = 'dkppkb_sesi';
   function simpanSesi(t) { if (!API_URL) return; try { if (t) sessionStorage.setItem(SESI_KEY, t); else sessionStorage.removeItem(SESI_KEY); } catch (e) { } }
+  var API_LAMA = { apiImporMonev: 1, apiGantiDaftarIndikator: 1, apiBackup: 1, apiPulihkanBackup: 1 };
   function callFetch(fn, args) {
     var ctl = typeof AbortController === 'function' ? new AbortController() : null;
-    var timer = ctl ? setTimeout(function () { ctl.abort(); }, 90000) : null;
+    var timer = ctl ? setTimeout(function () { ctl.abort(); }, API_LAMA[fn] ? 330000 : 90000) : null;   // proses besar (impor, ganti daftar) diberi waktu sampai batas Apps Script
     return fetch(API_URL, { method: 'POST', redirect: 'follow', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args || [] }), signal: ctl ? ctl.signal : undefined })
       .then(function (r) { if (!r.ok) throw new Error('Server mengembalikan status ' + r.status + '.'); return r.text(); })
       .then(function (t) {
