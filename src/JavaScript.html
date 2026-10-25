@@ -1985,6 +1985,7 @@
         var kp = el.closest('.db-petac'), md = el.getAttribute('data-v');
         $$('.db-pseg .seg-btn', kp).forEach(function (b) { b.classList.toggle('is-on', b === el); });
         $$('.db-pblok', kp).forEach(function (b) { b.hidden = b.getAttribute('data-mode') !== md; });
+        if (md === 'ind') petaInd($('.db-pblok[data-mode=ind]', kp), true);
         break;
       }
       case 'tbl-unduh': unduhTabel(el.getAttribute('data-nama')); break;
@@ -2223,6 +2224,50 @@
     var n = ssgTempel(t, teks); ssgStatus();
     toast(n ? n + ' kotak terisi dari tempelan. Periksa lalu tekan Simpan.' : 'Tidak ada angka yang bisa ditempel di sini.', n ? 'ok' : 'err');
   });
+  /* Peta Dashboard › Per indikator: gambar ulang warna, angka, keterangan, dan batang untuk indikator terpilih.
+   * Warna sama dengan server: persentase bertarget = capaian terhadap target; jumlah/angka/tanpa target = dibanding kabupaten
+   * tertinggi; Indikator Negatif dibalik. Indikator tingkat provinsi tidak punya sebaran kabupaten. */
+  var PETA_SK = ['#d6eef0', '#9fd6db', '#5bb3bc', '#1f8a95', '#0b5f68'];
+  function petaInd(blok, awal) {
+    var dEl = blok && $('.db-pind-data', blok), sel = blok && $('.db-pind', blok); if (!dEl || !sel) return;
+    var data = []; try { data = JSON.parse(dEl.getAttribute('data-json')); } catch (e) { return; }
+    if (awal) { var ingat = ''; try { ingat = localStorage.getItem('dkppkb_peta_ind') || ''; } catch (e) { }
+      var o = ingat && $('option[data-id="' + ingat + '"]', sel); if (o) sel.value = o.value; }
+    var I = data[Number(sel.value)] || data[0]; if (!I) return;
+    try { localStorage.setItem('dkppkb_peta_ind', I.id); } catch (e) { }
+    var sat = I.akum === 'persentase' ? '%' : (I.sat ? ' ' + I.sat : ''), bertarget = I.akum === 'persentase' && I.tgt > 0;
+    var fv = function (v) { return v === null || v === undefined ? '—' : (I.akum === 'jumlah' ? Math.round(v).toLocaleString('id-ID') : Number(v).toLocaleString('id-ID', { maximumFractionDigits: I.akum === 'persentase' ? 1 : 2 })) + sat; };
+    var paths = $$('.db-pk', blok), lbl = $$('.db-pl', blok), kabs = paths.map(function (p) { return p.getAttribute('data-k'); });
+    var nilai = function (k) { return I.v[k] === undefined ? null : I.v[k]; };
+    var mx = Math.max.apply(null, kabs.map(function (k) { return nilai(k) || 0; }).concat([0]));
+    var skor = function (v) {
+      if (v === null) return null;
+      var s = I.akum === 'persentase' ? (bertarget ? (I.neg ? (v > 0 ? I.tgt / v * 100 : 100) : v / I.tgt * 100) : v) : (mx > 0 ? v / mx * 100 : 0);
+      if (I.neg && !bertarget) s = 100 - s;
+      return Math.max(0, Math.min(100, s));
+    };
+    var kelas = function (s) { return s === null ? -1 : s < 40 ? 0 : s < 55 ? 1 : s < 70 ? 2 : s < 85 ? 3 : 4; };
+    var status = function (v) { return v === null ? 'belum diisi' : bertarget ? (I.neg ? (v <= I.tgt ? 'capai target' : 'di atas target') : (v >= I.tgt ? 'capai target' : 'di bawah target')) : '—'; };
+    paths.forEach(function (p, i) {
+      var k = kabs[i], v = nilai(k), kl = kelas(skor(v));
+      p.style.fill = kl < 0 ? 'var(--rail)' : PETA_SK[kl];
+      p.setAttribute('data-tip', JSON.stringify(I.prov ? [k, 'Tingkat provinsi|tidak dirinci'] : [k, 'Nilai|' + fv(v)].concat(bertarget ? ['Target|' + (I.neg ? '≤ ' : '≥ ') + fv(I.tgt)] : []).concat(['Status|' + status(v)])));
+      var t = $('title', p); if (t) t.textContent = k + ': ' + fv(v);
+      var tx = lbl[i]; if (tx) { var ts = $('tspan', tx); if (ts) ts.textContent = I.prov ? '' : fv(v); tx.style.fill = kl < 0 ? 'var(--tx)' : kl >= 3 ? '#fff' : '#1d1d1f'; tx.style.stroke = kl < 0 ? 'var(--card)' : kl >= 3 ? 'rgba(0,0,0,.25)' : 'rgba(255,255,255,.7)'; }
+    });
+    $('.db-h2', blok).textContent = I.no + '. ' + I.n;
+    $('.db-hint', blok).textContent = I.prov ? 'Indikator tingkat provinsi: diisi satu angka untuk provinsi (' + fv(I.pv) + '), jadi tidak ada sebaran per kabupaten.'
+      : I.g + (I.b ? ' · ' + I.b : '') + (bertarget ? ' · target ' + (I.neg ? '≤ ' : '≥ ') + fv(I.tgt) : '') + ' · ' + (bertarget ? 'warna = capaian terhadap target' : 'warna = dibanding kabupaten tertinggi') + (I.neg ? ' (dibalik)' : '');
+    $('.db-pind-info', blok).innerHTML = (bertarget ? '' : I.akum === 'persentase' ? 'target belum diisi · ' : '') + esc(I.akum) + (I.neg ? ' · <b class="ssg-neg">Indikator Negatif</b>' : '') + (I.prov ? ' · tingkat provinsi' : '');
+    var urut = kabs.filter(function (k) { return true; }).sort(function (a, b) { var x = nilai(a), y = nilai(b); if (x === null) return 1; if (y === null) return -1; return I.neg ? x - y : y - x; });
+    var lebar = function (v) { return v === null ? 0 : I.akum === 'persentase' ? Math.min(100, v) : (mx > 0 ? v / mx * 100 : 0); };
+    $('.db-bars', blok).innerHTML = I.prov ? '<p class="muted sm">Pilih indikator lain untuk melihat sebaran per kabupaten.</p>' : urut.map(function (k) {
+      var v = nilai(k), kl = kelas(skor(v));
+      return '<div class="db-bar" data-k="' + esc(k) + '"><span>' + esc(k) + '</span><div class="db-t"><i style="width:' + lebar(v).toFixed(1) + '%;background:' + (kl < 0 ? 'var(--rail)' : PETA_SK[kl]) + '"></i>' +
+        (bertarget ? '<b style="left:' + Math.min(100, I.tgt) + '%"></b>' : '') + '</div><span>' + fv(v) + '</span></div>';
+    }).join('');
+    var lg = $('.db-pleg .db-legend', blok); if (lg) { lg.hidden = !bertarget; lg.innerHTML = '<i></i>target ' + (I.neg ? '≤ ' : '') + fv(I.tgt); }
+  }
   /* Peta Dashboard: sorot kabupaten saat kursor di peta atau di barisnya, dan tampilkan keterangan di dekat kursor */
   function petaSorot(blok, k) {
     $$('.db-pk', blok).forEach(function (p) { p.classList.toggle('on', p.getAttribute('data-k') === k); });
@@ -2259,6 +2304,7 @@
     var t = ev.target;
     if (t.classList && t.classList.contains('dsb-sel')) { dsbSaring(); return; }
     if (t.classList && t.classList.contains('ssg-prog')) { ssgSaringProg(); return; }
+    if (t.classList && t.classList.contains('db-pind')) { petaInd(t.closest('.db-pblok'), false); return; }
     if (t.classList && t.classList.contains('lbr-in')) { lbrCek(t); lbrStatus(); return; }
     if (t.classList && t.classList.contains('rv-kab')) { var rm = rvMeta(); navigateTo(AppState.page === 'ssreview' ? 'ssreview' : 'review', Object.assign({ per: rm.per }, t.value ? { kab: t.value } : {})); return; }
     if (t.form && t.form.id === 'form-rv-cetak') { rvcSync(); return; }
