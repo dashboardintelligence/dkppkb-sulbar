@@ -577,8 +577,8 @@
       var anak = items.filter(function (x) { return x.induk === m.id; });
       if (anak.length === 1) { html += tombol(anak[0], ikon, m.label); return; }
       if (!anak.length) return;
-      html += '<div class="nav-grp"><button type="button" class="nav-item nav-induk" data-act="nav-induk" aria-expanded="true"><i class="ph-thin ph-' + ikon + '" aria-hidden="true"></i><span>' + esc(m.label) + '</span><i class="ph-thin ph-caret-right nav-car" aria-hidden="true"></i></button>' +
-        '<div class="nav-subs">' + anak.map(function (x) { return tombol(x, '', x.label, ' nav-sub'); }).join('') + '</div></div>';
+      html += '<div class="nav-grp"><button type="button" class="nav-item nav-induk" data-act="nav-induk" aria-expanded="false"><i class="ph-thin ph-' + ikon + '" aria-hidden="true"></i><span>' + esc(m.label) + '</span><i class="ph-thin ph-caret-right nav-car" aria-hidden="true"></i></button>' +
+        '<div class="nav-subs" hidden>' + anak.map(function (x) { return tombol(x, '', x.label, ' nav-sub'); }).join('') + '</div></div>';
     });
     $('#nav-side').innerHTML = html;
     var boleh = {}; items.forEach(function (m) { boleh[m.id] = m; });
@@ -1660,7 +1660,7 @@
   }
   function ssgCatatan(el) {
     if (ssgKotor()) { toast('Simpan atau batalkan perubahan angka dulu.', 'err'); return; }
-    var tr = el.closest('tr'), nama = $('th', tr).textContent;
+    var tr = el.closest('tr'), nama = ($('.ssg-nm', tr) || $('th', tr)).textContent;
     openModal('Catatan · ' + nama, '<form id="form-ssg-cat" novalidate data-ind="' + esc(el.getAttribute('data-ind')) + '"><div class="field"><label for="ssg-cat">Catatan untuk TW ini (opsional)</label><textarea class="input" id="ssg-cat" name="catatan" rows="3" maxlength="500">' + esc(el.getAttribute('data-cat') || '') + '</textarea></div>' +
       '<div class="form-actions"><button class="btn btn-primary" type="submit">Simpan catatan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
   }
@@ -1677,9 +1677,11 @@
     var mt = ssgMeta() || {}, opt = function (a, v) { return a.map(function (x) { return '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join(''); };
     openModal(mt.dp ? 'Tambah indikator Data Program' : 'Tambah indikator Sulbar Sehat', '<form id="form-ssg-ind" novalidate><p class="muted sm" style="margin:0 0 10px">Indikator baru langsung muncul sebagai baris di tabel dan siap diisi per kabupaten.</p>' +
       '<div class="field"><label for="ssgi-nama">Nama indikator</label><input class="input" id="ssgi-nama" name="nama" maxlength="200" required placeholder="mis. Remaja putri mendapat edukasi gizi"></div>' +
-      '<div class="form-grid"><div class="field"><label for="ssgi-grup">' + (mt.dp ? 'Program' : 'Kelompok') + '</label><select class="input" id="ssgi-grup" name="grup">' + opt(mt.grup || [], '') + (mt.dp ? '' : '<option>Lainnya</option>') + '</select></div>' +
+      '<div class="form-grid"><div class="field"><label for="ssgi-grup">Kelompok</label><select class="input" id="ssgi-grup" name="grup">' + opt(mt.grup || [], '') + (mt.dp ? '' : '<option>Lainnya</option>') + '</select></div>' +
       '<div class="field"><label for="ssgi-bid">Bidang</label><select class="input" id="ssgi-bid" name="bidang">' + opt(mt.bidang || [], '') + '</select></div>' +
-      '<div class="field"><label for="ssgi-sat">Satuan</label><select class="input" id="ssgi-sat" name="satuan">' + opt(['%', 'orang', 'desa', 'per 1.000', 'per 100.000 KH'], '%') + '</select></div>' +
+      '<div class="field"><label for="ssgi-sat">Satuan target</label><select class="input" id="ssgi-sat" name="satuan">' + (mt.dp
+        ? '<option value="persentase">Persentase (%)</option><option value="jumlah">Jumlah</option><option value="angka">Angka</option>' + opt(['per 1.000', 'per 100.000 KH', 'orang', 'desa'], '')
+        : opt(['%', 'orang', 'desa', 'per 1.000', 'per 100.000 KH'], '%')) + '</select></div>' +
       '<div class="field"><label for="ssgi-tgt">Target</label><input class="input" id="ssgi-tgt" name="target" inputmode="decimal" value="80"></div>' +
       '<div class="field"><label for="ssgi-arah">Arah</label><select class="input" id="ssgi-arah" name="arah"><option value="Naik">↑ makin besar makin baik</option><option value="Turun">↓ makin kecil makin baik</option></select></div></div>' +
       '<div class="form-actions"><button class="btn btn-primary" type="submit">Tambah</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
@@ -1690,7 +1692,10 @@
     var tgt = angkaKab(o.target); if (tgt === null || isNaN(tgt)) { msg.textContent = 'Target harus berupa angka.'; return; }
     btn.disabled = true;
     var dp = !!(ssgMeta() || {}).dp && o.grup !== 'Sulbar Sehat';
-    api('apiSimpanIndikator', [dp ? { baru: true, nama: o.nama, bidang: o.bidang, satuan: o.satuan, target: tgt, arah: o.arah, jenis: o.grup, frekuensi: 'Triwulan' }
+    // Satuan target Persentase/Jumlah/Angka sekaligus menentukan cara rekap kabupaten → provinsi (akumulasi)
+    var akum = { persentase: 'persentase', jumlah: 'jumlah', angka: 'angka', orang: 'jumlah', desa: 'jumlah' }[o.satuan] || 'persentase';
+    var sat = o.satuan === 'persentase' ? '%' : (o.satuan === 'jumlah' || o.satuan === 'angka') ? '' : o.satuan;
+    api('apiSimpanIndikator', [dp ? { baru: true, nama: o.nama, bidang: o.bidang, satuan: sat, akumulasi: akum, target: tgt, arah: o.arah, jenis: 'Kesehatan', grup: o.grup, frekuensi: 'Triwulan' }
       : { baru: true, nama: o.nama, grup: o.grup === 'Sulbar Sehat' ? 'Lainnya' : o.grup, bidang: o.bidang, satuan: o.satuan, target: tgt, arah: o.arah, jenis: 'Sulbar Sehat', frekuensi: 'Triwulan' }])
       .then(function (r) { closeModal(); toast('Indikator ' + r.id + ' ditambahkan.', 'ok'); reload(); })
       .catch(function (e) { btn.disabled = false; if (!e.handled) msg.textContent = e.message; });
