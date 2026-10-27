@@ -766,15 +766,26 @@
     var p = $('#notif-panel'); if (!p || p.hidden) return;
     p.hidden = true; $('#btn-notif').setAttribute('aria-expanded', 'false');
   }
+  /** Pemberitahuan yang sudah diklik disembunyikan (disimpan per pengguna di browser); muncul lagi bila isinya berubah. */
+  function kunciNotifBaca() { return 'dkppkb_notif_dibaca_' + ((AppState.user && AppState.user.username) || ''); }
+  function notifDibaca() { try { return JSON.parse(localStorage.getItem(kunciNotifBaca()) || '[]'); } catch (e) { return []; } }
+  function notifKunci(it) { return [it.jenis, it.judul, it.isi || ''].join('|'); }
+  function notifBaca(kunci) {
+    var l = notifDibaca(); (Array.isArray(kunci) ? kunci : [kunci]).forEach(function (k) { if (l.indexOf(k) < 0) l.push(k); });
+    try { localStorage.setItem(kunciNotifBaca(), JSON.stringify(l.slice(-200))); } catch (e) { }
+  }
+  var NOTIF_TERAKHIR = null;
   function renderNotif(d) {
-    var items = (d && d.items) || [];
-    var html = '<div class="np-head"><b>Pemberitahuan</b><button type="button" class="icon-btn np-x" data-act="notif-close" aria-label="Tutup pemberitahuan"><span class="ic" aria-hidden="true">close</span></button></div>';
-    if (!items.length) html += '<div class="np-empty"><span class="ic" aria-hidden="true">notifications_off</span><p>Tidak ada pemberitahuan. Semua isian tertib.</p></div>';
+    NOTIF_TERAKHIR = d;
+    var baca = notifDibaca(), semua = (d && d.items) || [], items = semua.filter(function (it) { return baca.indexOf(notifKunci(it)) < 0; });
+    var html = '<div class="np-head"><b>Pemberitahuan</b>' + (items.length ? '<button type="button" class="btn btn-ghost btn-sm np-semua" data-act="notif-semua">Tandai semua dibaca</button>' : '') +
+      '<button type="button" class="icon-btn np-x" data-act="notif-close" aria-label="Tutup pemberitahuan"><span class="ic" aria-hidden="true">close</span></button></div>';
+    if (!items.length) html += '<div class="np-empty"><span class="ic" aria-hidden="true">notifications_off</span><p>' + (semua.length ? 'Semua pemberitahuan sudah dibaca.' : 'Tidak ada pemberitahuan. Semua isian tertib.') + '</p></div>';
     else html += '<ul class="np-list">' + items.map(function (it) {
-      return '<li><button type="button" class="np-item np-' + esc(it.jenis) + '" data-nav="' + esc(it.nav || (AppState.user && AppState.user.role === 'pic' ? 'inputdata' : 'monitoring')) + '"><span class="np-ic"><span class="ic" aria-hidden="true">' + esc(it.ikon || 'info') + '</span></span>' +
+      return '<li><button type="button" class="np-item np-' + esc(it.jenis) + '" data-nk="' + esc(notifKunci(it)) + '" data-nav="' + esc(it.nav || (AppState.user && AppState.user.role === 'pic' ? 'inputdata' : 'monitoring')) + '"><span class="np-ic"><span class="ic" aria-hidden="true">' + esc(it.ikon || 'info') + '</span></span>' +
         '<span class="np-txt"><b>' + esc(it.judul) + '</b><span>' + esc(it.isi || '') + '</span></span><span class="sr">' + esc(NOTIF_JENIS[it.jenis] || '') + '</span></button></li>';
     }).join('') + '</ul>';
-    if (d && d.lebih) html += '<p class="np-more">+' + d.lebih + ' indikator tertunggak lainnya</p>';
+    if (d && d.lebih && items.length) html += '<p class="np-more">+' + d.lebih + ' indikator tertunggak lainnya</p>';
     var pic = AppState.user && AppState.user.role === 'pic';
     html += '<div class="np-foot"><button type="button" class="btn btn-ghost btn-sm" data-nav="' + (pic ? 'inputdata' : 'monitoring') + '">' + '<span class="ic" aria-hidden="true">' + (pic ? 'edit_note' : 'fact_check') + '</span>' + (pic ? 'Buka Input Data' : 'Buka Verifikasi & Pengingat') + '</button></div>';
     $('#notif-panel').innerHTML = html;
@@ -1666,6 +1677,38 @@
     cetakHtml(kopHtml() + '<h1>' + esc(('Tarik Data · ' + T.judul).toUpperCase()) + '</h1><div class="sub">' + baris.length + ' indikator · dicetak ' + esc(tglPanjang(new Date())) + '</div>' + tarikTabel(T, baris));
   }
 
+  /* ---------- bukti dukung SPBE: unggah dan hapus berkas tanpa memuat ulang lembar (isian yang belum disimpan tetap ada) ---------- */
+  function spbkHitung(row) {
+    var n = $$('#form-lbr tr[data-det="' + row + '"] .bk-item').length, ib = $('#form-lbr tr:not([data-det]) .lbr-ib[aria-label="Bukti dukung"][data-row="' + row + '"]');
+    if (!ib) return; var s = $('.spbk-n', ib); s.textContent = n; s.hidden = !n; ib.classList.toggle('ada', !!n || !!($('#form-lbr tr[data-det="' + row + '"] input[type=url]') || {}).value);
+  }
+  function spbkUnggah(inp) {
+    var file = inp.files && inp.files[0]; if (!file) return;
+    if (file.size > 8 * 1048576) { toast('Ukuran berkas ' + ukuranTeks(file.size) + ' melebihi batas 8 MB.', 'err'); inp.value = ''; return; }
+    var lbl = inp.closest('.spbk-unggah'), no = inp.getAttribute('data-no'); lbl.classList.add('is-busy');
+    var fr = new FileReader();
+    fr.onload = function () {
+      api('apiUnggahBuktiSpbe', [{ no: Number(no), tw: Number(inp.getAttribute('data-tw')), tahun: Number(inp.getAttribute('data-tahun')), nama: file.name, base64: String(fr.result).split(',')[1] || '' }])
+        .then(function (b) {
+          var lihat = ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'txt', 'csv'].indexOf(String(b.tipe).toLowerCase()) >= 0;
+          $('.bk-list', inp.closest('.spbk')).insertAdjacentHTML('beforeend', '<li class="bk-item" data-id="' + esc(b.id) + '"><span class="bk-ext">' + esc(b.tipe) + '</span><div class="bk-main"><b>' + esc(b.nama) + '</b><span class="muted sm">' + ukuranTeks(b.ukuran) + ' · ' + esc(b.oleh) + ' · baru saja</span></div><div class="bk-act">' +
+            (lihat ? '<button type="button" class="btn btn-ghost btn-sm" data-act="mbukti-lihat" data-id="' + esc(b.id) + '">Pratinjau</button>' : '') + '<button type="button" class="btn btn-ghost btn-sm" data-act="mbukti-unduh" data-id="' + esc(b.id) + '">Unduh</button><button type="button" class="btn btn-ghost btn-sm" data-act="spbk-hapus" data-id="' + esc(b.id) + '">Hapus</button></div></li>');
+          spbkHitung(no); toast('Berkas bukti diunggah.', 'ok');
+        })
+        .catch(function (e) { if (!e.handled) toast(e.message, 'err'); })
+        .then(function () { lbl.classList.remove('is-busy'); inp.value = ''; });
+    };
+    fr.onerror = function () { lbl.classList.remove('is-busy'); toast('Berkas tidak dapat dibaca.', 'err'); };
+    fr.readAsDataURL(file);
+  }
+  function spbkHapus(el) {
+    konfirmasiKlik(el, function () {
+      var li = el.closest('.bk-item'), row = el.closest('tr[data-det]').getAttribute('data-det'); el.disabled = true;
+      api('apiHapusBuktiSpbe', [el.getAttribute('data-id')]).then(function () { li.remove(); spbkHitung(row); toast('Berkas bukti dihapus.', 'ok'); })
+        .catch(function (e) { el.disabled = false; if (!e.handled) toast(e.message, 'err'); });
+    });
+  }
+
   /* ---------- logo: unggah gambar dan perkecil di browser ---------- */
   function perkecilLogo(file, selesai, gagal) {
     var fr = new FileReader();
@@ -2372,6 +2415,7 @@
       }
       case 'open-drawer': openDrawer(); break;
       case 'notif-close': closeNotif(); $('#btn-notif').focus(); break;
+      case 'notif-semua': if (NOTIF_TERAKHIR) { notifBaca(((NOTIF_TERAKHIR.items) || []).map(notifKunci)); renderNotif(NOTIF_TERAKHIR); } break;
       case 'lbr-det': { var dt = $('#form-lbr tr[data-det="' + el.getAttribute('data-row') + '"]'); if (dt) { dt.hidden = !dt.hidden; if (!dt.hidden) { var ta = $('textarea', dt); if (ta) ta.focus(); } } break; }
       case 'lbr-batal': if ($('.mvk-t tr.mvk-baru')) { reload(); break; } lbrBatal(); $$('.mvk-t tr.mvk-dihapus').forEach(function (tr) { tr.classList.remove('mvk-dihapus'); }); $$('[data-act=mvk-hapus-baris]').forEach(function (b) { b.textContent = 'Hapus baris'; }); mvkSiap(); break;
       case 'mvk-ik-baru': mvkIkBaru(el.getAttribute('data-node')); break;
@@ -2384,6 +2428,7 @@
       case 'lx-ulang': lxUlang(el); break;
       case 'lx-pdf': lxPdf(); break;
       case 'tarik-buka': tarikBuka(); break;
+      case 'spbk-hapus': spbkHapus(el); break;
       case 'tarik2': tarikUnduh(el.getAttribute('data-format')); break;
       case 'tg-buka': case 'tg-tutup': $$('#app-container details.tg-grp').forEach(function (d) { d.open = el.getAttribute('data-act') === 'tg-buka'; }); break;
       case 'mvk-ubah': mvkFormBaris(el.getAttribute('data-id')); break;
@@ -2595,6 +2640,7 @@
     if (t.id === 'scrim') { closeDrawer(); return; }
     if (!(t.closest && t.closest('.tn-group')) || (t.closest && t.closest('.tn-sub'))) closeTopMenus();
     if (!(t.closest && t.closest('#notif-panel'))) closeNotif();
+    var nk = t.closest && t.closest('[data-nk]'); if (nk) notifBaca(nk.getAttribute('data-nk'));   // pemberitahuan yang diklik dianggap sudah dibaca
     var nav = t.closest && t.closest('[data-nav]');
     if (nav) {
       ev.preventDefault();
@@ -2728,6 +2774,7 @@
     if (t.form && t.form.id === 'form-rv-cetak') { rvcSync(); return; }
     if (t.id === 'ssg-file' && t.files && t.files[0]) { ssgUnggah(t.files[0]); t.value = ''; return; }
     if (t.id === 'mvk-file' && t.files && t.files[0]) { mvkUnggah(t.files[0]); t.value = ''; return; }
+    if (t.classList && t.classList.contains('spbk-file')) { spbkUnggah(t); return; }
     if (t.id === 'mvk-tw' || t.id === 'mvk-unit') { if (MVK) { MVK.det = null; mvkGambar(); } return; }
     if (t.id === 'mvk-jenis' && t.form) { var fm = t.form; fm.elements.induk.innerHTML = mvkIndukOpsi(mvkMeta(), t.value, fm.elements.induk.value, fm.getAttribute('data-id')); return; }
     if (t.classList && (t.classList.contains('per-jn') || t.classList.contains('per-no'))) { perGanti(t); return; }
