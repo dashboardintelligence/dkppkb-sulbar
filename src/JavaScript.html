@@ -1587,44 +1587,83 @@
     mvkSimpanBerkas(mvkCsv(rows), 'Review Monev Kinerja TW ' + MVK_ROM[q - 1] + ' ' + MVK.tahun + '.csv');
   }
 
-  /* ---------- Laporan Eksekutif satu halaman dan Tarik Data (dibuka dari Dashboard) ---------- */
+  /* ---------- Laporan Eksekutif satu halaman dan Tarik Data (di setiap menu Review) ---------- */
+  /** Templat laporan untuk periode yang sedang dilihat; di Review Monev Kinerja mengikuti pilihan triwulan di halaman. */
+  function lxTpl() {
+    var tw = $('#mvk-tw'), all = $$('#app-container template.lx-tpl');
+    if (tw) { var t = all.filter(function (x) { return x.getAttribute('data-kode') === 'tw' + tw.value; })[0]; if (t) return t; }
+    return all[0];
+  }
   function lxBuka() {
-    var tpl = $('#lx-tpl'), meta = $('#lx-meta'); if (!tpl || !meta) return;
-    openModal('Laporan Eksekutif · ' + meta.getAttribute('data-label'),
-      '<div class="lx-alat"><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ubah">' + 'Ubah teks</button><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ulang">Susun ulang otomatis</button>' +
+    var tpl = lxTpl(), meta = $('#lx-meta'); if (!tpl || !meta) return;
+    openModal('Laporan Eksekutif · ' + meta.getAttribute('data-menu') + ' · ' + tpl.getAttribute('data-label'),
+      '<div class="lx-alat"><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ubah">Ubah teks</button><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ulang">Susun ulang otomatis</button>' +
       '<label class="muted sm lx-cek"><input type="checkbox" id="lx-lamp-cek"> sertakan lampiran rincian</label><button type="button" class="btn btn-primary btn-sm" data-act="lx-pdf">Unduh PDF</button></div>' +
-      '<p class="form-msg" role="alert"></p><div class="lx-wadah">' + tpl.innerHTML + '</div>', true);
+      '<p class="form-msg" role="alert"></p><div class="lx-wadah" data-kode="' + esc(tpl.getAttribute('data-kode')) + '">' + tpl.innerHTML + '</div>', true);
     var md = $('#modal-root .modal'); if (md) { md.style.maxWidth = '900px'; md.classList.add('lx-modal'); }
+  }
+  function lxKirim(isi) {
+    var meta = $('#lx-meta'), w = $('#modal-body .lx-wadah');
+    return api('apiSimpanLaporanEks', [Object.assign({ tahun: Number(meta.getAttribute('data-tahun')), jenis: meta.getAttribute('data-jenis'), kode: w.getAttribute('data-kode') }, isi)]);
   }
   function lxBagian() { return $$('#modal-body [data-ed="inti"], #modal-body [data-ed="temuan"] li, #modal-body [data-ed="rekom"] li'); }
   function lxUbah(btn) {
     var k = $('#modal-body .lx-kertas'); if (!k) return;
     if (!k.classList.contains('lx-sunting')) { k.classList.add('lx-sunting'); lxBagian().forEach(function (x) { x.contentEditable = 'true'; }); btn.textContent = 'Simpan teks'; btn.classList.add('btn-primary'); lxBagian()[0].focus(); return; }
     var teks = function (s) { return $$('#modal-body [data-ed="' + s + '"] li').map(function (x) { return x.innerText.trim(); }).filter(function (t) { return t && t !== '—'; }); };
-    var meta = $('#lx-meta'), msg = $('#modal-body .form-msg'); btn.disabled = true; btn.textContent = 'Menyimpan…';
-    api('apiSimpanLaporanEks', [{ tahun: Number(meta.getAttribute('data-tahun')), kode: meta.getAttribute('data-kode'), inti: $('#modal-body [data-ed="inti"]').innerText.trim(), temuan: teks('temuan'), rekom: teks('rekom') }])
+    var msg = $('#modal-body .form-msg'); btn.disabled = true; btn.textContent = 'Menyimpan…';
+    lxKirim({ inti: $('#modal-body [data-ed="inti"]').innerText.trim(), temuan: teks('temuan'), rekom: teks('rekom') })
       .then(function () { closeModal(); toast('Teks Laporan Eksekutif disimpan.', 'ok'); reload(); })
       .catch(function (e) { btn.disabled = false; btn.textContent = 'Simpan teks'; if (!e.handled) msg.textContent = e.message; });
   }
   function lxUlang(btn) {
     konfirmasiKlik(btn, function () {
-      var meta = $('#lx-meta'); btn.disabled = true;
-      api('apiSimpanLaporanEks', [{ tahun: Number(meta.getAttribute('data-tahun')), kode: meta.getAttribute('data-kode'), reset: true }])
-        .then(function () { closeModal(); toast('Laporan disusun ulang dari data terbaru.', 'ok'); reload(); })
+      btn.disabled = true;
+      lxKirim({ reset: true }).then(function () { closeModal(); toast('Laporan disusun ulang dari data terbaru.', 'ok'); reload(); })
         .catch(function (e) { btn.disabled = false; if (!e.handled) toast(e.message, 'err'); });
     });
+  }
+  function tarikData() { var el = $('#tarik-data'); if (!el) return null; try { return JSON.parse(el.getAttribute('data-json')); } catch (e) { return null; } }
+  /** Tabel rincian (lampiran laporan dan PDF Tarik Data). */
+  function tarikTabel(T, baris) {
+    return '<table class="lx-tabel"><thead><tr>' + T.kolom.map(function (k) { return '<th>' + esc(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      baris.map(function (b) { return '<tr>' + b.sel.map(function (v) { return '<td>' + esc(v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
   }
   /** Unduh PDF lewat dialog cetak browser (pilih "Simpan sebagai PDF"); lampiran rincian ikut bila dicentang. */
   function lxPdf() {
     var k = $('#modal-body .lx-kertas'); if (!k) return;
     var salin = k.cloneNode(true); salin.classList.remove('lx-sunting'); $$('[contenteditable]', salin).forEach(function (x) { x.removeAttribute('contenteditable'); });
-    var lamp = $('#lx-lamp-cek') && $('#lx-lamp-cek').checked && $('#lx-lamp') ? '<div class="lx-halbaru">' + $('#lx-lamp').innerHTML + '</div>' : '';
+    var T = tarikData(), lamp = $('#lx-lamp-cek') && $('#lx-lamp-cek').checked && T ? '<div class="lx-halbaru"><h2>Lampiran · ' + esc(T.judul) + '</h2>' + tarikTabel(T, T.baris) + '</div>' : '';
     cetakHtml(salin.outerHTML + lamp);
   }
   function tarikBuka() {
-    var tpl = $('#tarik-tpl'); if (!tpl) return;
-    openModal('Tarik Data', tpl.innerHTML, true);
-    var f = $('#modal-body #form-tarik'); if (f) syncTarik(f);
+    var T = tarikData(); if (!T) return;
+    var grup = []; T.baris.forEach(function (b) { if (grup.indexOf(b.g) < 0) grup.push(b.g); });
+    openModal('Tarik Data · ' + T.judul, '<form id="form-tarik2" novalidate><p class="muted sm">Pilih ' + esc(T.grupLabel.toLowerCase()) + ' atau indikator, lalu unduh. Kosong = semua.</p><div class="tk-grid">' +
+      '<fieldset class="tk-col"><legend>' + esc(T.grupLabel) + '</legend><div class="tk-box">' + grup.map(function (g) { return '<label class="ik-item"><input type="checkbox" name="tk-g" value="' + esc(g) + '"><span>' + esc(g) + '</span></label>'; }).join('') + '</div></fieldset>' +
+      '<fieldset class="tk-col"><legend>Indikator</legend><div class="tk-box">' + T.baris.map(function (b, i) { return '<label class="ik-item" data-g="' + esc(b.g) + '"><input type="checkbox" name="tk-i" value="' + i + '"><span>' + esc(b.nama) + '</span></label>'; }).join('') + '</div></fieldset></div>' +
+      '<p class="muted sm" id="tk-info">' + T.baris.length + ' indikator akan diunduh.</p>' +
+      '<div class="form-actions"><button type="button" class="btn btn-primary" data-act="tarik2" data-format="pdf">Unduh PDF</button><button type="button" class="btn btn-ghost" data-act="tarik2" data-format="csv">Unduh CSV (Excel)</button></div></form>', true);
+  }
+  function tarikPilihan() {
+    var T = tarikData(), f = $('#form-tarik2'); if (!T || !f) return [];
+    var g = $$('input[name=tk-g]', f).filter(function (x) { return x.checked; }).map(function (x) { return x.value; });
+    $$('.ik-item[data-g]', f).forEach(function (it) { var ok = !g.length || g.indexOf(it.getAttribute('data-g')) >= 0; it.hidden = !ok; if (!ok) $('input', it).checked = false; });
+    var pilih = $$('input[name=tk-i]', f).filter(function (x) { return x.checked; }).map(function (x) { return T.baris[Number(x.value)]; });
+    var hasil = pilih.length ? pilih : T.baris.filter(function (b) { return !g.length || g.indexOf(b.g) >= 0; });
+    var info = $('#tk-info'); if (info) info.textContent = hasil.length + ' indikator akan diunduh.';
+    return hasil;
+  }
+  function tarikUnduh(fmt) {
+    var T = tarikData(), baris = tarikPilihan(); if (!T || !baris.length) { toast('Tidak ada indikator yang dipilih.', 'err'); return; }
+    if (fmt === 'csv') {
+      var q = function (s) { s = String(s == null ? '' : s); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+      var isi = '﻿sep=;\n' + [T.kolom].concat(baris.map(function (b) { return b.sel; })).map(function (r) { return r.map(q).join(';'); }).join('\n');
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([isi], { type: 'text/csv;charset=utf-8' })); a.download = 'Tarik Data ' + T.judul + '.csv';
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      return;
+    }
+    cetakHtml(kopHtml() + '<h1>' + esc(('Tarik Data · ' + T.judul).toUpperCase()) + '</h1><div class="sub">' + baris.length + ' indikator · dicetak ' + esc(tglPanjang(new Date())) + '</div>' + tarikTabel(T, baris));
   }
 
   /* ---------- logo: unggah gambar dan perkecil di browser ---------- */
@@ -2345,6 +2384,7 @@
       case 'lx-ulang': lxUlang(el); break;
       case 'lx-pdf': lxPdf(); break;
       case 'tarik-buka': tarikBuka(); break;
+      case 'tarik2': tarikUnduh(el.getAttribute('data-format')); break;
       case 'tg-buka': case 'tg-tutup': $$('#app-container details.tg-grp').forEach(function (d) { d.open = el.getAttribute('data-act') === 'tg-buka'; }); break;
       case 'mvk-ubah': mvkFormBaris(el.getAttribute('data-id')); break;
       case 'mvk-ik-tambah': { var fb = el.closest('form'), w = $('.mvk-iks', fb); w.insertAdjacentHTML('beforeend', mvkIkBaris(mvkMeta(), {}, w.children.length)); mvkIkTombol(fb); $('[name=ikn]', w.lastElementChild).focus(); break; }
@@ -2697,6 +2737,7 @@
     if (t.form && t.form.getAttribute('id') === 'form-ind-baru' && t.name === 'bidang') { syncIndBaru(t.form); return; }
     if (t.form && t.form.getAttribute('id') === 'form-indikator' && t.name === 'bidang') { filterBidangOpts(t.form.elements.program, t.value); return; }
     if (t.form && t.form.getAttribute('id') === 'form-tarik') { syncTarik(t.form); return; }
+    if (t.form && t.form.id === 'form-tarik2') { tarikPilihan(); return; }
     if (t.id === 'logo-file' && t.files && t.files[0]) {
       var info = $('#logo-info'), fcfg = $('#form-config');
       if (info) info.textContent = 'Memproses gambar…';
