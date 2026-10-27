@@ -833,6 +833,7 @@
     if ($('.ssg-prog')) ssgSaringProg();
     if ($('.mvk-t')) mvkSiap();
     mvkReview();
+    cincinDb();
     window.scrollTo(0, keepY);
     if (!(opts && opts.keep)) { try { $('#main').focus({ preventScroll: true }); } catch (e) { } }
     applyImLayout();
@@ -1490,6 +1491,35 @@
       toast(r.barisBaru + ' baris baru, ' + r.barisDiubah + ' baris diperbarui, ' + r.ik + ' IK (' + r.ikBaru + ' baru), ' + r.angka + ' angka.' + (r.gagal.length ? ' ' + r.gagal.length + ' angka ditolak: ' + r.gagal[0] : '') + ' Cadangan: ' + r.cadangan, r.gagal.length ? 'err' : 'ok');
       reload();
     }).catch(function (e) { btn.disabled = false; btn.textContent = 'Impor sekarang'; if (!e.handled && msg) msg.textContent = e.message; });
+  }
+
+  /* Dashboard: cincin status indikator dari #db-cin (data-json); bidang dan sorotan dipilih tanpa memuat ulang. */
+  var CIN = null;
+  var CIN_ST = [['ok', 'Capai target', 'sudah memenuhi target', 'var(--ok)'], ['lo', 'Di bawah target', 'ada angka, belum capai', 'var(--warn)'], ['na', 'Belum diisi', 'menunggu isian PIC', 'var(--mute)']];
+  function cincinDb() {
+    var el = $('#db-cin'); if (!el) { CIN = null; return; }
+    try { CIN = JSON.parse(el.getAttribute('data-json')); } catch (e) { CIN = null; return; }
+    CIN.bid = ''; CIN.sorot = ''; cincinGambar(true);
+  }
+  function cincinGambar(anim) {
+    var el = $('#db-cin'); if (!el || !CIN) return;
+    var d = CIN.bid ? CIN.b.filter(function (b) { return b.k === CIN.bid; })[0] : CIN, tot = d.ok + d.lo + d.na;
+    var pct = function (k) { return tot ? Math.round(d[k] / tot * 100) : 0; }, rr = [86, 62, 38];
+    var s = '<defs>' + CIN_ST.map(function (x) { return '<linearGradient id="cin-g-' + x[0] + '" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:' + x[3] + ';stop-opacity:.5"/><stop offset="1" style="stop-color:' + x[3] + '"/></linearGradient>'; }).join('') + '</defs>';
+    CIN_ST.forEach(function (x, i) {
+      var r = rr[i], K = 2 * Math.PI * r, L = tot ? d[x[0]] / tot * K : 0;
+      s += '<circle cx="105" cy="105" r="' + r + '" fill="none" stroke="' + x[3] + '" stroke-opacity=".16" stroke-width="18"/>' +
+        (L ? '<circle class="cs' + (CIN.sorot === x[0] ? ' on' : '') + '" data-act="cin-sorot" data-k="' + x[0] + '" cx="105" cy="105" r="' + r + '" fill="none" stroke="url(#cin-g-' + x[0] + ')" stroke-width="18" stroke-linecap="round" stroke-dasharray="' + L.toFixed(2) + ' ' + (K + 1).toFixed(2) + '" transform="rotate(-90 105 105)" style="--L:' + L.toFixed(2) + ';animation-delay:' + (i * 120) + 'ms' + (anim ? '' : ';animation:none') + '"><title>' + x[1] + ': ' + d[x[0]] + ' indikator (' + pct(x[0]) + '%)</title></circle>' : '');
+    });
+    var sk = CIN.sorot ? CIN_ST.filter(function (x) { return x[0] === CIN.sorot; })[0] : null;
+    s += '<text x="105" y="108" text-anchor="middle" class="db-cin-t1">' + (sk ? pct(sk[0]) + '%' : tot) + '</text>';
+    var svg = $('.db-cin-svg', el); svg.innerHTML = s; svg.classList.toggle('fokus', !!CIN.sorot);
+    $('.db-cin-lg', el).innerHTML = CIN_ST.map(function (x) {
+      return '<button type="button" data-act="cin-sorot" data-k="' + x[0] + '" class="' + (CIN.sorot === x[0] ? 'on' : '') + '"><i style="background:' + x[3] + '"></i><span>' + x[1] + '<em>' + x[2] + '</em></span><b>' + d[x[0]] + '</b><small>' + pct(x[0]) + '%</small></button>';
+    }).join('');
+    $('.db-cin-chip', el).innerHTML = [''].concat(CIN.b.map(function (b) { return b.k; })).map(function (k) {
+      return '<button type="button" data-act="cin-bid" data-k="' + esc(k) + '" class="' + (k === CIN.bid ? 'on' : '') + '">' + esc(k || 'Semua bidang') + '</button>';
+    }).join('');
   }
 
   /* Review Monev Kinerja: digambar dari #mvk-data; triwulan dan unit dipilih tanpa memuat ulang halaman. */
@@ -2440,6 +2470,8 @@
       case 'mvk-det-tutup': MVK.det = null; mvkGambar(); break;
       case 'mvk-tw-pilih': { var tws = $('#mvk-tw'); if (tws && MVK) { tws.value = el.getAttribute('data-q'); MVK.det = null; mvkGambar(); } break; }
       case 'mvk-sorot': if (MVK) { MVK.sorot = MVK.sorot === el.getAttribute('data-id') ? null : el.getAttribute('data-id'); mvkGambar(); } break;
+      case 'cin-bid': if (CIN) { CIN.bid = el.getAttribute('data-k'); CIN.sorot = ''; cincinGambar(true); } break;
+      case 'cin-sorot': if (CIN) { CIN.sorot = CIN.sorot === el.getAttribute('data-k') ? '' : el.getAttribute('data-k'); cincinGambar(false); } break;
       case 'peta-mode': {
         var kp = el.closest('.db-petac'), md = el.getAttribute('data-v');
         $$('.db-pseg .seg-btn', kp).forEach(function (b) { b.classList.toggle('is-on', b === el); });

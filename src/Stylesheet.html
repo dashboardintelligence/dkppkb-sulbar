@@ -1520,6 +1520,40 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .dp-prov-l small{display:block;color:var(--mute);font-size:11.5px}
 .dsb-src{display:inline-block;margin-left:6px;padding:0 7px;border-radius:99px;background:var(--rail);color:var(--tx2);font-size:10.5px;font-weight:600;vertical-align:1px}
 .dsb-kt-pv td{border-top:1px solid var(--bd)}
+/* Dashboard: cincin status indikator dan batang rata-rata capaian per bidang */
+.db-cin-chip{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
+.db-cin-chip button{border:0;border-radius:999px;padding:4px 11px;font-size:12px;background:var(--rail);color:var(--tx2);cursor:pointer}
+.db-cin-chip button.on{background:var(--tx);color:var(--card)}
+.db-cin-w{display:grid;grid-template-columns:190px minmax(0,1fr);gap:16px;align-items:center;margin-top:8px}
+.db-cin-svg{width:190px;height:190px;overflow:visible}
+.db-cin-svg .cs{cursor:pointer;transition:opacity .25s;animation:dbCin 1s cubic-bezier(.2,.8,.2,1) both}
+.db-cin-svg.fokus .cs:not(.on){opacity:.22}
+.db-cin-svg .cs.on{filter:drop-shadow(0 4px 8px rgba(15,23,42,.25))}
+@keyframes dbCin{from{stroke-dashoffset:var(--L)}}
+.db-cin-t1{font-size:22px;font-weight:800;fill:var(--tx)}.db-cin-t2{font-size:10.5px;fill:var(--mute)}
+.db-cin-lg{display:flex;flex-direction:column;gap:4px;min-width:0}
+.db-cin-lg button{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:9px;align-items:center;border:0;background:none;padding:6px 8px;border-radius:10px;cursor:pointer;text-align:left;color:var(--tx)}
+.db-cin-lg button:hover,.db-cin-lg button.on{background:var(--rail)}
+.db-cin-lg i{width:12px;height:12px;border-radius:4px}
+.db-cin-lg em{display:block;font-style:normal;font-size:11px;color:var(--mute)}
+.db-cin-lg b{font-variant-numeric:tabular-nums}
+.db-cin-lg small{color:var(--mute);font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
+.db-cpb{display:flex;flex-direction:column;gap:10px;margin-top:14px}
+.db-cpb-r{display:grid;grid-template-columns:130px minmax(0,1fr) 64px 84px;gap:12px;align-items:center;font-size:13px}
+.db-cpb-n{text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.db-cpb-t{position:relative;height:20px;background:var(--rail);border-radius:6px}
+.db-cpb-t i{position:absolute;left:0;top:0;bottom:0;border-radius:6px;animation:dbCpb .8s cubic-bezier(.2,.8,.2,1) both}
+@keyframes dbCpb{from{width:0}}
+.db-cpb-t b{position:absolute;top:-4px;bottom:-4px;border-left:2px dashed var(--tx)}
+.db-cpb-r strong{font-variant-numeric:tabular-nums}
+.db-cpb-r small{color:var(--mute);font-size:11.5px;text-align:right}
+.db-cpb-ax{font-size:11px;color:var(--mute)}
+.db-cpb-ax div{position:relative;height:14px}.db-cpb-ax em{position:absolute;transform:translateX(-50%);font-style:normal}
+.db-cpb .st-ok,.db-cpb-leg .st-ok{background:var(--ok)}.db-cpb .st-warn,.db-cpb-leg .st-warn{background:var(--warn)}.db-cpb .st-crit,.db-cpb-leg .st-crit{background:var(--crit)}
+.db-cpb-leg{display:flex;flex-wrap:wrap;gap:14px;font-size:11.5px;color:var(--tx2);margin-top:12px}
+.db-cpb-leg span{display:inline-flex;align-items:center;gap:6px}.db-cpb-leg i{width:10px;height:10px;border-radius:3px;display:inline-block}
+.db-cpb-leg .db-cpb-gt{width:0;height:12px;border-left:2px dashed var(--tx);border-radius:0}
+@media (max-width:560px){.db-cin-w{grid-template-columns:1fr;justify-items:center}.db-cin-lg{width:100%}.db-cpb-r{grid-template-columns:88px minmax(0,1fr) 52px;gap:8px}.db-cpb-r small{display:none}}
 .db-s2{grid-column:span 2}.db-s3{grid-column:span 3}.db-s5{grid-column:span 5}.db-s7{grid-column:span 7}.db-s12{grid-column:1 / -1}
 @media (max-width:1100px){.db-s2,.db-s3{grid-column:span 6}.db-s5,.db-s7{grid-column:span 12}}
 @media (max-width:560px){.db-s2,.db-s3{grid-column:span 12}}
