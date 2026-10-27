@@ -617,11 +617,16 @@
     setBadge(d.badge);
     show($('#banner-pwd'), !!d.passwordDefault);
   }
+  /** Angka lonceng: hilang setelah panel pemberitahuan dibuka, muncul lagi bila jumlahnya bertambah (disimpan per pengguna di browser). */
+  function kunciLonceng() { return 'dkppkb_lonceng_' + ((AppState.user && AppState.user.username) || ''); }
   function setBadge(n) {
-    var b = $('#notif-badge'), nb = $('#nav-badge');
-    b.textContent = n > 99 ? '99+' : n; b.hidden = !n;
-    if (nb) { nb.textContent = n; nb.hidden = !n; }
+    n = Number(n) || 0; AppState.badge = n;
+    var lihat = 0; try { lihat = Number(localStorage.getItem(kunciLonceng()) || 0); if (n < lihat) { localStorage.setItem(kunciLonceng(), String(n)); lihat = n; } } catch (e) { }
+    var tampil = n > lihat ? n : 0, b = $('#notif-badge'), nb = $('#nav-badge');
+    b.textContent = tampil > 99 ? '99+' : tampil; b.hidden = !tampil;
+    if (nb) { nb.textContent = tampil; nb.hidden = !tampil; }
   }
+  function loncengDibaca() { try { localStorage.setItem(kunciLonceng(), String(AppState.badge || 0)); } catch (e) { } setBadge(AppState.badge || 0); }
   function refreshBadge() {
     return api('apiBootstrap').then(function (d) { setBadge(d.badge); show($('#banner-pwd'), !!d.passwordDefault); }).catch(function () { });
   }
@@ -778,12 +783,12 @@
     var p = $('#notif-panel');
     if (!p.hidden) { closeNotif(); return; }
     closeTopMenus();
-    posNotif(); p.hidden = false; $('#btn-notif').setAttribute('aria-expanded', 'true');
+    posNotif(); p.hidden = false; $('#btn-notif').setAttribute('aria-expanded', 'true'); loncengDibaca();
     p.innerHTML = '<div class="np-head"><b>Pemberitahuan</b></div><div class="np-empty"><span class="spin" aria-hidden="true"></span><p>Memuat…</p></div>';
     api('apiNotifikasi').then(renderNotif).catch(function (e) {
       if (e && e.handled) return;
       // Server Apps Script lama belum punya apiNotifikasi: tampilkan ringkasan dari data yang sudah ada.
-      var n = Number($('#notif-badge').textContent) || 0, it = [];
+      var n = AppState.badge || 0, it = [];
       if (n) it.push({ jenis: 'warn', ikon: 'report', judul: n + ' indikator tertunggak', isi: 'Belum diisi untuk periode berjalan', nav: AppState.user && AppState.user.role === 'pic' ? 'inputdata' : 'monitoring' });
       if (!$('#banner-pwd').hidden) it.push({ jenis: 'crit', ikon: 'key', judul: 'Kata sandi bawaan masih dipakai', isi: 'Segera ganti demi keamanan data', nav: 'pengaturan' });
       renderNotif({ items: it });
@@ -1582,6 +1587,46 @@
     mvkSimpanBerkas(mvkCsv(rows), 'Review Monev Kinerja TW ' + MVK_ROM[q - 1] + ' ' + MVK.tahun + '.csv');
   }
 
+  /* ---------- Laporan Eksekutif satu halaman dan Tarik Data (dibuka dari Dashboard) ---------- */
+  function lxBuka() {
+    var tpl = $('#lx-tpl'), meta = $('#lx-meta'); if (!tpl || !meta) return;
+    openModal('Laporan Eksekutif · ' + meta.getAttribute('data-label'),
+      '<div class="lx-alat"><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ubah">' + 'Ubah teks</button><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ulang">Susun ulang otomatis</button>' +
+      '<label class="muted sm lx-cek"><input type="checkbox" id="lx-lamp-cek"> sertakan lampiran rincian</label><button type="button" class="btn btn-primary btn-sm" data-act="lx-pdf">Unduh PDF</button></div>' +
+      '<p class="form-msg" role="alert"></p><div class="lx-wadah">' + tpl.innerHTML + '</div>', true);
+    var md = $('#modal-root .modal'); if (md) { md.style.maxWidth = '900px'; md.classList.add('lx-modal'); }
+  }
+  function lxBagian() { return $$('#modal-body [data-ed="inti"], #modal-body [data-ed="temuan"] li, #modal-body [data-ed="rekom"] li'); }
+  function lxUbah(btn) {
+    var k = $('#modal-body .lx-kertas'); if (!k) return;
+    if (!k.classList.contains('lx-sunting')) { k.classList.add('lx-sunting'); lxBagian().forEach(function (x) { x.contentEditable = 'true'; }); btn.textContent = 'Simpan teks'; btn.classList.add('btn-primary'); lxBagian()[0].focus(); return; }
+    var teks = function (s) { return $$('#modal-body [data-ed="' + s + '"] li').map(function (x) { return x.innerText.trim(); }).filter(function (t) { return t && t !== '—'; }); };
+    var meta = $('#lx-meta'), msg = $('#modal-body .form-msg'); btn.disabled = true; btn.textContent = 'Menyimpan…';
+    api('apiSimpanLaporanEks', [{ tahun: Number(meta.getAttribute('data-tahun')), kode: meta.getAttribute('data-kode'), inti: $('#modal-body [data-ed="inti"]').innerText.trim(), temuan: teks('temuan'), rekom: teks('rekom') }])
+      .then(function () { closeModal(); toast('Teks Laporan Eksekutif disimpan.', 'ok'); reload(); })
+      .catch(function (e) { btn.disabled = false; btn.textContent = 'Simpan teks'; if (!e.handled) msg.textContent = e.message; });
+  }
+  function lxUlang(btn) {
+    konfirmasiKlik(btn, function () {
+      var meta = $('#lx-meta'); btn.disabled = true;
+      api('apiSimpanLaporanEks', [{ tahun: Number(meta.getAttribute('data-tahun')), kode: meta.getAttribute('data-kode'), reset: true }])
+        .then(function () { closeModal(); toast('Laporan disusun ulang dari data terbaru.', 'ok'); reload(); })
+        .catch(function (e) { btn.disabled = false; if (!e.handled) toast(e.message, 'err'); });
+    });
+  }
+  /** Unduh PDF lewat dialog cetak browser (pilih "Simpan sebagai PDF"); lampiran rincian ikut bila dicentang. */
+  function lxPdf() {
+    var k = $('#modal-body .lx-kertas'); if (!k) return;
+    var salin = k.cloneNode(true); salin.classList.remove('lx-sunting'); $$('[contenteditable]', salin).forEach(function (x) { x.removeAttribute('contenteditable'); });
+    var lamp = $('#lx-lamp-cek') && $('#lx-lamp-cek').checked && $('#lx-lamp') ? '<div class="lx-halbaru">' + $('#lx-lamp').innerHTML + '</div>' : '';
+    cetakHtml(salin.outerHTML + lamp);
+  }
+  function tarikBuka() {
+    var tpl = $('#tarik-tpl'); if (!tpl) return;
+    openModal('Tarik Data', tpl.innerHTML, true);
+    var f = $('#modal-body #form-tarik'); if (f) syncTarik(f);
+  }
+
   /* ---------- logo: unggah gambar dan perkecil di browser ---------- */
   function perkecilLogo(file, selesai, gagal) {
     var fr = new FileReader();
@@ -2295,6 +2340,12 @@
       case 'mvk-ik-x': mvkIkX(el); break;
       case 'mvk-hapus-baris': mvkHapusBaris(el); break;
       case 'mvk-tambah': mvkFormBaris(''); break;
+      case 'lx-buka': lxBuka(); break;
+      case 'lx-ubah': lxUbah(el); break;
+      case 'lx-ulang': lxUlang(el); break;
+      case 'lx-pdf': lxPdf(); break;
+      case 'tarik-buka': tarikBuka(); break;
+      case 'tg-buka': case 'tg-tutup': $$('#app-container details.tg-grp').forEach(function (d) { d.open = el.getAttribute('data-act') === 'tg-buka'; }); break;
       case 'mvk-ubah': mvkFormBaris(el.getAttribute('data-id')); break;
       case 'mvk-ik-tambah': { var fb = el.closest('form'), w = $('.mvk-iks', fb); w.insertAdjacentHTML('beforeend', mvkIkBaris(mvkMeta(), {}, w.children.length)); mvkIkTombol(fb); $('[name=ikn]', w.lastElementChild).focus(); break; }
       case 'mvk-ik-hapus': { var fh = el.closest('form'); el.closest('.mvk-ikr').remove(); fh.removeAttribute('data-yakin'); mvkIkTombol(fh); break; }
@@ -2513,6 +2564,8 @@
       navigateTo(nav.getAttribute('data-nav'), params);
       return;
     }
+    var cg = t.closest && t.closest('summary .chk');   // centang kelompok Tunggakan Mendesak: pilih semua tanpa membuka/menutup kelompok
+    if (cg) { ev.preventDefault(); var kg = $('.chk-grp', cg); kg.checked = !kg.checked; $$('.chk-remind', cg.closest('details')).forEach(function (x) { x.checked = kg.checked; }); return; }
     var mk = t.closest && t.closest('[data-mk]');
     if (mk && MVK) { MVK.det = mk.getAttribute('data-mk'); mvkGambar(); var dt = $('#mvk-det'); if (dt) dt.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
     var a = t.closest && t.closest('[data-act]');
