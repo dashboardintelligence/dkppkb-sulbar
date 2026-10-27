@@ -1524,18 +1524,20 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .db-cin-chip{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 4px}
 .db-cin-chip button{border:0;border-radius:999px;padding:4px 11px;font-size:12px;background:var(--rail);color:var(--tx2);cursor:pointer}
 .db-cin-chip button.on{background:var(--tx);color:var(--card)}
-.db-cin-w{display:grid;grid-template-columns:190px minmax(0,1fr);gap:16px;align-items:center;margin-top:8px}
-.db-cin-svg{width:190px;height:190px;overflow:visible}
+.db-cin{display:flex;flex-direction:column}
+.db-cin-w{flex:1;display:grid;grid-template-columns:minmax(0,240px) minmax(0,1fr);gap:14px;align-items:center;margin-top:8px}
+.db-cin-svg{width:100%;max-width:240px;height:auto;aspect-ratio:1;overflow:visible}
 .db-cin-svg .cs{cursor:pointer;transition:opacity .25s;animation:dbCin 1s cubic-bezier(.2,.8,.2,1) both}
 .db-cin-svg.fokus .cs:not(.on){opacity:.22}
 .db-cin-svg .cs.on{filter:drop-shadow(0 4px 8px rgba(15,23,42,.25))}
 @keyframes dbCin{from{stroke-dashoffset:var(--L)}}
-.db-cin-t1{font-size:22px;font-weight:800;fill:var(--tx)}.db-cin-t2{font-size:10.5px;fill:var(--mute)}
+.db-cin-t1{font-size:24px;font-weight:800;fill:var(--tx)}.db-cin-t2{font-size:10.5px;fill:var(--mute)}
 .db-cin-lg{display:flex;flex-direction:column;gap:4px;min-width:0}
-.db-cin-lg button{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:9px;align-items:center;border:0;background:none;padding:6px 8px;border-radius:10px;cursor:pointer;text-align:left;color:var(--tx)}
+.db-cin-lg button{display:grid;grid-template-columns:12px minmax(0,1fr) auto auto;gap:8px;align-items:center;border:0;background:none;padding:6px 8px;border-radius:10px;cursor:pointer;text-align:left;color:var(--tx)}
 .db-cin-lg button:hover,.db-cin-lg button.on{background:var(--rail)}
 .db-cin-lg i{width:12px;height:12px;border-radius:4px}
-.db-cin-lg em{display:block;font-style:normal;font-size:11px;color:var(--mute)}
+.db-cin-lg span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.db-cin-lg em{display:none}
 .db-cin-lg b{font-variant-numeric:tabular-nums}
 .db-cin-lg small{color:var(--mute);font-variant-numeric:tabular-nums;min-width:30px;text-align:right}
 .db-cpb{display:flex;flex-direction:column;gap:10px;margin-top:14px}
