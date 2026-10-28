@@ -1712,6 +1712,62 @@ textarea.md-inp{min-height:70px;resize:vertical}
 .md-ttd{display:flex;justify-content:flex-end;margin-top:14px;text-align:center;color:#5b5f6b}.md-ttd div{width:180px}
 @media (max-width:1100px){.md-dua{grid-template-columns:1fr}}
 @media (max-width:640px){.md-h1{font-size:26px}.md-g3{grid-template-columns:1fr 1fr}.md-hp{display:none}.md-cari{width:100%}.md-hd .md-act-r{width:100%;justify-content:stretch}.md-hd .md-act-r .md-btn{flex:1;justify-content:center}.md-pv-bg{padding:14px 10px;min-height:0}.md-kertas{padding:18px 14px}}
+/* ---------- Angka janggal & riwayat per kotak (Isi Data) ---------- */
+.ssg-ub.jg{box-shadow:inset 0 0 0 2px #e3b341}
+.ssg-jgb{position:absolute;top:-7px;right:-7px;width:18px;height:18px;border-radius:99px;border:0;background:#b7791f;color:#fff;font-size:11px;font-weight:800;line-height:18px;padding:0;cursor:pointer;z-index:2;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.ssg-rwb{position:absolute;bottom:-6px;right:-6px;width:18px;height:18px;border-radius:99px;border:1px solid var(--bd);background:var(--card);color:#0a7f8c;font-size:11px;line-height:16px;padding:0;cursor:pointer;z-index:2;opacity:0;transition:opacity .15s}
+.ssg-ub:hover .ssg-rwb,.ssg-ub:focus-within .ssg-rwb,.ssg-rwb:focus{opacity:1}
+@media (hover:none){.ssg-rwb{opacity:.7}}
+.ssg-pop{position:absolute;z-index:60;background:var(--card);color:var(--tx);border-radius:16px;box-shadow:0 20px 40px -12px rgba(15,17,25,.35),0 0 0 1px var(--bd);padding:14px 16px;font-size:12.5px}
+.ssg-pop[hidden]{display:none}
+.ssg-pop-x{position:absolute;top:10px;right:10px;border:0;background:var(--rail);border-radius:99px;width:24px;height:24px;cursor:pointer;color:var(--tx2)}
+.ssg-pop-j{display:block;font-size:13px;padding-right:28px}
+.ssg-pop-tab{display:flex;gap:3px;background:var(--rail);border-radius:10px;padding:3px;margin:10px 0}
+.ssg-pop-tab button{flex:1;border:0;background:none;border-radius:8px;padding:5px;font-size:12px;cursor:pointer;color:var(--tx2);font-family:inherit}
+.ssg-pop-tab button.on{background:var(--card);color:#0a7f8c;box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.ssg-pop-al{list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px}
+.ssg-pop-al li{background:#fdf3dc;color:#7a5410;border-radius:10px;padding:7px 9px}
+:root[data-theme="dark"] .ssg-pop-al li{background:rgba(227,179,65,.16);color:#f0cf7a}
+.ssg-pop-bar{display:flex;align-items:flex-end;gap:5px;height:56px;margin:8px 0 0}
+.ssg-pop-bar span{flex:1;background:var(--bd);border-radius:5px 5px 2px 2px;position:relative}
+.ssg-pop-bar span.ini{background:#b7791f}
+.ssg-pop-bar em{position:absolute;bottom:-16px;left:0;right:0;text-align:center;font-style:normal;font-size:9.5px;color:var(--mute)}
+.ssg-pop-riw{list-style:none;margin:0;padding:0;max-height:260px;overflow:auto}
+.ssg-pop-riw li{display:grid;grid-template-columns:12px minmax(0,1fr) auto;gap:8px;padding-bottom:10px;position:relative}
+.ssg-pop-riw li::before{content:"";position:absolute;left:4px;top:13px;bottom:0;width:1px;background:var(--bd)}
+.ssg-pop-riw li:last-child::before{display:none}
+.ssg-pop-riw i{width:9px;height:9px;border-radius:99px;background:var(--bd);margin-top:5px;position:relative;z-index:1}
+.ssg-pop-riw li:last-child i{background:#0a7f8c}
+.ssg-pop-riw span small{display:block;color:var(--tx2);font-size:11.5px}
+.ssg-pop-riw>li>small{color:var(--mute);white-space:nowrap;font-size:11px}
+.ssg-pop-riw s{color:var(--mute)}
+.ssg-pop-tg{font-style:normal;font-size:10.5px;font-weight:700;color:#b7791f;background:#fdf3dc;border-radius:99px;padding:1px 7px}
+.ssg-jl{display:flex;flex-direction:column;gap:10px;margin:10px 0;max-height:55vh;overflow:auto}
+.ssg-jl-it{border:1px solid var(--bd);border-radius:14px;padding:10px 12px}
+.ssg-jl-t{display:flex;justify-content:space-between;gap:10px;font-weight:600;font-size:13px}
+.ssg-jl-why{font-size:12px;color:#7a5410;margin:4px 0 8px}
+:root[data-theme="dark"] .ssg-jl-why{color:#f0cf7a}
+/* Verifikasi angka janggal */
+.jg-t{width:100%;border-collapse:collapse;font-size:12.5px}
+.jg-t th{background:var(--rail);text-align:left;font-weight:500;color:var(--tx2);padding:9px 12px;font-size:11.5px}
+.jg-t td{padding:12px;border-bottom:1px solid var(--bd);vertical-align:top}
+.jg-chg{white-space:nowrap;font-variant-numeric:tabular-nums}.jg-chg s,.rw-chg s{color:var(--mute)}
+.jg-why{color:#7a5410;font-size:12px}:root[data-theme="dark"] .jg-why{color:#f0cf7a}
+.jg-pj{border-left:2px solid var(--bd);padding-left:8px;color:var(--tx2)}
+.jg-perb{margin-top:6px;font-size:12px;color:#b7791f}
+.jg-akt{display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap}
+/* Riwayat Perubahan */
+.rw-filt{justify-content:flex-start}
+.rw-filt .md-inp{width:auto;min-width:150px;flex:0 1 auto}
+.rw-filt .md-cari{flex:1 1 200px}
+.rw-chg{white-space:nowrap;font-variant-numeric:tabular-nums}
+.md-st-janggal{background:#fdf3dc;color:#b7791f;padding:2px 8px;font-size:11px}.md-st-janggal::before{background:#b7791f}
+/* Persetujuan disposisi */
+.md-st-menunggu{background:var(--md-al,#e6f3f4);color:#086570}.md-st-menunggu::before{background:#0a7f8c}
+.md-stempel{display:grid;grid-template-columns:36px 1fr;gap:8px;align-items:center;text-align:left;border:1.5px solid #0a7f8c;border-radius:12px;padding:7px 9px;margin-top:6px;background:#e6f3f4;color:#086570}
+.md-stempel b{display:block;font-size:10.5px}.md-stempel small{display:block;font-size:9.5px;color:#5b5f6b}
+.md-qr{width:36px;height:36px;border-radius:4px;border:2px solid #fff;outline:1px solid #0a7f8c;background:conic-gradient(from 90deg at 30% 30%,#0b5f68 25%,transparent 0) 0 0/9px 9px,#fff}
+.md-ttd>div{width:230px}
 /* Peringkat kabupaten (Dashboard) */
 .db-rk-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
 .db-rk-pod{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:end;margin:2px 0 10px}
