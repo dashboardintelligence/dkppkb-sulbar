@@ -509,7 +509,7 @@
     call('doLogin', [u, p]).then(function (r) {
       if (!r || !r.success) throw new Error((r && r.message) || 'Gagal masuk.');
       AppState.sessionToken = r.data.token; simpanSesi(r.data.token);
-      return startApp(r.data.mulai);
+      return startApp(r.data.mulai).then(function () { sambutTampil(false); });
     }).catch(function (err) {
       msg.textContent = err.message;
     }).then(function () { btn.disabled = false; btn.textContent = 'Masuk'; });
@@ -569,8 +569,9 @@
     applyFavicon(d.cfg && d.cfg.logo);
     applyLogo(d.cfg && d.cfg.logo);
     var u = AppState.user;
-    $('#user-name').textContent = u.nama; $('#user-role').textContent = ROLE_LABEL[u.role] || u.role;
-    $('#user-avatar').textContent = (u.nama || '?').charAt(0).toUpperCase();
+    $('#user-name').textContent = u.nama; $('#user-role').textContent = ROLE_LABEL[u.role] || u.role; $('#user-av-nm').textContent = u.nama;
+    AppState.foto = d.foto || ''; AppState.sapaan = d.sapaan || null;
+    avatarIsi($('#user-avatar'));
     var sb = $('#sel-bulan'), st = $('#sel-tahun');
     sb.innerHTML = d.bulanList.map(function (b, i) { return '<option value="' + (i + 1) + '"' + (i + 1 === d.cfg.bulan ? ' selected' : '') + '>' + esc(b) + '</option>'; }).join('');
     st.innerHTML = d.tahunList.map(function (t) { return '<option value="' + t + '"' + (t === d.cfg.tahun ? ' selected' : '') + '>' + t + '</option>'; }).join('');
@@ -1197,6 +1198,95 @@
       return [r.w, r.indNama, r.ind, r.kab, rwPer(r.bulan), r.tahun, r.kolom, r.lama === null ? '' : String(r.lama).replace('.', ','), r.baru === null ? '' : String(r.baru).replace('.', ','), r.oleh, r.janggal ? 'Ya' : '', r.alasan, r.pj, r.verif, r.verifOleh, r.verifCat]; })).map(function (r) { return r.map(q).join(';'); }).join('\n');
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([isi], { type: 'text/csv;charset=utf-8' })); a.download = 'Riwayat Perubahan Isian.csv';
     document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
+  /* ---------- Profil: foto, nama tampil (laci dari ikon akun) dan layar sambutan saat masuk ---------- */
+  function avatarIsi(el, besar) {
+    if (!el) return; var u = AppState.user || {}, f = AppState.foto;
+    var ini = String(u.nama || '?').trim().split(/\s+/).map(function (x) { return x.charAt(0); }).slice(0, besar ? 2 : 1).join('').toUpperCase();
+    el.textContent = f ? '' : ini; el.style.backgroundImage = f ? 'url(' + f + ')' : ''; el.classList.toggle('av-foto', !!f);
+  }
+  function salamWaktu() { var j = new Date().getHours(); return j >= 4 && j < 11 ? ['Selamat pagi', 'pagi'] : j >= 11 && j < 15 ? ['Selamat siang', 'siang'] : j >= 15 && j < 18 ? ['Selamat sore', 'sore'] : ['Selamat malam', 'malam']; }
+  function namaDepan() { var n = String((AppState.user || {}).nama || '').replace(/^(dr|drg|ns|h|hj|ir)\.?\s+/i, '').trim(); return n.split(/\s+/)[0] || n; }
+  function profilBuka() {
+    var u = AppState.user; if (!u) return;
+    var sp = AppState.sapaan || {}, el = $('#profil-laci');
+    if (!el) { document.body.insertAdjacentHTML('beforeend', '<div class="profil-tirai" data-act="profil-tutup"></div><aside class="profil-laci" id="profil-laci" role="dialog" aria-modal="true" aria-label="Profil Saya"></aside>'); el = $('#profil-laci'); }
+    el.innerHTML = '<div class="pl-h"><b>Profil Saya</b><button type="button" class="pl-x" data-act="profil-tutup" aria-label="Tutup">✕</button></div><div class="pl-b">' +
+      '<div class="pl-sapa"><span class="pl-av-k av-fill" data-pav></span><div><b>' + esc(salamWaktu()[0] + ', ' + namaDepan()) + '!</b><small>' + esc(tglPanjang(new Date())) + '</small></div>' +
+        ((sp.items || []).length ? '<div class="pl-chips">' + sp.items.map(function (x) { return '<span>' + x.n + ' ' + esc(x.t) + '</span>'; }).join('') + '</div>' : '') + '</div>' +
+      '<label class="pl-ganti" title="Ganti foto"><input type="file" id="profil-file" accept="image/*" hidden><span class="pl-av av-fill" data-pav></span><span class="pl-kam" aria-hidden="true">📷</span><span class="sr">Ganti foto profil</span></label>' +
+      '<p class="pl-ket">Klik foto untuk mengganti' + (AppState.foto ? ' · <button type="button" class="pl-link" data-act="profil-hapus-foto">hapus foto</button>' : '') + '</p>' +
+      '<div class="pl-f"><label class="md-lbl" for="profil-nama">Nama tampil</label><input class="md-inp" id="profil-nama" maxlength="60" value="' + esc(u.nama || '') + '"></div>' +
+      '<div class="pl-f"><span class="md-lbl">Nama pengguna</span><div class="md-inp md-ro">' + esc(u.username) + '</div><small class="md-s2">Hanya admin yang bisa mengubah</small></div>' +
+      '<div class="pl-f"><span class="md-lbl">Peran' + (sp.tim ? ' · Tim Kerja' : u.bidang ? ' · Bidang' : '') + '</span><div class="md-inp md-ro">' + esc((sp.jabatan || ROLE_LABEL[u.role] || u.role) + (sp.tim ? ' · ' + sp.tim.replace(/^Tim Kerja /, '') : u.bidang ? ' · ' + u.bidang : '')) + '</div></div>' +
+      '<p class="form-msg" role="alert"></p><button type="button" class="md-btn md-btn-a pl-simpan" data-act="profil-simpan">Simpan</button>' +
+      '<div class="pl-menu"><button type="button" data-nav="pengaturan">🔑 Ubah kata sandi</button><button type="button" class="theme-btn" data-act="theme">🌓 Tema: <b class="theme-lbl"></b></button><button type="button" data-act="logout">↩︎ Keluar</button></div></div>';
+    $$('[data-pav]', el).forEach(function (a) { avatarIsi(a, true); });
+    if (window.DkTheme) window.DkTheme.refresh();
+    document.documentElement.classList.add('profil-buka'); el.classList.add('on');
+    setTimeout(function () { var n = $('#profil-nama'); if (n) n.focus(); }, 250);
+  }
+  function profilTutup() { var el = $('#profil-laci'); if (el) el.classList.remove('on'); document.documentElement.classList.remove('profil-buka'); }
+  function profilSegar(r) {
+    AppState.user.nama = r.nama; AppState.foto = r.foto || '';
+    $('#user-name').textContent = r.nama; $('#user-av-nm').textContent = r.nama; avatarIsi($('#user-avatar'));
+    $$('#profil-laci [data-pav]').forEach(function (a) { avatarIsi(a, true); });
+  }
+  function profilSimpan(btn) {
+    var n = ($('#profil-nama') || {}).value || '', msg = $('#profil-laci .form-msg');
+    if (n.trim().length < 3) { msg.textContent = 'Nama tampil minimal 3 huruf.'; return; }
+    btn.disabled = true; btn.textContent = 'Menyimpan…'; msg.textContent = '';
+    api('apiSimpanProfil', [{ nama: n.trim() }]).then(function (r) { profilSegar(r); toast('Profil disimpan.', 'ok'); btn.textContent = 'Simpan'; btn.disabled = false; })
+      .catch(function (e) { btn.disabled = false; btn.textContent = 'Simpan'; if (!e.handled) msg.textContent = e.message; });
+  }
+  /** Foto diperkecil di peramban: potong tengah persegi, 256×256 JPEG (~20 KB). */
+  function profilFile(file) {
+    if (!/^image\//.test(file.type)) { toast('Pilih berkas gambar (JPG atau PNG).', 'err'); return; }
+    if (file.size > 8 * 1048576) { toast('Ukuran foto melebihi 8 MB.', 'err'); return; }
+    var fr = new FileReader();
+    fr.onload = function () {
+      var img = new Image();
+      img.onload = function () {
+        var c = document.createElement('canvas'); c.width = c.height = 256;
+        var x = c.getContext('2d'), sz = Math.min(img.width, img.height);
+        x.fillStyle = '#fff'; x.fillRect(0, 0, 256, 256);
+        x.drawImage(img, (img.width - sz) / 2, (img.height - sz) / 2.6, sz, sz, 0, 0, 256, 256);
+        profilFoto(c.toDataURL('image/jpeg', 0.85));
+      };
+      img.onerror = function () { toast('Gambar tidak bisa dibaca.', 'err'); };
+      img.src = fr.result;
+    };
+    fr.readAsDataURL(file);
+  }
+  function profilFoto(data) {
+    var u = AppState.user, ket = $('#profil-laci .pl-ket'); if (ket) ket.textContent = data ? 'Mengunggah foto…' : 'Menghapus foto…';
+    api('apiSimpanProfil', [{ nama: u.nama, foto: data }]).then(function (r) { profilSegar(r); toast(data ? 'Foto profil diperbarui.' : 'Foto profil dihapus.', 'ok'); profilBuka(); })
+      .catch(function (e) { if (ket) ket.textContent = 'Klik foto untuk mengganti'; if (!e.handled) toast(e.message, 'err'); });
+  }
+  /** Layar sambutan penuh setelah masuk (warna langit sesuai waktu, kartu pengguna, ringkasan tugas). */
+  function sambutKunci() { var d = new Date(); return 'dkppkb_sambut_' + ((AppState.user || {}).username || '') + '_' + d.getFullYear() + (d.getMonth() + 1) + d.getDate(); }
+  function sambutTampil(paksa) {
+    var u = AppState.user; if (!u) return;
+    try { if (!paksa && localStorage.getItem(sambutKunci())) return; } catch (e) { }
+    var sp = AppState.sapaan || { items: [], nav: 'dashboard', tombol: 'Lihat Dashboard' }, w = salamWaktu(), el = $('#sambut');
+    if (!el) { document.body.insertAdjacentHTML('beforeend', '<div class="sambut" id="sambut" role="dialog" aria-modal="true" aria-label="Sambutan" hidden></div>'); el = $('#sambut'); }
+    var peran = (sp.jabatan || ROLE_LABEL[u.role] || u.role) + (sp.tim ? ' · ' + sp.tim.replace(/^Tim Kerja /, 'Tim Kerja ') : '');
+    el.className = 'sambut sb-' + w[1];
+    el.innerHTML = '<span class="sb-mat" aria-hidden="true"></span><div class="sb-isi"><span class="sb-av av-fill" data-pav></span><h2>' + esc(w[0] + ', ' + namaDepan()) + '!</h2>' +
+      '<p class="sb-tgl">' + esc(['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][new Date().getDay()] + ', ' + tglPanjang(new Date())) + ' · semoga harimu lancar</p>' +
+      '<div class="sb-kartu"><span class="sb-kl" aria-hidden="true">' + EMBLEM_SVG + '</span><div><small>KARTU PENGGUNA</small><b>' + esc(u.nama) + '</b><span>' + esc(peran) + (u.bidang && !sp.tim ? ' · ' + esc(u.bidang) : '') + '</span></div></div>' +
+      ((sp.items || []).length ? '<ul class="sb-tugas">' + sp.items.map(function (x) { return '<li><b>' + x.n + '</b>' + esc(x.t) + '</li>'; }).join('') + '</ul>' : '<p class="sb-kosong">Tidak ada tugas yang tertunda. Selamat bekerja!</p>') +
+      '<button type="button" class="sb-btn" data-act="sambut-mulai" data-tuju="' + esc(sp.nav) + '">' + esc(sp.tombol) + ' →</button>' +
+      '<label class="sb-lagi"><input type="checkbox" id="sambut-lagi"> Jangan tampilkan lagi hari ini</label>' +
+      '<button type="button" class="sb-x" data-act="sambut-tutup" aria-label="Tutup sambutan">✕</button></div>';
+    $$('[data-pav]', el).forEach(function (a) { avatarIsi(a, true); });
+    el.hidden = false; requestAnimationFrame(function () { el.classList.add('on'); var b = $('.sb-btn', el); if (b) b.focus(); });
+  }
+  function sambutTutup() {
+    var el = $('#sambut'); if (!el || el.hidden) return;
+    try { if ($('#sambut-lagi') && $('#sambut-lagi').checked) localStorage.setItem(sambutKunci(), '1'); } catch (e) { }
+    el.classList.remove('on'); setTimeout(function () { el.hidden = true; }, 350);
   }
 
   /* ---------- Minta Data (gaya kartu toska): tabel -> rincian dengan pratinjau Surat / Lembar disposisi ----------
@@ -3202,7 +3292,12 @@
         }).catch(function (e) { if (!e.handled) toast(e.message, 'err'); }).then(function () { el.disabled = false; el.innerHTML = old; });
         break;
       }
-      case 'logout': logout(); break;
+      case 'logout': profilTutup(); logout(); break;
+      case 'profil-tutup': profilTutup(); break;
+      case 'profil-simpan': profilSimpan(el); break;
+      case 'profil-hapus-foto': profilFoto(''); break;
+      case 'sambut-tutup': sambutTutup(); break;
+      case 'sambut-mulai': sambutTutup(); if (el.getAttribute('data-tuju') !== AppState.page) navigateTo(el.getAttribute('data-tuju') || 'dashboard', {}); break;
     }
   }
 
@@ -3222,6 +3317,7 @@
     if (SSG_POP && t.closest && !t.closest('#ssg-pop') && !t.closest('.ssg-jgb') && !t.closest('.ssg-rwb')) ssgPopTutup();
     var nk = t.closest && t.closest('[data-nk]'); if (nk) notifBaca(nk.getAttribute('data-nk'));   // pemberitahuan yang diklik dianggap sudah dibaca
     var nav = t.closest && t.closest('[data-nav]');
+    if (nav && t.closest('#profil-laci')) profilTutup();
     if (nav) {
       ev.preventDefault();
       var params = {};
@@ -3243,6 +3339,8 @@
   });
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Escape') {
+      if ($('#sambut') && !$('#sambut').hidden) { sambutTutup(); return; }
+      if ($('#profil-laci.on')) { profilTutup(); $('#btn-user').focus(); return; }
       if (!$('#notif-panel').hidden) { closeNotif(); $('#btn-notif').focus(); return; }
       var openG = $$('.tn-group').filter(function (g) { return !$('.tn-menu', g).hidden; })[0];
       if (openG) { closeTopMenus(); $('.tn-item', openG).focus(); return; }
@@ -3373,6 +3471,7 @@
     if (t.form && t.form.getAttribute('id') === 'form-tarik') { syncTarik(t.form); return; }
     if (tdUbah(t)) return;
     if (mdUbah(t)) return;
+    if (t.id === 'profil-file' && t.files && t.files[0]) { profilFile(t.files[0]); t.value = ''; return; }
     if (RW && t.getAttribute && t.getAttribute('data-rw')) { RW[t.getAttribute('data-rw')] = t.value; rwGambar(); return; }
     if (t.id === 'logo-file' && t.files && t.files[0]) {
       var info = $('#logo-info'), fcfg = $('#form-config');
@@ -3448,14 +3547,7 @@
     applyLogo(document.documentElement.getAttribute('data-logo'));
     $('#btn-menu').addEventListener('click', openDrawer);
     $('#btn-notif').addEventListener('click', function (ev) { ev.stopPropagation(); toggleNotif(); });
-    $('#btn-user').addEventListener('click', function () {
-      var u = AppState.user; if (!u) return;
-      openModal('Akun Saya',
-        '<div class="pic-line" style="margin-bottom:16px"><div class="avatar">' + esc((u.nama || '?').charAt(0)) + '</div><div><b>' + esc(u.nama) + '</b><div class="muted sm">' + esc(ROLE_LABEL[u.role] || u.role) + (u.bidang ? ' · ' + esc(u.bidang) : '') + '</div></div></div>' +
-        '<div class="form-actions" style="margin-bottom:12px"><button class="btn btn-ghost theme-btn" type="button" data-act="theme"><span class="ic" aria-hidden="true">brightness_auto</span><span>Tema: <b class="theme-lbl"></b></span></button></div>' +
-        '<div class="form-actions"><button class="btn btn-primary" type="button" data-nav="pengaturan">Pengaturan Akun</button><button class="btn btn-ghost" type="button" data-act="logout">Keluar</button></div>');
-      if (window.DkTheme) window.DkTheme.refresh();
-    });
+    $('#btn-user').addEventListener('click', function () { profilBuka(); });
     $('#sel-bulan').addEventListener('change', function () { navigateTo(AppState.page, AppState.params).then(function () { prefetchTabs(); prefetchMenu(); }); refreshBadgeForPeriod(); });
     $('#sel-tahun').addEventListener('change', function () { navigateTo(AppState.page, AppState.params).then(function () { prefetchTabs(); prefetchMenu(); }); });
     $('#skip-link').addEventListener('click', function (e) { e.preventDefault(); $('#main').focus(); });
