@@ -1607,6 +1607,38 @@ fieldset.field legend{font-size:12.5px;font-weight:600;padding:0;margin-bottom:4
 .db-cpb-leg span{display:inline-flex;align-items:center;gap:6px}.db-cpb-leg i{width:10px;height:10px;border-radius:3px;display:inline-block}
 .db-cpb-leg .db-cpb-gt{width:0;height:12px;border-left:2px dashed var(--tx);border-radius:0}
 @media (max-width:560px){.db-cin-w{grid-template-columns:1fr;justify-items:center}.db-cin-lg{width:100%}.db-cpb-r{grid-template-columns:88px minmax(0,1fr) 52px;gap:8px}.db-cpb-r small{display:none}}
+/* Peringkat kabupaten (Dashboard) */
+.db-rk-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap}
+.db-rk-pod{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;align-items:end;margin:2px 0 10px}
+.db-rk-p{border-radius:16px 16px 8px 8px;text-align:center;padding:10px 6px 9px;background:var(--rail);min-width:0}
+.db-rk-p b{display:block;font-size:12.5px;line-height:1.25;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.db-rk-p strong{display:block;font-size:19px;font-weight:800;letter-spacing:-.02em;margin-top:2px;font-variant-numeric:tabular-nums}
+.db-rk-p small{font-size:11px;color:var(--mute)}
+.db-rk-md{display:inline-grid;place-items:center;width:26px;height:26px;border-radius:99px;font-size:12px;font-weight:800;color:#fff;margin-bottom:4px}
+.db-rk-p1{background:linear-gradient(180deg,#fdf0c4,#fffaeb);padding-top:30px;position:relative;overflow:hidden;box-shadow:0 10px 24px -12px rgba(201,151,26,.55)}
+.db-rk-p1 .db-rk-md{background:#c9971a;width:32px;height:32px;font-size:14px;box-shadow:0 0 0 4px rgba(201,151,26,.18)}
+.db-rk-p1::after{content:"";position:absolute;top:0;left:-60%;width:40%;height:100%;background:linear-gradient(100deg,transparent,rgba(255,255,255,.7),transparent);animation:dbRkKilau 3.2s ease-in-out infinite;pointer-events:none}
+.db-rk-crown{position:absolute;top:-2px;left:50%;width:34px;height:26px;transform:translateX(-50%);animation:dbRkAyun 2.6s ease-in-out infinite}
+@keyframes dbRkKilau{0%,55%{left:-60%}100%{left:130%}}
+@keyframes dbRkAyun{0%,100%{transform:translateX(-50%) translateY(0)}50%{transform:translateX(-50%) translateY(-3px)}}
+@media (prefers-reduced-motion:reduce){.db-rk-p1::after,.db-rk-crown{animation:none}}
+:root[data-theme="dark"] .db-rk-p1::after{background:linear-gradient(100deg,transparent,rgba(255,255,255,.18),transparent)}
+.db-rk-p2{background:linear-gradient(180deg,#e2e8f0,#f8fafc)}.db-rk-p2 .db-rk-md{background:#8a98ab}
+.db-rk-p3{background:linear-gradient(180deg,#fbe2cc,#fff6ee)}.db-rk-p3 .db-rk-md{background:#b8683a}
+:root[data-theme="dark"] .db-rk-p{background:var(--rail)}
+:root[data-theme="dark"] .db-rk-p1{background:linear-gradient(180deg,rgba(201,151,26,.28),rgba(201,151,26,.08))}
+:root[data-theme="dark"] .db-rk-p3{background:linear-gradient(180deg,rgba(184,104,58,.28),rgba(184,104,58,.08))}
+.db-rk-l{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:2px}
+.db-rk-l li{display:grid;grid-template-columns:22px minmax(0,1fr) minmax(50px,90px) 54px 30px;gap:8px;align-items:center;padding:6px 6px;border-radius:9px;font-size:13px}
+.db-rk-l li:hover{background:var(--rail)}
+.db-rk-n{color:var(--mute);font-weight:700;text-align:center}
+.db-rk-k{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.db-rk-t{height:6px;border-radius:99px;background:var(--rail);position:relative;overflow:hidden}
+.db-rk-t i{position:absolute;inset:0 auto 0 0;background:var(--p-d);border-radius:99px}
+.db-rk-l b{text-align:right;font-variant-numeric:tabular-nums}
+.db-rk em{font-style:normal;font-size:11px;font-weight:700;text-align:right}
+.db-rk-up{color:#15803d}.db-rk-dn{color:#ea6a1f}.db-rk-eq{color:var(--mute)}
+.db-rk-ft{font-size:11.5px;color:var(--mute);margin:10px 0 0}
 .db-s2{grid-column:span 2}.db-s3{grid-column:span 3}.db-s5{grid-column:span 5}.db-s7{grid-column:span 7}.db-s12{grid-column:1 / -1}
 @media (max-width:1100px){.db-s2,.db-s3{grid-column:span 6}.db-s5,.db-s7{grid-column:span 12}}
 @media (max-width:560px){.db-s2,.db-s3{grid-column:span 12}}
@@ -2052,6 +2084,41 @@ svg.mvk-sb path{fill:none;stroke:var(--mute2);stroke-width:1.6}
 .lx-tombol{background:var(--tx);color:var(--card);border:0}.lx-tombol:hover{opacity:.9}
 .lx-alat{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}.lx-cek{display:flex;gap:5px;align-items:center}
 .lx-wadah{background:#e8e8ed;border-radius:12px;padding:14px;max-height:70vh;overflow:auto}
+.lx-wadah,.td-prev{transition:opacity .2s}.lx-wadah.is-muat,.td-prev.is-muat{opacity:.35;pointer-events:none}
+.lx-twpil{display:inline-flex;align-items:center;gap:8px}.lx-sp{flex:1}
+.lx-twseg{margin:0}
+.lx-twseg .seg-btn{min-height:32px;padding:0 12px;font-size:12.5px}
+.lx-twseg .seg-btn[disabled]{opacity:.4;cursor:not-allowed;background:var(--card);color:var(--tx2);border-color:var(--bd)}
+/* Tarik Data: templat + saringan (kiri), pratinjau langsung (kanan) */
+.td-lay{display:grid;grid-template-columns:270px minmax(0,1fr);gap:0;border:1px solid var(--bd);border-radius:16px;overflow:hidden;min-height:440px}
+.td-kiri{border-right:1px solid var(--bd);padding:14px;display:flex;flex-direction:column;gap:14px;background:var(--rail);min-width:0;max-height:66vh;overflow:auto}
+.td-sar{display:flex;flex-direction:column;gap:14px}.td-sar[hidden]{display:none}
+.td-lbl{font-size:11px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:var(--mute);margin-bottom:6px}
+.td-tpl{display:flex;flex-direction:column;gap:6px}
+.td-tc{display:flex;flex-direction:column;align-items:flex-start;gap:1px;text-align:left;border:1.5px solid var(--bd);background:var(--card);border-radius:12px;padding:8px 11px;cursor:pointer;color:var(--tx)}
+.td-tc b{font-size:13px}.td-tc small{font-size:11.5px;color:var(--tx2)}
+.td-tc:hover{border-color:var(--p)}
+.td-tc.on{border-color:var(--p);background:var(--p-l)}
+.td-chips{display:flex;flex-wrap:wrap;gap:5px}
+.td-chip{border:1px solid var(--bd);background:var(--card);border-radius:99px;padding:3px 10px;font-size:12px;cursor:pointer;color:var(--tx2);max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.td-chip.on{background:var(--tx);border-color:var(--tx);color:var(--card)}
+.td-cari{width:100%}
+.td-kol{display:flex;flex-wrap:wrap;gap:5px}
+.td-kol label{font-size:12px;background:var(--card);border:1px solid var(--bd);border-radius:8px;padding:3px 8px;display:flex;gap:5px;align-items:center;cursor:pointer}
+.td-kol input{accent-color:var(--p);margin:0}
+.td-kanan{padding:14px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.td-top{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.td-prev{border:1px solid var(--bd);border-radius:12px;overflow:auto;max-height:58vh;flex:1}
+.td-t{border-collapse:collapse;width:100%;font-size:12px;white-space:nowrap}
+.td-t th{position:sticky;top:0;z-index:1;background:var(--rail);text-align:left;font-weight:600;color:var(--tx2);padding:7px 9px;border-bottom:1px solid var(--bd)}
+.td-t td{padding:6px 9px;border-bottom:1px solid var(--rail);font-variant-numeric:tabular-nums;max-width:340px;overflow:hidden;text-overflow:ellipsis}
+.td-t .r{text-align:right}
+.td-t tr.on td{background:var(--p-l)}
+.td-ck{width:30px}.td-ck input{accent-color:var(--p);margin:0}
+.td-kosong{padding:20px}
+.td-aksi{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-top:12px}
+.td-btn{display:flex;gap:8px}.td-btn .ic{font-size:18px}
+@media (max-width:760px){.td-lay{grid-template-columns:1fr}.td-kiri{border-right:0;border-bottom:1px solid var(--bd);max-height:none}.td-tpl{flex-direction:row;overflow-x:auto}.td-tc{flex:none;min-width:150px}.lx-sp{display:none}}
 .lx-kertas{background:#fff;color:#1d1d1f;border-radius:4px;box-shadow:0 4px 18px rgba(0,0,0,.14);max-width:794px;margin:0 auto;padding:40px 48px;display:flex;flex-direction:column;gap:14px;font-size:13px;line-height:1.45}
 .lx-kop{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:2px solid #1d1d1f;padding-bottom:10px;font-size:11.5px;color:#6e6e73;gap:12px}
 .lx-kop b{display:block;color:#1d1d1f;font-size:14px}.lx-kop span:last-child{text-align:right}

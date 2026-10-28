@@ -15,7 +15,7 @@
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', group: 'Utama' },
     { id: 'review', label: 'Review', icon: 'fact_check', group: 'Utama' },
     { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'admindata', 'pic'] },
-    { id: 'laporan', label: 'Laporan', icon: 'description', group: 'Utama' },
+    { id: 'laporan', label: 'Minta Data', icon: 'description', group: 'Utama' },
     // Menu induk (id diawali _) membuka sub-menu Isi Data dan Review; bila hanya satu sub-menu yang boleh, tampil sebagai satu menu biasa
     { id: '_ss', label: 'Sulbar Sehat', icon: 'monitor_heart', group: 'Monev', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
     { id: 'ssisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_ss', roles: ['admin', 'staf', 'admindata'] },
@@ -39,7 +39,7 @@
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'review', label: 'Review', icon: 'fact_check' },
     { id: 'inputdata', label: 'Isi Data', icon: 'edit_note' },
-    { id: 'laporan', label: 'Laporan', icon: 'description' },
+    { id: 'laporan', label: 'Minta Data', icon: 'description' },
     { id: '_menu', label: 'Menu', icon: 'menu' }
   ];
   /* Menu tab atas: Dashboard, Review, Isi Data, Laporan, Sulbar Sehat, SPBE, Monev Kinerja, Pengaturan. Tindak Lanjut dan Permintaan Data di Laporan. */
@@ -47,7 +47,7 @@
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'review', label: 'Review' },
     { id: 'inputdata', label: 'Isi Data' },
-    { id: 'laporan', label: 'Laporan' },
+    { id: 'laporan', label: 'Minta Data' },
     { label: 'Sulbar Sehat', children: ['ssisi', 'ssreview'] },
     { label: 'SPBE', children: ['spbeisi', 'spbe'] },
     { label: 'Monev Kinerja', children: ['monevisi', 'monev'] },
@@ -113,7 +113,7 @@
     return pr;
   }
   /** Panggil API ber-token. Mengembalikan data atau melempar Error; sesi habis -> kembali ke login. */
-  var PCACHE = {}, READ_API = { apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiFotoGaleriAdmin: 1, apiNotifikasi: 1 };
+  var PCACHE = {}, READ_API = { apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiFotoGaleriAdmin: 1, apiNotifikasi: 1, apiLaporanTw: 1 };
   function api(fn, args) {
     if (!READ_API[fn]) pcBasi();   // ada perubahan data: tandai cache halaman basi
     args = [AppState.sessionToken].concat(args || []);
@@ -208,7 +208,7 @@
   /** Halaman tanpa menu sendiri disorot di menu induknya (Tindak Lanjut dan Permintaan Data di Laporan). */
   function menuInduk(page) {
     if (page === 'monev' && AppState.params && AppState.params.sasaran) return 'monevisi';   // rincian sasaran dibuka dari Isi Data Monev Kinerja
-    return { sulbarsehat: 'laporan', permintaan: 'laporan' }[page] || page;
+    return { sulbarsehat: 'dashboard', permintaan: 'laporan' }[page] || page;
   }
   function markMenu(page) {
     page = menuInduk(page);
@@ -536,8 +536,8 @@
   /* Panduan singkat tiga langkah sesuai peran; muncul sekali saat pertama masuk, bisa dibuka lagi dari menu Panduan. */
   var PANDUAN = {
     isi: [['Buka Isi Data', 'Pilih periode (bulan, triwulan, atau semester). Angka diisi kumulatif sampai akhir periode.'], ['Ketik angka', 'Isi Sasaran dan Realisasi per kabupaten, atau unduh templat Excel, isi, lalu unggah kembali.'], ['Tekan Simpan', 'Kotak kuning berarti angka perlu diperiksa (melebihi sasaran atau turun dari periode lalu), tetapi tetap bisa disimpan.']],
-    admin: [['Pantau kelengkapan', 'Review › Kelengkapan isian menunjukkan kabupaten yang belum mengisi. Tombol WhatsApp membuat pesan pengingat.'], ['Atur indikator', 'Kelola Indikator dipisah per kelompok. Pilih cara akumulasi: persentase, angka, atau jumlah.'], ['Bagikan hasil', 'Cetak atau unduh Excel dari Review; rapor kabupaten ada di Laporan.']],
-    pimpinan: [['Baca Dashboard', 'Kalimat ringkasan di atas dan peta kabupaten memberi gambaran sekali pandang.'], ['Telusuri di Review', 'Pilih periode dan kabupaten; klik indikator untuk melihat angka per kabupaten dan tren.'], ['Laporan', 'Rapor kabupaten berisi catatan otomatis; Laporan Eksekutif siap dicetak.']]
+    admin: [['Pantau kelengkapan', 'Peta Dashboard › Kelengkapan menunjukkan kabupaten yang belum mengisi; Peringkat kabupaten ada di Dashboard.'], ['Atur indikator', 'Kelola Indikator dipisah per kelompok. Pilih cara akumulasi: persentase, angka, atau jumlah.'], ['Bagikan hasil', 'Dari Review: Tarik Data untuk Excel/PDF dan Laporan Eksekutif per triwulan. Permintaan data masuk di menu Minta Data.']],
+    pimpinan: [['Baca Dashboard', 'Kalimat ringkasan di atas dan peta kabupaten memberi gambaran sekali pandang.'], ['Telusuri di Review', 'Pilih periode dan kabupaten; klik indikator untuk melihat angka per kabupaten dan tren.'], ['Laporan Eksekutif', 'Tombol Laporan Eksekutif di Review menyusun ringkasan satu halaman per triwulan, siap dicetak.']]
   };
   function panduanSingkat(paksa) {
     var u = AppState.user || {}, k = 'dkppkb_panduan_v1_' + u.role;
@@ -1685,13 +1685,56 @@
     if (tw) { var t = all.filter(function (x) { return x.getAttribute('data-kode') === 'tw' + tw.value; })[0]; if (t) return t; }
     return all[0];
   }
+  /** Laporan dan data Tarik Data per periode, dimuat sekali per halaman: kunci jenis|tahun|kode -> { label, html, tarik }.
+   *  Periode halaman ada di templat dan #tarik-data; triwulan lain diambil dari server (apiLaporanTw). */
+  var LXC = {};
+  function lxMeta() { var x = $('#lx-meta'); return x ? { jenis: x.getAttribute('data-jenis'), tahun: Number(x.getAttribute('data-tahun')), menu: x.getAttribute('data-menu'), maks: Number(x.getAttribute('data-maks') || 4), kode: x.getAttribute('data-kode'), label: x.getAttribute('data-label') } : null; }
+  function lxKunci(kode) { var M = lxMeta(); return M ? M.jenis + '|' + M.tahun + '|' + kode : kode; }
+  /** Ambil entri satu periode; perlu = 'html' (laporan) atau 'tarik' (data). Mengembalikan Promise. */
+  function lxAmbil(kode, perlu) {
+    var k = lxKunci(kode), e = LXC[k] = LXC[k] || {};
+    if (!e.html) { var tp = $$('#app-container template.lx-tpl').filter(function (x) { return x.getAttribute('data-kode') === kode; })[0]; if (tp) { e.html = tp.innerHTML; e.label = tp.getAttribute('data-label'); } }
+    if (!e.tarik) { var td = $('#tarik-data'); if (td && td.getAttribute('data-kode') === kode) e.tarik = tarikData(); }
+    if (e[perlu]) return Promise.resolve(e);
+    var M = lxMeta(), tw = /^tw([1-4])$/.exec(kode);
+    if (!M || !tw) return Promise.reject(new Error('Periode ini tidak tersedia.'));
+    return api('apiLaporanTw', [{ tahun: M.tahun, jenis: M.jenis, tw: Number(tw[1]) }]).then(function (r) { e.html = r.html; e.label = r.label; e.tarik = r.tarik; return e; });
+  }
+  /** Pilihan periode di jendela Laporan Eksekutif dan Tarik Data: TW I–IV (yang belum berjalan dinonaktifkan),
+   *  ditambah periode halaman bila bukan triwulan (mis. bulan atau semester). */
+  function lxTwSeg(aktif, act) {
+    var M = lxMeta(); if (!M) return '';
+    var b = function (kode, lbl, mati) { return '<button type="button" class="seg-btn' + (kode === aktif ? ' is-on' : '') + '" data-act="' + act + '" data-kode="' + kode + '"' + (mati ? ' disabled title="Belum berjalan"' : '') + '>' + esc(lbl) + '</button>'; };
+    return '<div class="seg seg-sm lx-twseg" role="group" aria-label="Periode">' + (/^tw/.test(M.kode) ? '' : b(M.kode, M.label)) +
+      ['I', 'II', 'III', 'IV'].map(function (r, i) { return b('tw' + (i + 1), 'TW ' + r, i + 1 > M.maks); }).join('') + '</div>';
+  }
+  function lxSegOn(wadah, kode) { $$('.lx-twseg .seg-btn', wadah).forEach(function (x) { x.classList.toggle('is-on', x.getAttribute('data-kode') === kode); }); }
+  /** Templat laporan untuk periode yang sedang dilihat; di Review Monev Kinerja mengikuti pilihan triwulan di halaman. */
+  function lxTpl() {
+    var tw = $('#mvk-tw'), all = $$('#app-container template.lx-tpl');
+    if (tw) { var t = all.filter(function (x) { return x.getAttribute('data-kode') === 'tw' + tw.value; })[0]; if (t) return t; }
+    return all[0];
+  }
   function lxBuka() {
-    var tpl = lxTpl(), meta = $('#lx-meta'); if (!tpl || !meta) return;
-    openModal('Laporan Eksekutif · ' + meta.getAttribute('data-menu') + ' · ' + tpl.getAttribute('data-label'),
-      '<div class="lx-alat"><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ubah">Ubah teks</button><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ulang">Susun ulang otomatis</button>' +
+    var tpl = lxTpl(), M = lxMeta(); if (!tpl || !M) return;
+    var kode = tpl.getAttribute('data-kode');
+    openModal('Laporan Eksekutif · ' + M.menu + ' · ' + tpl.getAttribute('data-label'),
+      '<div class="lx-alat"><span class="lx-twpil"><span class="muted sm">Periode</span>' + lxTwSeg(kode, 'lx-tw') + '</span><span class="lx-sp"></span>' +
+      '<button type="button" class="btn btn-ghost btn-sm" data-act="lx-ubah">Ubah teks</button><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ulang">Susun ulang otomatis</button>' +
       '<label class="muted sm lx-cek"><input type="checkbox" id="lx-lamp-cek"> sertakan lampiran rincian</label><button type="button" class="btn btn-primary btn-sm" data-act="lx-pdf">Unduh PDF</button></div>' +
-      '<p class="form-msg" role="alert"></p><div class="lx-wadah" data-kode="' + esc(tpl.getAttribute('data-kode')) + '">' + tpl.innerHTML + '</div>', true);
+      '<p class="form-msg" role="alert"></p><div class="lx-wadah" data-kode="' + esc(kode) + '">' + tpl.innerHTML + '</div>', true);
     var md = $('#modal-root .modal'); if (md) { md.style.maxWidth = '900px'; md.classList.add('lx-modal'); }
+  }
+  /** Ganti periode laporan di jendela yang sama (tanpa memuat ulang halaman Review). */
+  function lxGanti(el) {
+    var w = $('#modal-body .lx-wadah'), kode = el.getAttribute('data-kode'), M = lxMeta(); if (!w || el.disabled || w.getAttribute('data-kode') === kode) return;
+    var k = $('#modal-body .lx-kertas'); if (k && k.classList.contains('lx-sunting')) { toast('Simpan atau batalkan ubahan teks dulu.', 'err'); return; }
+    lxSegOn($('#modal-body'), kode); w.classList.add('is-muat');
+    lxAmbil(kode, 'html').then(function (e) {
+      if (!$('#modal-body .lx-wadah')) return;
+      w.innerHTML = e.html; w.setAttribute('data-kode', kode); w.classList.remove('is-muat');
+      var t = $('#modal-title'); if (t) t.textContent = 'Laporan Eksekutif · ' + M.menu + ' · ' + e.label;
+    }).catch(function (e) { w.classList.remove('is-muat'); lxSegOn($('#modal-body'), w.getAttribute('data-kode')); if (!e.handled) toast(e.message, 'err'); });
   }
   function lxKirim(isi) {
     var meta = $('#lx-meta'), w = $('#modal-body .lx-wadah');
@@ -1702,15 +1745,16 @@
     var k = $('#modal-body .lx-kertas'); if (!k) return;
     if (!k.classList.contains('lx-sunting')) { k.classList.add('lx-sunting'); lxBagian().forEach(function (x) { x.contentEditable = 'true'; }); btn.textContent = 'Simpan teks'; btn.classList.add('btn-primary'); lxBagian()[0].focus(); return; }
     var teks = function (s) { return $$('#modal-body [data-ed="' + s + '"] li').map(function (x) { return x.innerText.trim(); }).filter(function (t) { return t && t !== '—'; }); };
-    var msg = $('#modal-body .form-msg'); btn.disabled = true; btn.textContent = 'Menyimpan…';
+    var msg = $('#modal-body .form-msg'), w = $('#modal-body .lx-wadah'); btn.disabled = true; btn.textContent = 'Menyimpan…';
     lxKirim({ inti: $('#modal-body [data-ed="inti"]').innerText.trim(), temuan: teks('temuan'), rekom: teks('rekom') })
-      .then(function () { closeModal(); toast('Teks Laporan Eksekutif disimpan.', 'ok'); reload(); })
+      .then(function () { delete LXC[lxKunci(w.getAttribute('data-kode'))]; closeModal(); toast('Teks Laporan Eksekutif disimpan.', 'ok'); reload(); })
       .catch(function (e) { btn.disabled = false; btn.textContent = 'Simpan teks'; if (!e.handled) msg.textContent = e.message; });
   }
   function lxUlang(btn) {
     konfirmasiKlik(btn, function () {
       btn.disabled = true;
-      lxKirim({ reset: true }).then(function () { closeModal(); toast('Laporan disusun ulang dari data terbaru.', 'ok'); reload(); })
+      var w = $('#modal-body .lx-wadah');
+      lxKirim({ reset: true }).then(function () { delete LXC[lxKunci(w.getAttribute('data-kode'))]; closeModal(); toast('Laporan disusun ulang dari data terbaru.', 'ok'); reload(); })
         .catch(function (e) { btn.disabled = false; if (!e.handled) toast(e.message, 'err'); });
     });
   }
@@ -1720,41 +1764,103 @@
     return '<table class="lx-tabel"><thead><tr>' + T.kolom.map(function (k) { return '<th>' + esc(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
       baris.map(function (b) { return '<tr>' + b.sel.map(function (v) { return '<td>' + esc(v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
   }
-  /** Unduh PDF lewat dialog cetak browser (pilih "Simpan sebagai PDF"); lampiran rincian ikut bila dicentang. */
+  /** Unduh PDF lewat dialog cetak browser (pilih "Simpan sebagai PDF"); lampiran rincian periode yang sama ikut bila dicentang. */
   function lxPdf() {
-    var k = $('#modal-body .lx-kertas'); if (!k) return;
+    var k = $('#modal-body .lx-kertas'), w = $('#modal-body .lx-wadah'); if (!k || !w) return;
     var salin = k.cloneNode(true); salin.classList.remove('lx-sunting'); $$('[contenteditable]', salin).forEach(function (x) { x.removeAttribute('contenteditable'); });
-    var T = tarikData(), lamp = $('#lx-lamp-cek') && $('#lx-lamp-cek').checked && T ? '<div class="lx-halbaru"><h2>Lampiran · ' + esc(T.judul) + '</h2>' + tarikTabel(T, T.baris) + '</div>' : '';
-    cetakHtml(salin.outerHTML + lamp);
+    if (!($('#lx-lamp-cek') && $('#lx-lamp-cek').checked)) { cetakHtml(salin.outerHTML); return; }
+    lxAmbil(w.getAttribute('data-kode'), 'tarik').then(function (e) {
+      var T = e.tarik; cetakHtml(salin.outerHTML + (T ? '<div class="lx-halbaru"><h2>Lampiran · ' + esc(T.judul) + '</h2>' + tarikTabel(T, T.baris) + '</div>' : ''));
+    }).catch(function (e) { if (!e.handled) toast(e.message, 'err'); });
   }
+
+  /* ---------- Tarik Data: templat cepat + saringan di kiri, pratinjau langsung di kanan ---------- */
+  var TD = null;
+  var TD_TPL = [['semua', 'Semua indikator', 'Seluruh baris periode ini'], ['bawah', 'Di bawah target', 'Hanya yang belum capai target'], ['peringkat', 'Peringkat kabupaten', 'Rata-rata capaian per kabupaten']];
   function tarikBuka() {
-    var T = tarikData(); if (!T) return;
+    var T = tarikData(), td = $('#tarik-data'); if (!T || !td) return;
+    TD = { kode: td.getAttribute('data-kode'), T: T, tpl: 'semua', g: '', q: '', sembunyi: {}, pilih: {} };
+    openModal('Tarik Data · ' + lxMeta().menu, '<div class="td-lay"><aside class="td-kiri"></aside><section class="td-kanan"><div class="td-top"><b id="td-n"></b><span class="muted sm" id="td-lbl"></span></div><div class="td-prev"></div></section></div>' +
+      '<div class="td-aksi"><span class="muted sm">Centang baris di pratinjau untuk mengunduh sebagian saja.</span><span class="td-btn"><button type="button" class="btn btn-ghost btn-sm" data-act="tarik2" data-format="pdf"><span class="ic" aria-hidden="true">picture_as_pdf</span>PDF</button>' +
+      '<button type="button" class="btn btn-primary btn-sm" data-act="tarik2" data-format="csv"><span class="ic" aria-hidden="true">download</span>Unduh Excel</button></span></div>', true);
+    var md = $('#modal-root .modal'); if (md) { md.style.maxWidth = '1080px'; md.classList.add('td-modal'); }
+    tdKiri(); tdGambar();
+  }
+  function tdKiri() {
+    var T = TD.T, kiri = $('#modal-body .td-kiri'); if (!kiri) return;
     var grup = []; T.baris.forEach(function (b) { if (grup.indexOf(b.g) < 0) grup.push(b.g); });
-    openModal('Tarik Data · ' + T.judul, '<form id="form-tarik2" novalidate><p class="muted sm">Pilih ' + esc(T.grupLabel.toLowerCase()) + ' atau indikator, lalu unduh. Kosong = semua.</p><div class="tk-grid">' +
-      '<fieldset class="tk-col"><legend>' + esc(T.grupLabel) + '</legend><div class="tk-box">' + grup.map(function (g) { return '<label class="ik-item"><input type="checkbox" name="tk-g" value="' + esc(g) + '"><span>' + esc(g) + '</span></label>'; }).join('') + '</div></fieldset>' +
-      '<fieldset class="tk-col"><legend>Indikator</legend><div class="tk-box">' + T.baris.map(function (b, i) { return '<label class="ik-item" data-g="' + esc(b.g) + '"><input type="checkbox" name="tk-i" value="' + i + '"><span>' + esc(b.nama) + '</span></label>'; }).join('') + '</div></fieldset></div>' +
-      '<p class="muted sm" id="tk-info">' + T.baris.length + ' indikator akan diunduh.</p>' +
-      '<div class="form-actions"><button type="button" class="btn btn-primary" data-act="tarik2" data-format="pdf">Unduh PDF</button><button type="button" class="btn btn-ghost" data-act="tarik2" data-format="csv">Unduh CSV (Excel)</button></div></form>', true);
+    var tpl = TD_TPL.filter(function (t) { return t[0] !== 'peringkat' || T.peringkat; });
+    kiri.innerHTML = '<div class="td-tpl" role="group" aria-label="Templat">' + tpl.map(function (t) { return '<button type="button" class="td-tc' + (TD.tpl === t[0] ? ' on' : '') + '" data-act="td-tpl" data-v="' + t[0] + '"><b>' + t[1] + '</b><small>' + t[2] + '</small></button>'; }).join('') + '</div>' +
+      '<div><div class="td-lbl">Periode</div>' + lxTwSeg(TD.kode, 'td-tw') + '</div>' +
+      '<div class="td-sar"' + (TD.tpl === 'peringkat' ? ' hidden' : '') + '><div><div class="td-lbl">' + esc(T.grupLabel) + '</div><div class="td-chips">' +
+        [''].concat(grup).map(function (g) { return '<button type="button" class="td-chip' + (TD.g === g ? ' on' : '') + '" data-act="td-g" data-v="' + esc(g) + '" title="' + esc(g || 'Semua') + '">' + esc(g || 'Semua') + '</button>'; }).join('') + '</div></div>' +
+        '<div><div class="td-lbl">Cari indikator</div><input class="input input-sm td-cari" type="search" placeholder="mis. imunisasi" value="' + esc(TD.q) + '" aria-label="Cari indikator"></div>' +
+        '<div><div class="td-lbl">Kolom</div><div class="td-kol">' + (T.kolGrup || []).map(function (k) { return '<label><input type="checkbox" data-k="' + k.k + '"' + (TD.sembunyi[k.k] ? '' : ' checked') + '>' + esc(k.l) + '</label>'; }).join('') + '</div></div></div>';
   }
-  function tarikPilihan() {
-    var T = tarikData(), f = $('#form-tarik2'); if (!T || !f) return [];
-    var g = $$('input[name=tk-g]', f).filter(function (x) { return x.checked; }).map(function (x) { return x.value; });
-    $$('.ik-item[data-g]', f).forEach(function (it) { var ok = !g.length || g.indexOf(it.getAttribute('data-g')) >= 0; it.hidden = !ok; if (!ok) $('input', it).checked = false; });
-    var pilih = $$('input[name=tk-i]', f).filter(function (x) { return x.checked; }).map(function (x) { return T.baris[Number(x.value)]; });
-    var hasil = pilih.length ? pilih : T.baris.filter(function (b) { return !g.length || g.indexOf(b.g) >= 0; });
-    var info = $('#tk-info'); if (info) info.textContent = hasil.length + ' indikator akan diunduh.';
-    return hasil;
+  /** Baris dan kolom yang akan diunduh sesuai pilihan saat ini. */
+  function tdHasil() {
+    var T = TD.T;
+    if (TD.tpl === 'peringkat') return { judul: T.judul + ' · Peringkat kabupaten', kolom: ['Peringkat', 'Kabupaten', 'Rata-rata capaian (%)', 'Indikator berdata'],
+      baris: (T.peringkat || []).map(function (x, i) { return { sel: [i + 1, x.kab, x.v, x.n] }; }), semua: (T.peringkat || []).length };
+    var q = TD.q.toLowerCase(), kol = T.kolom.map(function (k, i) { return i; }).filter(function (i) { return !TD.sembunyi[(T.kk || [])[i] || '']; });
+    var lolos = T.baris.filter(function (b) { return (!TD.g || b.g === TD.g) && (!q || b.nama.toLowerCase().indexOf(q) >= 0) && (TD.tpl !== 'bawah' || b.st === 'lo'); });
+    var dipilih = lolos.filter(function (b) { return TD.pilih[b.id]; });
+    return { judul: T.judul + (TD.tpl === 'bawah' ? ' · Di bawah target' : ''), kolom: kol.map(function (i) { return T.kolom[i]; }), lolos: lolos, kolI: kol,
+      baris: (dipilih.length ? dipilih : lolos).map(function (b) { return { id: b.id, sel: kol.map(function (i) { return b.sel[i]; }) }; }), semua: lolos.length, n: dipilih.length };
   }
-  function tarikUnduh(fmt) {
-    var T = tarikData(), baris = tarikPilihan(); if (!T || !baris.length) { toast('Tidak ada indikator yang dipilih.', 'err'); return; }
-    if (fmt === 'csv') {
-      var q = function (s) { s = String(s == null ? '' : s); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-      var isi = '﻿sep=;\n' + [T.kolom].concat(baris.map(function (b) { return b.sel; })).map(function (r) { return r.map(q).join(';'); }).join('\n');
-      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([isi], { type: 'text/csv;charset=utf-8' })); a.download = 'Tarik Data ' + T.judul + '.csv';
-      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  function tdGambar() {
+    var H = tdHasil(), prev = $('#modal-body .td-prev'); if (!prev) return;
+    $('#td-n').textContent = TD.tpl === 'peringkat' ? H.semua + ' kabupaten' : (H.n ? H.n + ' dari ' + H.semua + ' indikator dipilih' : H.semua + ' indikator');
+    $('#td-lbl').textContent = 'Pratinjau · ' + (TD.T.label || '');
+    var angka = function (v) { return /^-?[\d.]+(,\d+)?$/.test(String(v)) ? ' class="r"' : ''; };
+    if (TD.tpl === 'peringkat') {
+      prev.innerHTML = '<table class="td-t"><thead><tr>' + H.kolom.map(function (k, i) { return '<th' + (i === 2 ? ' class="r"' : '') + '>' + esc(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+        H.baris.map(function (b) { return '<tr>' + b.sel.map(function (v, i) { return '<td' + (i === 2 ? ' class="r"' : '') + '>' + (i === 2 ? '<b>' + esc(v) + '</b>' : esc(v)) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
       return;
     }
-    cetakHtml(kopHtml() + '<h1>' + esc(('Tarik Data · ' + T.judul).toUpperCase()) + '</h1><div class="sub">' + baris.length + ' indikator · dicetak ' + esc(tglPanjang(new Date())) + '</div>' + tarikTabel(T, baris));
+    if (!H.lolos.length) { prev.innerHTML = '<p class="muted sm td-kosong">Tidak ada indikator yang cocok dengan pilihan.</p>'; return; }
+    prev.innerHTML = '<table class="td-t"><thead><tr><th class="td-ck"><input type="checkbox" class="td-semua" aria-label="Pilih semua"' + (H.n && H.n === H.semua ? ' checked' : '') + '></th>' + H.kolom.map(function (k) { return '<th>' + esc(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
+      H.lolos.map(function (b) { return '<tr' + (TD.pilih[b.id] ? ' class="on"' : '') + '><td class="td-ck"><input type="checkbox" class="td-pil" data-id="' + esc(b.id) + '"' + (TD.pilih[b.id] ? ' checked' : '') + ' aria-label="Pilih ' + esc(b.nama) + '"></td>' +
+        H.kolI.map(function (i) { return '<td' + angka(b.sel[i]) + '>' + esc(b.sel[i]) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
+  }
+  /** Klik di jendela Tarik Data: templat, periode, dan bidang/kelompok. */
+  function tdAksi(el, act) {
+    if (!TD) return;
+    var v = el.getAttribute('data-v');
+    if (act === 'td-tpl') { TD.tpl = v; if (v !== 'bawah' && v !== 'peringkat') { TD.g = ''; TD.q = ''; TD.pilih = {}; } tdKiri(); tdGambar(); return; }
+    if (act === 'td-g') { TD.g = v; $$('#modal-body .td-chip').forEach(function (c) { c.classList.toggle('on', c === el); }); tdGambar(); return; }
+    if (act === 'td-tw') {
+      var kode = el.getAttribute('data-kode'); if (el.disabled || kode === TD.kode) return;
+      lxSegOn($('#modal-body .td-kiri'), kode); $('#modal-body .td-prev').classList.add('is-muat');
+      lxAmbil(kode, 'tarik').then(function (e) {
+        if (!TD || !$('#modal-body .td-prev')) return;
+        TD.kode = kode; TD.T = e.tarik; TD.pilih = {}; if (TD.g && !TD.T.baris.some(function (b) { return b.g === TD.g; })) TD.g = '';
+        $('#modal-body .td-prev').classList.remove('is-muat'); tdKiri(); tdGambar();
+      }).catch(function (e) { $('#modal-body .td-prev').classList.remove('is-muat'); lxSegOn($('#modal-body .td-kiri'), TD.kode); if (!e.handled) toast(e.message, 'err'); });
+    }
+  }
+  /** Ketik/centang di jendela Tarik Data. */
+  function tdUbah(t) {
+    if (!TD || !t.closest('.td-modal')) return false;
+    if (t.classList.contains('td-cari')) { TD.q = t.value.trim(); tdGambar(); return true; }
+    if (t.closest('.td-kol')) { TD.sembunyi[t.getAttribute('data-k')] = !t.checked; tdGambar(); return true; }
+    if (t.classList.contains('td-pil')) { TD.pilih[t.getAttribute('data-id')] = t.checked; t.closest('tr').classList.toggle('on', t.checked); var H = tdHasil(); $('#td-n').textContent = H.n ? H.n + ' dari ' + H.semua + ' indikator dipilih' : H.semua + ' indikator'; var sm = $('#modal-body .td-semua'); if (sm) sm.checked = H.n === H.semua; return true; }
+    if (t.classList.contains('td-semua')) { tdHasil().lolos.forEach(function (b) { TD.pilih[b.id] = t.checked; }); tdGambar(); return true; }
+    return false;
+  }
+  function tarikUnduh(fmt) {
+    if (!TD) return;
+    var H = tdHasil(); if (!H.baris.length) { toast('Tidak ada baris yang dipilih.', 'err'); return; }
+    var nama = 'Tarik Data ' + H.judul;
+    if (fmt === 'csv') {
+      var q = function (s) { s = String(s == null ? '' : s); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
+      var isi = '﻿sep=;\n' + [H.kolom].concat(H.baris.map(function (b) { return b.sel; })).map(function (r) { return r.map(q).join(';'); }).join('\n');
+      var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([isi], { type: 'text/csv;charset=utf-8' })); a.download = nama + '.csv';
+      document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+      toast(H.baris.length + ' baris diunduh.', 'ok');
+      return;
+    }
+    cetakHtml(kopHtml() + '<h1>' + esc(('Tarik Data · ' + H.judul).toUpperCase()) + '</h1><div class="sub">' + H.baris.length + (TD.tpl === 'peringkat' ? ' kabupaten' : ' indikator') + ' · dicetak ' + esc(tglPanjang(new Date())) + '</div>' + tarikTabel({ kolom: H.kolom }, H.baris));
   }
 
   /* ---------- bukti dukung SPBE: unggah dan hapus berkas tanpa memuat ulang lembar (isian yang belum disimpan tetap ada) ---------- */
@@ -2512,6 +2618,8 @@
       case 'tarik-buka': tarikBuka(); break;
       case 'spbk-hapus': spbkHapus(el); break;
       case 'tarik2': tarikUnduh(el.getAttribute('data-format')); break;
+      case 'lx-tw': lxGanti(el); break;
+      case 'td-tpl': case 'td-g': case 'td-tw': tdAksi(el, act); break;
       case 'tg-buka': case 'tg-tutup': $$('#app-container details.tg-grp').forEach(function (d) { d.open = el.getAttribute('data-act') === 'tg-buka'; }); break;
       case 'mvk-ubah': mvkFormBaris(el.getAttribute('data-id')); break;
       case 'mvk-ik-tambah': { var fb = el.closest('form'), w = $('.mvk-iks', fb); w.insertAdjacentHTML('beforeend', mvkIkBaris(mvkMeta(), {}, w.children.length)); mvkIkTombol(fb); $('[name=ikn]', w.lastElementChild).focus(); break; }
@@ -2529,6 +2637,12 @@
         $$('.db-pseg .seg-btn', kp).forEach(function (b) { b.classList.toggle('is-on', b === el); });
         $$('.db-pblok', kp).forEach(function (b) { b.hidden = b.getAttribute('data-mode') !== md; });
         if (md === 'ind') petaInd($('.db-pblok[data-mode=ind]', kp), true);
+        break;
+      }
+      case 'rk-mode': {
+        var rkc = el.closest('.db-rk'), rkm = el.getAttribute('data-v');
+        $$('.seg-btn', rkc).forEach(function (b) { b.classList.toggle('is-on', b === el); });
+        $$('.db-rk-b', rkc).forEach(function (b) { b.hidden = b.getAttribute('data-mode') !== rkm; });
         break;
       }
       case 'tbl-unduh': unduhTabel(el.getAttribute('data-nama')); break;
@@ -2842,6 +2956,7 @@
   });
   document.addEventListener('input', function (ev) {
     if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
+    if (ev.target && ev.target.classList && ev.target.classList.contains('td-cari')) { tdUbah(ev.target); return; }
     if (ev.target && ev.target.id === 'is-real' && ev.target.form) cekIsian(ev.target.form);
     if (ev.target && ev.target.classList && ev.target.classList.contains('ssg-in')) { ssgCekBaris(ev.target); ssgStatus(); }
     if (ev.target && ev.target.classList && ev.target.classList.contains('lbr-in')) { lbrCek(ev.target); lbrStatus(); if (ev.target.tagName === 'TEXTAREA' && ev.target.closest('.mvk-t')) mvkPas(ev.target); }
@@ -2874,7 +2989,7 @@
     if (t.form && t.form.getAttribute('id') === 'form-ind-baru' && t.name === 'bidang') { syncIndBaru(t.form); return; }
     if (t.form && t.form.getAttribute('id') === 'form-indikator' && t.name === 'bidang') { filterBidangOpts(t.form.elements.program, t.value); return; }
     if (t.form && t.form.getAttribute('id') === 'form-tarik') { syncTarik(t.form); return; }
-    if (t.form && t.form.id === 'form-tarik2') { tarikPilihan(); return; }
+    if (tdUbah(t)) return;
     if (t.id === 'logo-file' && t.files && t.files[0]) {
       var info = $('#logo-info'), fcfg = $('#form-config');
       if (info) info.textContent = 'Memproses gambar…';
