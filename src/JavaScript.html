@@ -27,15 +27,13 @@
     { id: 'monevisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_monev', roles: ['admin', 'staf', 'adminmonev'] },
     { id: 'monev', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_monev', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
     { id: 'pengaturan', label: 'Pengaturan', icon: 'settings', group: 'Pengaturan' },
-    { id: 'monitoring', label: 'Verifikasi & Pengingat', icon: 'fact_check', group: 'Pengaturan', roles: ['admin', 'staf', 'admindata', 'pimpinan'] },
-    { id: 'riwayat', label: 'Riwayat Perubahan', icon: 'history', group: 'Pengaturan', roles: ['admin', 'staf', 'admindata', 'pimpinan'] },
     { id: 'tambahindikator', label: 'Kelola Indikator', icon: 'add_circle', group: 'Pengaturan', roles: ['admin', 'staf', 'admindata', 'adminspbe'] },
     { id: 'pengguna', label: 'Kelola Pengguna', icon: 'group', group: 'Pengaturan', roles: ['admin'] },
     { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Pengaturan' }
   ];
   // Ikon bilah samping: Phosphor Thin (garis tipis, gaya Apple)
   var IKON_SIDE = { dashboard: 'squares-four', review: 'clipboard-text', inputdata: 'pencil-simple-line', laporan: 'file-text', _ss: 'heartbeat', _spbe: 'cpu', _monev: 'chart-line-up', pengaturan: 'gear-six',
-    monitoring: 'seal-check', riwayat: 'clock-counter-clockwise', tambahindikator: 'target', pengguna: 'users', panduan: 'book-open' };
+    tambahindikator: 'target', pengguna: 'users', panduan: 'book-open' };
   var BOTTOM = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'review', label: 'Review', icon: 'fact_check' },
@@ -52,7 +50,7 @@
     { label: 'Sulbar Sehat', children: ['ssisi', 'ssreview'] },
     { label: 'SPBE', children: ['spbeisi', 'spbe'] },
     { label: 'Monev Kinerja', children: ['monevisi', 'monev'] },
-    { label: 'Pengaturan', children: ['pengaturan', 'monitoring', 'riwayat', 'tambahindikator', 'pengguna', 'panduan'] }
+    { label: 'Pengaturan', children: ['pengaturan', 'tambahindikator', 'pengguna', 'panduan'] }
   ];
   var EMBLEM_SVG = '<svg viewBox="0 6 120 108" aria-hidden="true" focusable="false"><path d="M30 82h60a19 19 0 0 0 3-37.8A26 26 0 0 0 43 38a19 19 0 0 0-13 44Z" fill="none" stroke="#fff" stroke-width="7" stroke-linejoin="round"/><path d="M34 64h12l5-10 8 20 7-16 6 6h4l8-12M78 52h6v6" fill="none" stroke="#bfe6e1" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><path d="M60 82v20M54 96l6 6 6-6M52 34v-6" fill="none" stroke="#d9b45a" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle cx="52" cy="24" r="4" fill="#d9b45a"/></svg>';
   var ROLE_LABEL = { admin: 'Administrator', staf: 'Staf Admin', pimpinan: 'Pimpinan', pic: 'PIC Bidang' };
@@ -467,6 +465,7 @@
   }
   function tabelDari(el) { var bar = el.closest('.tbl-alat'); var n = bar && bar.nextElementSibling; return n ? (n.matches('table') ? n : n.querySelector('table')) : null; }
   function tabelAlat() {
+    if (AppState.page === 'tambahindikator') return;   // Kelola Indikator: tanpa bilah CSV · Excel · Cetak
     $$('#app-container table.tbl').forEach(function (t) {
       if (t.getAttribute('data-alat') || !t.tBodies[0] || t.tBodies[0].rows.length < 2) return;
       t.setAttribute('data-alat', '1');
@@ -538,7 +537,7 @@
   var PANDUAN = {
     isi: [['Buka Isi Data', 'Pilih periode (bulan, triwulan, atau semester). Angka diisi kumulatif sampai akhir periode.'], ['Ketik angka', 'Isi Sasaran dan Realisasi per kabupaten, atau unduh templat Excel, isi, lalu unggah kembali.'], ['Tekan Simpan', 'Kotak kuning berarti angka perlu diperiksa (melebihi sasaran atau turun dari periode lalu), tetapi tetap bisa disimpan.']],
     admin: [['Pantau kelengkapan', 'Peta Dashboard › Kelengkapan menunjukkan kabupaten yang belum mengisi; Peringkat kabupaten ada di Dashboard.'], ['Atur indikator', 'Kelola Indikator dipisah per kelompok. Pilih cara akumulasi: persentase, angka, atau jumlah.'], ['Bagikan hasil', 'Dari Review: Tarik Data untuk Excel/PDF dan Laporan Eksekutif per triwulan. Permintaan data masuk di menu Minta Data.']],
-    pimpinan: [['Baca Dashboard', 'Kalimat ringkasan di atas dan peta kabupaten memberi gambaran sekali pandang.'], ['Telusuri di Review', 'Pilih periode dan kabupaten; klik indikator untuk melihat angka per kabupaten dan tren.'], ['Laporan Eksekutif', 'Tombol Laporan Eksekutif di Review menyusun ringkasan satu halaman per triwulan, siap dicetak.']]
+    pimpinan: [['Baca Dashboard', 'Kalimat ringkasan di atas dan peta kabupaten memberi gambaran sekali pandang.'], ['Telusuri di Review', 'Pilih periode dan kabupaten; klik indikator untuk melihat angka per kabupaten dan tren.'], ['Tarik Data', 'Tombol Tarik Data di Review mengunduh angka indikator per triwulan sebagai Excel atau PDF.']]
   };
   function panduanSingkat(paksa) {
     var u = AppState.user || {}, k = 'dkppkb_panduan_v1_' + u.role;
@@ -784,12 +783,12 @@
       '<button type="button" class="icon-btn np-x" data-act="notif-close" aria-label="Tutup pemberitahuan"><span class="ic" aria-hidden="true">close</span></button></div>';
     if (!items.length) html += '<div class="np-empty"><span class="ic" aria-hidden="true">notifications_off</span><p>' + (semua.length ? 'Semua pemberitahuan sudah dibaca.' : 'Tidak ada pemberitahuan. Semua isian tertib.') + '</p></div>';
     else html += '<ul class="np-list">' + items.map(function (it) {
-      return '<li><button type="button" class="np-item np-' + esc(it.jenis) + '" data-nk="' + esc(notifKunci(it)) + '" data-nav="' + esc(it.nav || (AppState.user && AppState.user.role === 'pic' ? 'inputdata' : 'monitoring')) + '"><span class="np-ic"><span class="ic" aria-hidden="true">' + esc(it.ikon || 'info') + '</span></span>' +
+      return '<li><button type="button" class="np-item np-' + esc(it.jenis) + '" data-nk="' + esc(notifKunci(it)) + '" data-nav="' + esc(it.nav || (AppState.user && AppState.user.role === 'pimpinan' ? 'review' : 'inputdata')) + '"><span class="np-ic"><span class="ic" aria-hidden="true">' + esc(it.ikon || 'info') + '</span></span>' +
         '<span class="np-txt"><b>' + esc(it.judul) + '</b><span>' + esc(it.isi || '') + '</span></span><span class="sr">' + esc(NOTIF_JENIS[it.jenis] || '') + '</span></button></li>';
     }).join('') + '</ul>';
     if (d && d.lebih && items.length) html += '<p class="np-more">+' + d.lebih + ' indikator tertunggak lainnya</p>';
-    var pic = AppState.user && AppState.user.role === 'pic';
-    html += '<div class="np-foot"><button type="button" class="btn btn-ghost btn-sm" data-nav="' + (pic ? 'inputdata' : 'monitoring') + '">' + '<span class="ic" aria-hidden="true">' + (pic ? 'edit_note' : 'fact_check') + '</span>' + (pic ? 'Buka Input Data' : 'Buka Verifikasi & Pengingat') + '</button></div>';
+    var isi = !(AppState.user && AppState.user.role === 'pimpinan');
+    html += '<div class="np-foot"><button type="button" class="btn btn-ghost btn-sm" data-nav="' + (isi ? 'inputdata' : 'review') + '">' + '<span class="ic" aria-hidden="true">' + (isi ? 'edit_note' : 'fact_check') + '</span>' + (isi ? 'Buka Isi Data' : 'Buka Review') + '</button></div>';
     $('#notif-panel').innerHTML = html;
   }
   function toggleNotif() {
@@ -802,7 +801,7 @@
       if (e && e.handled) return;
       // Server Apps Script lama belum punya apiNotifikasi: tampilkan ringkasan dari data yang sudah ada.
       var n = AppState.badge || 0, it = [];
-      if (n) it.push({ jenis: 'warn', ikon: 'report', judul: n + ' indikator tertunggak', isi: 'Belum diisi untuk periode berjalan', nav: AppState.user && AppState.user.role === 'pic' ? 'inputdata' : 'monitoring' });
+      if (n) it.push({ jenis: 'warn', ikon: 'report', judul: n + ' indikator tertunggak', isi: 'Belum diisi untuk periode berjalan', nav: AppState.user && AppState.user.role === 'pimpinan' ? 'review' : 'inputdata' });
       if (!$('#banner-pwd').hidden) it.push({ jenis: 'crit', ikon: 'key', judul: 'Kata sandi bawaan masih dipakai', isi: 'Segera ganti demi keamanan data', nav: 'pengaturan' });
       renderNotif({ items: it });
     });
@@ -837,8 +836,6 @@
     mvkReview();
     cincinDb();
     mdInit();
-    rwInit();
-    ssgPopTutup();
     window.scrollTo(0, keepY);
     if (!(opts && opts.keep)) { try { $('#main').focus({ preventScroll: true }); } catch (e) { } }
     applyImLayout();
@@ -913,35 +910,19 @@
         '<input type="hidden" name="indikatorId" value="' + esc(d.id) + '"><input type="hidden" name="bulan" value="' + esc(d.bulan) + '"><input type="hidden" name="tahun" value="' + p.tahun + '">' +
         '<div class="form-grid"><div class="field"><label for="is-ket">Satuan nilai</label><select class="input" id="is-ket" name="keterangan">' + opt + '</select></div>' +
         '<div class="field"><label for="is-real">Realisasi provinsi <span id="is-unit" class="muted"></span></label><input class="input" id="is-real" name="realisasi" type="text" inputmode="decimal" autocomplete="off" required value="' + esc(r.realisasi === null ? String(d.real || '').replace('.', ',') : String(r.realisasi).replace('.', ',')) + '"></div></div>' +
-        '<p class="muted sm" id="is-ket-info" style="margin:-4px 0 14px"></p><div id="is-warn" aria-live="polite"></div>' +
+        '<p class="muted sm" id="is-ket-info" style="margin:-4px 0 14px"></p>' +
         '<div class="field"><label for="is-an">Catatan analisis masalah</label><textarea class="input input-area" id="is-an" name="analisis" maxlength="800" rows="3" placeholder="Apa penyebab capaian belum optimal?">' + esc(r.analisis) + '</textarea></div>' +
         '<div class="field"><label for="is-rek">Catatan rekomendasi</label><textarea class="input input-area" id="is-rek" name="rekomendasi" maxlength="800" rows="3" placeholder="Tindak lanjut yang disarankan">' + esc(r.rekomendasi) + '</textarea></div>' +
         '<div class="field"><label for="is-cat">Catatan lain (opsional)</label><textarea class="input input-area" id="is-cat" name="catatan" maxlength="300" rows="2">' + esc(r.catatan) + '</textarea></div>' +
-        (AppState.user.role === 'pic' ? '<p class="muted sm">Isian PIC akan menunggu verifikasi admin.</p>' : '') +
         '<div class="form-actions"><button class="btn btn-primary" type="submit">Simpan</button><button class="btn btn-ghost" type="button" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>';
       var fi = $('#form-isian'); fi.setAttribute('data-prev', d.prev || ''); fi.setAttribute('data-prev-bulan', d.prevBulan || '');
-      sinkIsian(fi); cekIsian(fi);
+      sinkIsian(fi);
     }).catch(function (e) { if (!e.handled) $('#modal-body').innerHTML = '<p class="form-msg err">' + esc(e.message) + '</p>'; });
-  }
-  /** Peringatan nilai tidak wajar: persen di atas 100, atau berubah lebih dari 30% dari bulan terakhir yang terisi. Mengembalikan teks peringatan atau ''. */
-  function cekIsian(form) {
-    var box = $('#is-warn', form), btn = $('button[type=submit]', form); if (!box) return '';
-    var raw = angkaId(form.realisasi.value), v = Number(raw), w = '';
-    var persen = form.keterangan.value === 'persen' || form.getAttribute('data-sat') === '%';
-    var pv = form.getAttribute('data-prev'), pb = Number(form.getAttribute('data-prev-bulan')), prev = pv === '' || pv === null ? null : Number(pv);
-    if (raw !== '' && !isNaN(v)) {
-      if (persen && v > 100) w = 'Nilai persen di atas 100. Pastikan bukan salah ketik.';
-      else if (prev !== null && prev > 0 && Math.abs(v - prev) / prev > 0.3) w = 'Berubah ' + Math.round(Math.abs(v - prev) / prev * 100) + '% dari ' + (pb ? BULAN[pb - 1] : 'bulan sebelumnya') + ' (' + String(prev).replace('.', ',') + '). Periksa lagi.';
-    }
-    box.innerHTML = w ? '<div class="is-warn"><span class="ic" aria-hidden="true">warning</span><div><b>' + esc(w) + '</b> Bila angkanya benar, tulis penyebabnya di <b>Catatan lain</b>.</div></div>' : '';
-    if (btn && !btn.disabled) btn.textContent = w ? 'Simpan dengan catatan' : 'Simpan';
-    return w;
   }
   function submitIsian(form) {
     var msg = $('.form-msg', form), btn = $('button[type=submit]', form);
     var raw = angkaId(form.realisasi.value);
     if (raw === '' || isNaN(Number(raw)) || Number(raw) < 0) { msg.className = 'form-msg'; msg.textContent = 'Realisasi harus berupa angka nol atau lebih.'; form.realisasi.focus(); return; }
-    if (cekIsian(form) && !form.catatan.value.trim()) { msg.className = 'form-msg'; msg.textContent = 'Nilai ini tidak biasa. Tulis penyebabnya di kolom Catatan lain sebelum menyimpan.'; form.catatan.focus(); return; }
     btn.disabled = true; btn.textContent = 'Menyimpan…'; msg.textContent = '';
     api('apiSimpanIsian', [{ indikatorId: form.indikatorId.value, tahun: Number(form.tahun.value), bulan: Number(form.bulan.value), keterangan: form.keterangan.value, realisasi: Number(raw), analisis: form.analisis.value, rekomendasi: form.rekomendasi.value, catatan: form.catatan.value }])
       .then(function (r) {
@@ -949,34 +930,6 @@
         toast(r.status === 'Lengkap' ? 'Data tersimpan.' : r.status === 'Menunggu Verifikasi' ? 'Tersimpan, menunggu verifikasi admin.' : 'Tersimpan sebagai belum lengkap.', 'ok');
         reload(); refreshBadge();
       }).catch(function (e) { if (e.handled) return; msg.className = 'form-msg'; msg.textContent = e.message; btn.disabled = false; btn.textContent = 'Simpan'; });
-  }
-
-  /* ---------- pengingat ---------- */
-  function openRemind() {
-    var boxes = $$('.chk-remind');
-    if (!boxes.length) { toast('Tidak ada tunggakan untuk diingatkan.', ''); return; }
-    var ids = boxes.filter(function (b) { return b.checked; }).map(function (b) { return b.value; });
-    if (!ids.length) { ids = boxes.map(function (b) { return b.value; }); boxes.forEach(function (b) { b.checked = true; }); }
-    openModal('Kirim Pengingat',
-      '<form id="form-remind" novalidate><p class="muted sm" style="margin-bottom:12px">' + ids.length + ' indikator tertunggak akan diingatkan kepada PIC masing-masing.</p>' +
-      '<div class="field"><label for="rm-pesan">Pesan</label><textarea class="input input-area" id="rm-pesan" name="pesan" maxlength="1000" rows="3">Mohon segera melengkapi isian indikator sebelum batas cut-off. Terima kasih.</textarea></div>' +
-      '<div class="check-list"><label class="pill-check"><input type="checkbox" name="email" checked><span>Kirim email</span></label><label class="pill-check"><input type="checkbox" name="prioritas"><span>Tandai prioritas</span></label></div>' +
-      '<input type="hidden" name="ids" value="' + esc(ids.join(',')) + '">' +
-      '<div class="form-actions"><button class="btn btn-alert" type="submit">Kirim</button><button class="btn btn-ghost" type="button" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
-  }
-  function submitRemind(form) {
-    var msg = $('.form-msg', form), btn = $('button[type=submit]', form);
-    btn.disabled = true; btn.textContent = 'Mengirim…';
-    api('apiKirimPengingat', [{ ids: form.ids.value.split(','), pesan: form.pesan.value, email: form.email.checked, prioritas: form.prioritas.checked }]).then(function (r) {
-      var wa = (r.wa || []).filter(function (w) { return w.telp; }).map(function (w) {
-        var d = String(w.telp).replace(/[^0-9]/g, ''); if (d.charAt(0) === '0') d = '62' + d.slice(1);
-        return '<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/' + d + '?text=' + encodeURIComponent(w.teks) + '">WhatsApp ' + esc(w.nama) + '</a>';
-      }).join(' ');
-      $('#modal-body').innerHTML = '<p><b>' + r.indikator + '</b> indikator untuk <b>' + r.pic + '</b> PIC. Email terkirim: <b>' + r.email + '</b>.</p>' +
-        (r.tanpaEmail && r.tanpaEmail.length ? '<p class="muted sm" style="margin-top:8px">Tanpa email / gagal: ' + esc(r.tanpaEmail.join(', ')) + '</p>' : '') +
-        (wa ? '<p class="muted sm" style="margin:12px 0 8px">Kirim juga lewat WhatsApp:</p><div class="stack">' + wa + '</div>' : '') +
-        '<div class="form-actions" style="margin-top:16px"><button class="btn btn-primary" type="button" data-act="close-modal">Selesai</button></div>';
-    }).catch(function (e) { if (e.handled) return; msg.className = 'form-msg'; msg.textContent = e.message; btn.disabled = false; btn.textContent = 'Kirim'; });
   }
 
   /* ---------- form umum (data-api) ---------- */
@@ -1144,61 +1097,7 @@
     setTimeout(function () { URL.revokeObjectURL(url); }, 4000);
   }
   var PRATINJAU_ = { pdf: 1, jpg: 1, jpeg: 1, png: 1, webp: 1, txt: 1, csv: 1 };
-  /* ---------- Verifikasi angka janggal (Verifikasi & Pengingat) ---------- */
-  function jgVerif(el, act) {
-    var id = el.getAttribute('data-id');
-    if (act === 'jg-benar') {
-      el.disabled = true; el.textContent = 'Menyimpan…';
-      api('apiVerifikasiJanggal', [{ id: id, hasil: 'Benar' }]).then(function () { toast('Angka ditandai benar.', 'ok'); reload(); })
-        .catch(function (e) { el.disabled = false; el.textContent = 'Benar'; if (!e.handled) toast(e.message, 'err'); });
-      return;
-    }
-    openModal('Minta perbaiki', '<form id="form-jg" novalidate data-id="' + esc(id) + '"><div class="field"><label for="jg-cat">Apa yang perlu diperiksa ulang PIC?</label><textarea class="input input-area" id="jg-cat" name="catatan" rows="3" maxlength="300" required placeholder="mis. Cocokkan lagi dengan laporan Dinkes Mamasa, angka TW II hanya 58%."></textarea></div>' +
-      '<p class="form-msg" role="alert"></p><div class="form-actions"><button class="btn btn-primary" type="submit">Kirim ke PIC</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div></form>');
-  }
-  function submitJg(f) {
-    var cat = f.elements.catatan.value.trim(), msg = $('.form-msg', f), btn = $('button[type=submit]', f);
-    if (cat.length < 5) { msg.textContent = 'Tulis catatan minimal 5 karakter.'; return; }
-    btn.disabled = true; btn.textContent = 'Mengirim…';
-    api('apiVerifikasiJanggal', [{ id: f.getAttribute('data-id'), hasil: 'Perbaiki', catatan: cat }]).then(function () { closeModal(); toast('Permintaan perbaikan dikirim ke PIC.', 'ok'); reload(); })
-      .catch(function (e) { btn.disabled = false; btn.textContent = 'Kirim ke PIC'; if (!e.handled) msg.textContent = e.message; });
-  }
   /* ---------- Riwayat Perubahan (halaman) ---------- */
-  var RW = null;
-  function rwInit() {
-    var el = $('#rw'); if (!el) { RW = null; return; }
-    var d = {}; try { d = JSON.parse(el.getAttribute('data-json') || '{}'); } catch (e) { }
-    RW = { el: el, d: d, tim: '', kab: '', hari: '30', jg: '', q: '' };
-    var tim = []; (d.rows || []).forEach(function (r) { if (r.tim && tim.indexOf(r.tim) < 0) tim.push(r.tim); }); tim.sort();
-    var sel = function (k, ops, lbl) { return '<select class="md-inp rw-f" data-rw="' + k + '" aria-label="' + lbl + '">' + ops.map(function (o) { return '<option value="' + esc(o[0]) + '">' + esc(o[1]) + '</option>'; }).join('') + '</select>'; };
-    el.innerHTML = '<div class="md-hd"><div><span class="md-cap">Semua perubahan angka isian kabupaten · untuk audit</span><h1 class="md-h1">Riwayat Perubahan</h1></div><button type="button" class="md-btn" data-act="rw-unduh">Unduh Excel</button></div>' +
-      '<section class="md-kartu"><div class="md-alat rw-filt">' + sel('tim', [['', 'Semua tim kerja']].concat(tim.map(function (t) { return [t, t.replace(/^Tim Kerja /, '')]; })), 'Tim kerja') +
-      sel('kab', [['', 'Semua kabupaten']].concat((d.kab || []).map(function (k) { return [k, k]; })), 'Kabupaten') + sel('hari', [['30', '30 hari terakhir'], ['7', '7 hari terakhir'], ['90', '90 hari terakhir'], ['', 'Semua waktu']], 'Rentang waktu') +
-      sel('jg', [['', 'Semua perubahan'], ['ya', 'Hanya angka janggal']], 'Jenis') + '<input class="md-inp md-cari rw-f" data-rw="q" type="search" placeholder="Cari indikator atau PIC" aria-label="Cari"></div><div class="rw-isi"></div></section>';
-    rwGambar();
-  }
-  function rwSaring() {
-    var batas = RW.hari ? new Date(Date.now() - Number(RW.hari) * 86400000) : null, q = RW.q.toLowerCase();
-    var iso = batas ? batas.getFullYear() + '-' + ('0' + (batas.getMonth() + 1)).slice(-2) + '-' + ('0' + batas.getDate()).slice(-2) : '';
-    return (RW.d.rows || []).filter(function (r) { return (!RW.tim || r.tim === RW.tim) && (!RW.kab || r.kab === RW.kab) && (!iso || r.w >= iso) && (!RW.jg || r.janggal) && (!q || (r.indNama + ' ' + r.oleh + ' ' + r.ind).toLowerCase().indexOf(q) >= 0); });
-  }
-  function rwPer(b) { return b % 3 === 0 ? 'TW ' + ['I', 'II', 'III', 'IV'][b / 3 - 1] : BLN_ID[b - 1]; }
-  function rwGambar() {
-    var rows = rwSaring(), box = $('.rw-isi', RW.el), fv = function (v) { return v === null || v === undefined ? '—' : fmtNum(v); };
-    if (!rows.length) { box.innerHTML = '<p class="md-kosong">' + ((RW.d.rows || []).length ? 'Tidak ada perubahan yang cocok dengan saringan.' : 'Belum ada riwayat. Riwayat dicatat otomatis sejak fitur ini aktif, setiap kali angka di Isi Data disimpan.') + '</p>'; return; }
-    box.innerHTML = '<p class="md-s2" style="margin:0 2px 8px">' + rows.length + ' perubahan' + (rows.length >= 3000 ? ' (3.000 terbaru)' : '') + '</p><div class="tbl-wrap"><table class="md-tbl rw-t"><thead><tr><th>Waktu</th><th>Indikator · kabupaten</th><th>Kolom</th><th>Perubahan</th><th class="md-hp">Oleh</th><th class="md-hp">Keterangan</th></tr></thead><tbody>' +
-      rows.slice(0, 500).map(function (r) { return '<tr><td class="md-s2">' + esc(r.wTxt) + '</td><td><b>' + esc(r.indNama) + '</b><div class="md-s2">' + esc(r.kab) + ' · ' + esc(rwPer(r.bulan)) + ' ' + r.tahun + '</div></td><td>' + esc(r.kolom) + '</td>' +
-        '<td class="rw-chg"><s>' + fv(r.lama) + '</s> → <b>' + fv(r.baru) + '</b></td><td class="md-hp">' + esc(r.oleh) + '</td><td class="md-hp">' + (r.janggal ? '<span class="md-st md-st-janggal">janggal</span> ' + esc(r.pj) : r.lama === null ? '<span class="md-s2">Isian pertama</span>' : '') +
-        (r.verif ? '<div class="md-s2">' + (r.verif === 'Benar' ? 'Diverifikasi benar' : 'Diminta perbaiki: ' + esc(r.verifCat)) + ' · ' + esc(r.verifOleh) + '</div>' : '') + '</td></tr>'; }).join('') + '</tbody></table></div>' +
-      (rows.length > 500 ? '<p class="md-s2" style="margin-top:8px">Menampilkan 500 baris pertama. Unduh Excel untuk semua ' + rows.length + ' baris.</p>' : '');
-  }
-  function rwUnduh() {
-    var rows = rwSaring(), q = function (v) { v = String(v == null ? '' : v); return /[";\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; };
-    var isi = '﻿sep=;\n' + [['Waktu', 'Indikator', 'ID', 'Kabupaten', 'Periode', 'Tahun', 'Kolom', 'Lama', 'Baru', 'Oleh', 'Janggal', 'Alasan', 'Penjelasan', 'Verifikasi', 'Verifikator', 'Catatan verifikasi']].concat(rows.map(function (r) {
-      return [r.w, r.indNama, r.ind, r.kab, rwPer(r.bulan), r.tahun, r.kolom, r.lama === null ? '' : String(r.lama).replace('.', ','), r.baru === null ? '' : String(r.baru).replace('.', ','), r.oleh, r.janggal ? 'Ya' : '', r.alasan, r.pj, r.verif, r.verifOleh, r.verifCat]; })).map(function (r) { return r.map(q).join(';'); }).join('\n');
-    var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([isi], { type: 'text/csv;charset=utf-8' })); a.download = 'Riwayat Perubahan Isian.csv';
-    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  }
 
   /* ---------- Profil: foto, nama tampil (laci dari ikon akun) dan layar sambutan saat masuk ---------- */
   function avatarIsi(el, besar) {
@@ -2045,29 +1944,22 @@
     mvkSimpanBerkas(mvkCsv(rows), 'Review Monev Kinerja TW ' + MVK_ROM[q - 1] + ' ' + MVK.tahun + '.csv');
   }
 
-  /* ---------- Laporan Eksekutif satu halaman dan Tarik Data (di setiap menu Review) ---------- */
-  /** Templat laporan untuk periode yang sedang dilihat; di Review Monev Kinerja mengikuti pilihan triwulan di halaman. */
-  function lxTpl() {
-    var tw = $('#mvk-tw'), all = $$('#app-container template.lx-tpl');
-    if (tw) { var t = all.filter(function (x) { return x.getAttribute('data-kode') === 'tw' + tw.value; })[0]; if (t) return t; }
-    return all[0];
-  }
-  /** Laporan dan data Tarik Data per periode, dimuat sekali per halaman: kunci jenis|tahun|kode -> { label, html, tarik }.
-   *  Periode halaman ada di templat dan #tarik-data; triwulan lain diambil dari server (apiLaporanTw). */
+  /* ---------- Tarik Data (di setiap menu Review) ----------
+   *  Data per periode dimuat sekali per halaman: kunci jenis|tahun|kode -> { label, tarik }.
+   *  Periode halaman ada di #tarik-data; triwulan lain diambil dari server (apiLaporanTw). */
   var LXC = {};
   function lxMeta() { var x = $('#lx-meta'); return x ? { jenis: x.getAttribute('data-jenis'), tahun: Number(x.getAttribute('data-tahun')), menu: x.getAttribute('data-menu'), maks: Number(x.getAttribute('data-maks') || 4), kode: x.getAttribute('data-kode'), label: x.getAttribute('data-label') } : null; }
   function lxKunci(kode) { var M = lxMeta(); return M ? M.jenis + '|' + M.tahun + '|' + kode : kode; }
-  /** Ambil entri satu periode; perlu = 'html' (laporan) atau 'tarik' (data). Mengembalikan Promise. */
-  function lxAmbil(kode, perlu) {
+  /** Ambil data Tarik Data satu periode. Mengembalikan Promise. */
+  function lxAmbil(kode) {
     var k = lxKunci(kode), e = LXC[k] = LXC[k] || {};
-    if (!e.html) { var tp = $$('#app-container template.lx-tpl').filter(function (x) { return x.getAttribute('data-kode') === kode; })[0]; if (tp) { e.html = tp.innerHTML; e.label = tp.getAttribute('data-label'); } }
-    if (!e.tarik) { var td = $('#tarik-data'); if (td && td.getAttribute('data-kode') === kode) e.tarik = tarikData(); }
-    if (e[perlu]) return Promise.resolve(e);
+    if (!e.tarik) { var td = $('#tarik-data'); if (td && td.getAttribute('data-kode') === kode) e.tarik = tarikIsi(); }
+    if (e.tarik) return Promise.resolve(e);
     var M = lxMeta(), tw = /^tw([1-4])$/.exec(kode);
     if (!M || !tw) return Promise.reject(new Error('Periode ini tidak tersedia.'));
-    return api('apiLaporanTw', [{ tahun: M.tahun, jenis: M.jenis, tw: Number(tw[1]) }]).then(function (r) { e.html = r.html; e.label = r.label; e.tarik = r.tarik; return e; });
+    return api('apiLaporanTw', [{ tahun: M.tahun, jenis: M.jenis, tw: Number(tw[1]) }]).then(function (r) { e.label = r.label; e.tarik = r.tarik; return e; });
   }
-  /** Pilihan periode di jendela Laporan Eksekutif dan Tarik Data: TW I–IV (yang belum berjalan dinonaktifkan),
+  /** Pilihan periode di jendela Tarik Data: TW I–IV (yang belum berjalan dinonaktifkan),
    *  ditambah periode halaman bila bukan triwulan (mis. bulan atau semester). */
   function lxTwSeg(aktif, act) {
     var M = lxMeta(); if (!M) return '';
@@ -2075,77 +1967,14 @@
     return '<div class="seg seg-sm lx-twseg" role="group" aria-label="Periode">' + (/^tw/.test(M.kode) ? '' : b(M.kode, M.label)) +
       ['I', 'II', 'III', 'IV'].map(function (r, i) { return b('tw' + (i + 1), 'TW ' + r, i + 1 > M.maks); }).join('') + '</div>';
   }
+  /** Data Tarik Data periode halaman dari #tarik-data (JSON dari server). */
+  function tarikIsi() { var el = $('#tarik-data'); if (!el) return null; try { return JSON.parse(el.getAttribute('data-json')); } catch (e) { return null; } }
   function lxSegOn(wadah, kode) { $$('.lx-twseg .seg-btn', wadah).forEach(function (x) { x.classList.toggle('is-on', x.getAttribute('data-kode') === kode); }); }
-  /** Templat laporan untuk periode yang sedang dilihat; di Review Monev Kinerja mengikuti pilihan triwulan di halaman. */
-  function lxTpl() {
-    var tw = $('#mvk-tw'), all = $$('#app-container template.lx-tpl');
-    if (tw) { var t = all.filter(function (x) { return x.getAttribute('data-kode') === 'tw' + tw.value; })[0]; if (t) return t; }
-    return all[0];
-  }
-  function lxBuka() {
-    var tpl = lxTpl(), M = lxMeta(); if (!tpl || !M) return;
-    var kode = tpl.getAttribute('data-kode');
-    openModal('Laporan Eksekutif · ' + M.menu + ' · ' + tpl.getAttribute('data-label'),
-      '<div class="lx-alat"><span class="lx-twpil"><span class="muted sm">Periode</span>' + lxTwSeg(kode, 'lx-tw') + '</span><span class="lx-sp"></span>' +
-      '<button type="button" class="btn btn-ghost btn-sm" data-act="lx-ubah">Ubah teks</button><button type="button" class="btn btn-ghost btn-sm" data-act="lx-ulang">Susun ulang otomatis</button>' +
-      '<label class="muted sm lx-cek"><input type="checkbox" id="lx-lamp-cek"> sertakan lampiran rincian</label><button type="button" class="btn btn-primary btn-sm" data-act="lx-pdf">Unduh PDF</button></div>' +
-      '<p class="form-msg" role="alert"></p><div class="lx-wadah" data-kode="' + esc(kode) + '">' + tpl.innerHTML + '</div>', true);
-    var md = $('#modal-root .modal'); if (md) { md.style.maxWidth = '900px'; md.classList.add('lx-modal'); }
-  }
-  /** Ganti periode laporan di jendela yang sama (tanpa memuat ulang halaman Review). */
-  function lxGanti(el) {
-    var w = $('#modal-body .lx-wadah'), kode = el.getAttribute('data-kode'), M = lxMeta(); if (!w || el.disabled || w.getAttribute('data-kode') === kode) return;
-    var k = $('#modal-body .lx-kertas'); if (k && k.classList.contains('lx-sunting')) { toast('Simpan atau batalkan ubahan teks dulu.', 'err'); return; }
-    lxSegOn($('#modal-body'), kode); w.classList.add('is-muat');
-    lxAmbil(kode, 'html').then(function (e) {
-      if (!$('#modal-body .lx-wadah')) return;
-      w.innerHTML = e.html; w.setAttribute('data-kode', kode); w.classList.remove('is-muat');
-      var t = $('#modal-title'); if (t) t.textContent = 'Laporan Eksekutif · ' + M.menu + ' · ' + e.label;
-    }).catch(function (e) { w.classList.remove('is-muat'); lxSegOn($('#modal-body'), w.getAttribute('data-kode')); if (!e.handled) toast(e.message, 'err'); });
-  }
-  function lxKirim(isi) {
-    var meta = $('#lx-meta'), w = $('#modal-body .lx-wadah');
-    return api('apiSimpanLaporanEks', [Object.assign({ tahun: Number(meta.getAttribute('data-tahun')), jenis: meta.getAttribute('data-jenis'), kode: w.getAttribute('data-kode') }, isi)]);
-  }
-  function lxBagian() { return $$('#modal-body [data-ed="inti"], #modal-body [data-ed="temuan"] li, #modal-body [data-ed="rekom"] li'); }
-  function lxUbah(btn) {
-    var k = $('#modal-body .lx-kertas'); if (!k) return;
-    if (!k.classList.contains('lx-sunting')) { k.classList.add('lx-sunting'); lxBagian().forEach(function (x) { x.contentEditable = 'true'; }); btn.textContent = 'Simpan teks'; btn.classList.add('btn-primary'); lxBagian()[0].focus(); return; }
-    var teks = function (s) { return $$('#modal-body [data-ed="' + s + '"] li').map(function (x) { return x.innerText.trim(); }).filter(function (t) { return t && t !== '—'; }); };
-    var msg = $('#modal-body .form-msg'), w = $('#modal-body .lx-wadah'); btn.disabled = true; btn.textContent = 'Menyimpan…';
-    lxKirim({ inti: $('#modal-body [data-ed="inti"]').innerText.trim(), temuan: teks('temuan'), rekom: teks('rekom') })
-      .then(function () { delete LXC[lxKunci(w.getAttribute('data-kode'))]; closeModal(); toast('Teks Laporan Eksekutif disimpan.', 'ok'); reload(); })
-      .catch(function (e) { btn.disabled = false; btn.textContent = 'Simpan teks'; if (!e.handled) msg.textContent = e.message; });
-  }
-  function lxUlang(btn) {
-    konfirmasiKlik(btn, function () {
-      btn.disabled = true;
-      var w = $('#modal-body .lx-wadah');
-      lxKirim({ reset: true }).then(function () { delete LXC[lxKunci(w.getAttribute('data-kode'))]; closeModal(); toast('Laporan disusun ulang dari data terbaru.', 'ok'); reload(); })
-        .catch(function (e) { btn.disabled = false; if (!e.handled) toast(e.message, 'err'); });
-    });
-  }
-  function tarikData() { var el = $('#tarik-data'); if (!el) return null; try { return JSON.parse(el.getAttribute('data-json')); } catch (e) { return null; } }
-  /** Tabel rincian (lampiran laporan dan PDF Tarik Data). */
-  function tarikTabel(T, baris) {
-    return '<table class="lx-tabel"><thead><tr>' + T.kolom.map(function (k) { return '<th>' + esc(k) + '</th>'; }).join('') + '</tr></thead><tbody>' +
-      baris.map(function (b) { return '<tr>' + b.sel.map(function (v) { return '<td>' + esc(v) + '</td>'; }).join('') + '</tr>'; }).join('') + '</tbody></table>';
-  }
-  /** Unduh PDF lewat dialog cetak browser (pilih "Simpan sebagai PDF"); lampiran rincian periode yang sama ikut bila dicentang. */
-  function lxPdf() {
-    var k = $('#modal-body .lx-kertas'), w = $('#modal-body .lx-wadah'); if (!k || !w) return;
-    var salin = k.cloneNode(true); salin.classList.remove('lx-sunting'); $$('[contenteditable]', salin).forEach(function (x) { x.removeAttribute('contenteditable'); });
-    if (!($('#lx-lamp-cek') && $('#lx-lamp-cek').checked)) { cetakHtml(salin.outerHTML); return; }
-    lxAmbil(w.getAttribute('data-kode'), 'tarik').then(function (e) {
-      var T = e.tarik; cetakHtml(salin.outerHTML + (T ? '<div class="lx-halbaru"><h2>Lampiran · ' + esc(T.judul) + '</h2>' + tarikTabel(T, T.baris) + '</div>' : ''));
-    }).catch(function (e) { if (!e.handled) toast(e.message, 'err'); });
-  }
-
   /* ---------- Tarik Data: templat cepat + saringan di kiri, pratinjau langsung di kanan ---------- */
   var TD = null;
   var TD_TPL = [['semua', 'Semua indikator', 'Seluruh baris periode ini'], ['bawah', 'Di bawah target', 'Hanya yang belum capai target'], ['peringkat', 'Peringkat kabupaten', 'Rata-rata capaian per kabupaten']];
   function tarikBuka() {
-    var T = tarikData(), td = $('#tarik-data'); if (!T || !td) return;
+    var T = tarikIsi(), td = $('#tarik-data'); if (!T || !td) return;
     TD = { kode: td.getAttribute('data-kode'), T: T, tpl: 'semua', g: '', q: '', sembunyi: {}, pilih: {} };
     openModal('Tarik Data · ' + lxMeta().menu, '<div class="td-lay"><aside class="td-kiri"></aside><section class="td-kanan"><div class="td-top"><b id="td-n"></b><span class="muted sm" id="td-lbl"></span></div><div class="td-prev"></div></section></div>' +
       '<div class="td-aksi"><span class="muted sm">Centang baris di pratinjau untuk mengunduh sebagian saja.</span><span class="td-btn"><button type="button" class="btn btn-ghost btn-sm" data-act="tarik2" data-format="pdf"><span class="ic" aria-hidden="true">picture_as_pdf</span>PDF</button>' +
@@ -2199,7 +2028,7 @@
     if (act === 'td-tw') {
       var kode = el.getAttribute('data-kode'); if (el.disabled || kode === TD.kode) return;
       lxSegOn($('#modal-body .td-kiri'), kode); $('#modal-body .td-prev').classList.add('is-muat');
-      lxAmbil(kode, 'tarik').then(function (e) {
+      lxAmbil(kode).then(function (e) {
         if (!TD || !$('#modal-body .td-prev')) return;
         TD.kode = kode; TD.T = e.tarik; TD.pilih = {}; if (TD.g && !TD.T.baris.some(function (b) { return b.g === TD.g; })) TD.g = '';
         $('#modal-body .td-prev').classList.remove('is-muat'); tdKiri(); tdGambar();
@@ -2449,102 +2278,6 @@
     ssgCek(inp);
     if (inp.getAttribute('data-f') === 's') { var r = ssgKotak(inp.closest('tr').getAttribute('data-ind'), inp.getAttribute('data-kab'), 'r'); if (r) ssgCek(r); }
     ssgWarna(inp.closest('tr'));
-    ssgJanggalBaris(inp.closest('tr'));
-  }
-  /* ---------- Angka janggal & riwayat per kotak (Isi Data) ----------
-   * Hanya kotak realisasi yang diubah dan belum disimpan yang diberi tanda "!". Aturan: melebihi sasaran, naik/turun > 30% dari periode lalu,
-   * lebih kecil dari angka kumulatif sebelumnya, tiba-tiba nol, atau jauh dari kabupaten lain (lebih dari 2× jarak normal dari nilai tengah). */
-  function ssgNilaiUbin(tr, kab) {
-    var s = ssgKotak(tr.getAttribute('data-ind'), kab, 's'), r = ssgKotak(tr.getAttribute('data-ind'), kab, 'r');
-    var sv = s ? angkaKab(s.value) : null, rv = r ? angkaKab(r.value) : null, akum = tr.getAttribute('data-akum') || 'persentase';
-    if (rv === null || isNaN(rv)) return null;
-    if (tr.hasAttribute('data-dua')) return sv > 0 && !isNaN(sv) ? rv / sv * (akum === 'persentase' ? 100 : 1) : null;
-    return rv;
-  }
-  function ssgFmtJg(tr, v) { var p = tr.hasAttribute('data-dua') && (tr.getAttribute('data-akum') || 'persentase') === 'persentase'; return fmtNum(Math.round(v * (p ? 10 : 100)) / (p ? 10 : 100)) + (p ? '%' : ''); }
-  function ssgJanggal(tr, inp) {
-    var kab = inp.getAttribute('data-kab'), ind = tr.getAttribute('data-ind'), v = ssgNilaiUbin(tr, kab), rv = angkaKab(inp.value), alasan = [];
-    if (rv === null || isNaN(rv)) return alasan;
-    var akum = tr.getAttribute('data-akum') || 'persentase', dua = tr.hasAttribute('data-dua'), s = ssgKotak(ind, kab, 's'), sv = s ? angkaKab(s.value) : null;
-    if (akum === 'persentase' && dua && sv !== null && !isNaN(sv) && rv > sv) alasan.push('Realisasi melebihi sasaran (' + fmtNum(rv) + ' dari ' + fmtNum(sv) + ')');
-    var pv = ((ssgMeta() || {}).prev || {})[ind + '|' + kab];
-    if (pv) {
-      if (rv === 0 && pv.r > 0) alasan.push('Tiba-tiba nol, padahal ' + pv.b + ' ada ' + fmtNum(pv.r));
-      else if (dua && pv.s > 0 && v !== null) {
-        var lama = pv.r / pv.s * (akum === 'persentase' ? 100 : 1), sel = v - lama;
-        if (lama > 0 && Math.abs(sel) / lama > 0.3 && (akum !== 'persentase' || Math.abs(sel) >= 10)) alasan.push((sel > 0 ? 'Naik ' : 'Turun ') + (akum === 'persentase' ? fmtNum(Math.round(Math.abs(sel) * 10) / 10) + ' poin' : Math.round(Math.abs(sel) / lama * 100) + '%') + ' dari ' + pv.b + ' (' + ssgFmtJg(tr, lama) + ' → ' + ssgFmtJg(tr, v) + ')');
-      } else if (tr.hasAttribute('data-kum') && rv < pv.r) alasan.push('Lebih kecil dari angka ' + pv.b + ' (' + fmtNum(pv.r) + '), padahal angka kumulatif biasanya tidak turun');
-    }
-    if (v !== null) {
-      var lain = $$('.ssg-ub[data-kab]', tr).map(function (u) { return ssgNilaiUbin(tr, u.getAttribute('data-kab')); }).filter(function (x) { return x !== null && !isNaN(x); });
-      if (lain.length >= 4) {
-        var urut = lain.slice().sort(function (a, b) { return a - b; }), med = urut.length % 2 ? urut[(urut.length - 1) / 2] : (urut[urut.length / 2 - 1] + urut[urut.length / 2]) / 2;
-        var dev = lain.map(function (x) { return Math.abs(x - med); }).sort(function (a, b) { return a - b; }), mad = dev.length % 2 ? dev[(dev.length - 1) / 2] : (dev[dev.length / 2 - 1] + dev[dev.length / 2]) / 2;
-        var jarak = Math.abs(v - med);
-        if (mad > 0 && jarak > 2 * 1.4826 * mad && jarak > 0.25 * Math.abs(med)) alasan.push('Jauh ' + (v > med ? 'di atas' : 'di bawah') + ' kabupaten lain (nilai tengah ' + ssgFmtJg(tr, med) + ')');
-      }
-    }
-    return alasan;
-  }
-  function ssgJanggalBaris(tr) {
-    if (!tr || !tr.getAttribute('data-ind')) return;
-    $$('.ssg-in[data-f=r]', tr).forEach(function (inp) {
-      var ub = inp.closest('.ssg-ub'), s = ssgKotak(tr.getAttribute('data-ind'), inp.getAttribute('data-kab'), 's');
-      var ubah = inp.classList.contains('chg') || (s && s.classList.contains('chg'));
-      var al = ubah && !inp.classList.contains('bad') ? ssgJanggal(tr, inp) : [];
-      inp._jg = al;
-      ub.classList.toggle('jg', al.length > 0);
-      if (al.length) { inp.classList.add('warn'); inp.title = al.join(' · '); }
-      if (al.length && !$('.ssg-jgb', ub)) ub.insertAdjacentHTML('beforeend', '<button type="button" class="ssg-jgb" data-act="ssg-jg" tabindex="-1" aria-label="Mengapa angka ini janggal">!</button>');
-    });
-  }
-  /** Popover kotak isian: alasan janggal (bila ada) dan riwayat perubahan kotak itu. */
-  var SSG_POP = null;
-  function ssgPop(ub, tab) {
-    var tr = ub.closest('tr'), kab = ub.getAttribute('data-kab'), r = $('.ssg-in[data-f=r]', ub), al = (r && r._jg) || [], f = $('form.ssg-form');
-    if (!f || !tr) return;
-    SSG_POP = { ub: ub, tab: tab || (al.length ? 'j' : 'r') };
-    var p = $('#ssg-pop'); if (!p) { document.body.insertAdjacentHTML('beforeend', '<div class="ssg-pop" id="ssg-pop" role="dialog" aria-label="Rincian kotak isian"></div>'); p = $('#ssg-pop'); }
-    var nama = ($('.ssg-nm', tr) || {}).textContent || '', meta = ssgMeta() || {};
-    var isi = '<button type="button" class="ssg-pop-x" data-act="ssg-pop-x" aria-label="Tutup">✕</button><b class="ssg-pop-j">' + esc(nama) + '</b><div class="muted sm">' + esc(kab) + ' · ' + esc(meta.label || '') + (r && r.value ? ' · ' + esc(r.value) : '') + '</div>' +
-      '<div class="ssg-pop-tab" role="group"><button type="button" class="' + (SSG_POP.tab === 'j' ? 'on' : '') + '" data-act="ssg-pop-tab" data-v="j">' + (al.length ? 'Mengapa janggal' : 'Pemeriksaan') + '</button><button type="button" class="' + (SSG_POP.tab === 'r' ? 'on' : '') + '" data-act="ssg-pop-tab" data-v="r">Riwayat</button></div><div class="ssg-pop-isi">';
-    if (SSG_POP.tab === 'j') {
-      if (!al.length) isi += '<p class="muted sm">Tidak ada yang janggal pada angka ini.</p>';
-      else {
-        var vals = $$('.ssg-ub[data-kab]', tr).map(function (u) { return { k: u.getAttribute('data-kab'), v: ssgNilaiUbin(tr, u.getAttribute('data-kab')) }; }), mx = Math.max.apply(null, vals.map(function (x) { return x.v || 0; }).concat([1]));
-        isi += '<ul class="ssg-pop-al">' + al.map(function (a) { return '<li>' + esc(a) + '</li>'; }).join('') + '</ul><div class="muted sm">Dibanding kabupaten lain</div><div class="ssg-pop-bar">' +
-          vals.map(function (x) { return '<span class="' + (x.k === kab ? 'ini' : '') + '" style="height:' + Math.max(6, (x.v || 0) / mx * 100) + '%" title="' + esc(x.k + ': ' + (x.v === null ? '—' : ssgFmtJg(tr, x.v))) + '"><em>' + esc(ssgKabPendek(x.k)) + '</em></span>'; }).join('') + '</div>' +
-          '<p class="muted sm" style="margin-top:22px">Saat menyimpan, Anda akan diminta menulis penjelasan singkat untuk verifikator.</p>';
-      }
-    } else isi += '<p class="muted sm">Memuat riwayat…</p>';
-    p.innerHTML = isi + '</div>';
-    var rc = ub.getBoundingClientRect(), w = Math.min(340, window.innerWidth - 20);
-    p.style.width = w + 'px'; p.style.left = Math.max(10, Math.min(rc.left + window.scrollX, window.scrollX + window.innerWidth - w - 10)) + 'px'; p.style.top = (rc.bottom + window.scrollY + 8) + 'px'; p.hidden = false;
-    if (SSG_POP.tab === 'r') api('apiRiwayatIsian', [{ ind: tr.getAttribute('data-ind'), tahun: Number(f.getAttribute('data-tahun')), bulan: Number(f.getAttribute('data-bulan')), kab: kab }]).then(function (a) {
-      var box = $('#ssg-pop .ssg-pop-isi'); if (!box || !SSG_POP || SSG_POP.ub !== ub || SSG_POP.tab !== 'r') return;
-      var fv = function (v) { return v === null || v === undefined ? '—' : fmtNum(v); };
-      box.innerHTML = a.length ? '<ul class="ssg-pop-riw">' + a.map(function (x) { return '<li><i></i><span>' + esc(x.kolom) + ': <s>' + fv(x.lama) + '</s> → <b>' + fv(x.baru) + '</b>' + (x.janggal ? ' <em class="ssg-pop-tg">janggal</em>' : '') +
-        '<small>' + esc(x.oleh) + (x.pj ? ' · ' + esc(x.pj) : '') + (x.verif ? ' · ' + (x.verif === 'Benar' ? 'diverifikasi benar' : 'diminta perbaiki: ' + esc(x.verifCat)) + ' oleh ' + esc(x.verifOleh) : '') + '</small></span><small>' + esc(x.wTxt) + '</small></li>'; }).join('') + '</ul>'
-        : '<p class="muted sm">Belum ada riwayat perubahan untuk kotak ini. Riwayat dicatat sejak fitur ini aktif.</p>';
-    }).catch(function (e) { var box = $('#ssg-pop .ssg-pop-isi'); if (box && !e.handled) box.innerHTML = '<p class="muted sm">' + esc(e.message) + '</p>'; });
-  }
-  function ssgKabPendek(k) { var th = $('form.ssg-form thead th[title="' + k.replace(/"/g, '') + '"]'); return th ? th.textContent.trim().slice(0, 6) : k.slice(0, 4); }
-  function ssgPopTutup() { var p = $('#ssg-pop'); if (p) p.hidden = true; SSG_POP = null; }
-  /** Sebelum simpan: angka janggal yang diubah wajib diberi penjelasan. */
-  function ssgJanggalBelum(f) { return $$('.ssg-in[data-f=r]', f).filter(function (i) { return i._jg && i._jg.length; }); }
-  function ssgMintaPenjelasan(f, daftar) {
-    openModal('Periksa sebelum menyimpan', '<p class="muted sm">Ada angka yang tidak biasa. Pastikan angkanya sesuai laporan kabupaten, lalu tulis penjelasan singkat. Penjelasan ini dibaca verifikator.</p><div class="ssg-jl">' +
-      daftar.map(function (i, n) { var tr = i.closest('tr'); return '<div class="ssg-jl-it"><div class="ssg-jl-t"><span>' + esc(($('.ssg-nm', tr) || {}).textContent || '') + ' · ' + esc(i.getAttribute('data-kab')) + '</span><b>' + esc(i.value) + '</b></div><div class="ssg-jl-why">' + esc(i._jg.join(' · ')) + '</div>' +
-        '<textarea class="input" data-jl="' + n + '" rows="2" maxlength="300" placeholder="Penjelasan (wajib), mis. ada laporan susulan dari 3 puskesmas">' + esc(i._pj || '') + '</textarea></div>'; }).join('') + '</div>' +
-      '<p class="form-msg" role="alert"></p><div class="form-actions"><button type="button" class="btn btn-primary" data-act="ssg-jl-ok">Simpan dengan penjelasan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Perbaiki dulu</button></div>', true);
-    SSG_JL = daftar;
-  }
-  var SSG_JL = null;
-  function ssgJlOk() {
-    var tx = $$('#modal-body [data-jl]'), kurang = tx.filter(function (t) { return t.value.trim().length < 5; });
-    if (kurang.length) { $('#modal-body .form-msg').textContent = 'Tulis penjelasan minimal 5 karakter untuk setiap angka.'; kurang[0].focus(); return; }
-    tx.forEach(function (t) { SSG_JL[Number(t.getAttribute('data-jl'))]._pj = t.value.trim(); });
-    closeModal(); var f = $('form.ssg-form'); if (f) { f._jlOk = true; submitSsg(f); }
   }
   /** Warna ubin satu baris (sama dengan server): persentase = realisasi ÷ sasaran; jumlah/angka dibanding nilai tertinggi; negatif dibalik. */
   function ssgWarna(tr) {
@@ -2729,21 +2462,18 @@
   }
   function submitSsg(f) {
     if ($('.ssg-in.bad', f)) { toast('Perbaiki kotak bergaris merah dulu.', 'err'); return; }
-    var belum = ssgJanggalBelum(f);
-    if (belum.length && !f._jlOk) { ssgMintaPenjelasan(f, belum); return; }
-    f._jlOk = false;
     var data = [];
     $$('tbody tr[data-ind]', f).forEach(function (tr) {
       if (!$('.ssg-in.chg', tr)) return;
       var per = {};
-      $$('.ssg-in', tr).forEach(function (i) { var k = i.getAttribute('data-kab'); (per[k] = per[k] || { kab: k })[i.getAttribute('data-f')] = i.value; if (i._jg && i._jg.length && i._pj) { per[k].jg = i._jg; per[k].pj = i._pj; } });
+      $$('.ssg-in', tr).forEach(function (i) { var k = i.getAttribute('data-kab'); (per[k] = per[k] || { kab: k })[i.getAttribute('data-f')] = i.value; });
       data.push({ indikatorId: tr.getAttribute('data-ind'), rows: Object.keys(per).map(function (k) { return per[k]; }) });
     });
     if (!data.length) return;
     var btn = $('button[type=submit]', f); btn.disabled = true; btn.textContent = 'Menyimpan…';
     api('apiSimpanIsianKabMassal', [{ tahun: Number(f.getAttribute('data-tahun')), bulan: Number(f.getAttribute('data-bulan')), data: data, dp: !!(ssgMeta() || {}).dp }])
       .then(function (r) {
-        $$('.ssg-in', f).forEach(function (i) { i.setAttribute('data-o', i.value.trim()); i.classList.remove('chg'); i._jg = null; i._pj = ''; });
+        $$('.ssg-in', f).forEach(function (i) { i.setAttribute('data-o', i.value.trim()); i.classList.remove('chg'); });
         toast(r.tersimpan + ' isian tersimpan' + (r.lewat && r.lewat.length ? ' · dilewati ' + r.lewat.join(', ') : '') + '.', 'ok'); reload();
       })
       .catch(function (e) { btn.textContent = 'Simpan'; ssgStatus(); if (!e.handled) toast(e.message, 'err'); });
@@ -2842,10 +2572,10 @@
     rows.forEach(function (tr) { var p = tr.getAttribute('data-prog'); if (prog.indexOf(p) < 0) prog.push(p); });
     var grp = ''; var opsi = RV_PERIODE.map(function (o) { var s = (o[2] !== grp ? (grp ? '</optgroup>' : '') + '<optgroup label="' + o[2] + '">' : ''); grp = o[2]; return s + '<option value="' + o[0] + '"' + (o[0] === mt.per ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</optgroup>';
     openModal('Cetak Review', '<form id="form-rv-cetak" novalidate><div class="form-grid"><div class="field"><label for="rvc-per">Periode</label><select class="input" id="rvc-per" name="per">' + opsi + '</select></div>' +
-      '<div class="field"><label>Jenis indikator</label><div class="rvc-jenis">' + prog.map(function (p) { return '<label class="chk"><input type="checkbox" name="prog" value="' + esc(p) + '" checked> ' + esc(p) + '</label>'; }).join('') + '</div></div></div>' +
+      '<div class="field"><label>Jenis indikator</label><details class="rvc-buka"><summary><span id="rvc-jn"></span><span class="ic" aria-hidden="true">expand_more</span></summary><div class="rvc-jenis">' + prog.map(function (p) { return '<label class="rvc-pil"><input type="checkbox" name="prog" value="' + esc(p) + '" checked><span>' + esc(p) + '</span></label>'; }).join('') + '</div></details></div></div>' +
       '<div class="field"><label>Indikator yang dicetak <span class="muted sm" id="rvc-n"></span></label><div class="ik-tools"><button type="button" class="btn btn-ghost btn-sm" data-act="rvc-semua" data-v="1">Pilih semua</button><button type="button" class="btn btn-ghost btn-sm" data-act="rvc-semua" data-v="0">Kosongkan</button></div>' +
       '<div class="ik-box">' + rows.map(function (tr) { var nm = $('.dsb-nm', tr).textContent.replace(/angka provinsi$/, '').trim(); return '<label class="ik-item" data-prog="' + esc(tr.getAttribute('data-prog')) + '"><input type="checkbox" name="ind" value="' + esc(tr.getAttribute('data-id')) + '" checked><span>' + esc(nm) + ' <em>' + esc(tr.getAttribute('data-prog')) + '</em></span></label>'; }).join('') + '</div></div>' +
-      '<label class="chk"><input type="checkbox" name="rinci" checked> Sertakan angka per kabupaten</label>' +
+      '<label class="rvc-cek"><input type="checkbox" name="rinci" checked> Sertakan angka per kabupaten</label>' +
       '<div class="form-actions"><button class="btn btn-primary" type="submit">' + '<span class="ic" aria-hidden="true">print</span>Cetak</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div></form>');
     rvcSync();
   }
@@ -2853,6 +2583,8 @@
     var f = $('#form-rv-cetak'); if (!f) return;
     var on = $$('input[name=prog]', f).filter(function (x) { return x.checked; }).map(function (x) { return x.value; });
     $$('.ik-item', f).forEach(function (l) { l.hidden = on.indexOf(l.getAttribute('data-prog')) < 0; });
+    var semua = $$('input[name=prog]', f).length;
+    $('#rvc-jn').textContent = on.length === semua ? 'Semua jenis (' + semua + ')' : on.length ? on.length + ' dari ' + semua + ' jenis dipilih' : 'Belum ada jenis dipilih';
     $('#rvc-n').textContent = '(' + $$('.ik-item', f).filter(function (l) { return !l.hidden && $('input', l).checked; }).length + ' dipilih)';
   }
   function rvCetakKirim(f) {
@@ -2924,23 +2656,6 @@
           .catch(function (e) { if (!e.handled) toast(e.message, 'err'); el.disabled = false; el.innerHTML = lh; });
         break;
       }
-      case 'arsip-tanya': {
-        var th = ($('#ars-sampai') || {}).value; if (!th) break;
-        openModal('Arsipkan data sampai ' + th, '<p>Baris tahun <b>' + esc(th) + '</b> dan sebelumnya dari sheet Isian, Target, Monev, SPBE, Bukti, PermintaanData, dan Log akan dipindah ke spreadsheet <b>Arsip DKPPKB Intelligence</b> di Google Drive.</p>' +
-          '<ol class="langkah"><li>Cadangan penuh tiap sheet dibuat lebih dulu di spreadsheet arsip.</li><li>Baris lama disalin dan jumlahnya dicocokkan.</li><li>Baru setelah cocok, baris itu dihapus dari spreadsheet utama.</li></ol>' +
-          '<p class="muted sm">Data tahun itu tetap bisa dilihat lewat pemilih tahun, tetapi tidak bisa diubah lagi. Proses bisa memakan beberapa menit.</p>' +
-          '<div class="form-actions"><button type="button" class="btn btn-alert" data-act="arsip-ya" data-th="' + esc(th) + '">Ya, arsipkan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>');
-        break;
-      }
-      case 'arsip-ya': {
-        var tha = el.getAttribute('data-th'); el.disabled = true; el.textContent = 'Mengarsipkan…';
-        api('apiArsipkan', [Number(tha)]).then(function (r) {
-          $('#modal-body').innerHTML = '<p><b>Arsip selesai.</b> ' + (r.hasil.length ? r.hasil.map(function (x) { return esc(x.sheet) + ': ' + x.dipindah + ' baris dipindah'; }).join(' · ') : 'Tidak ada baris yang perlu dipindah.') + '</p>' +
-            '<div class="form-actions" style="margin-top:14px"><a class="btn btn-ghost" target="_blank" rel="noopener noreferrer" href="' + esc(r.url) + '">Buka spreadsheet arsip</a><button type="button" class="btn btn-primary" data-act="close-modal">Selesai</button></div>';
-          reload();
-        }).catch(function (e) { if (e.handled) return; var m = $('#modal-body .form-msg'); if (m) m.textContent = e.message; el.disabled = false; el.textContent = 'Ya, arsipkan'; });
-        break;
-      }
       case 'kinerja-migrasi':
         openModal('Pindahkan Monev Kinerja ke master indikator', '<ol class="langkah"><li>Seluruh spreadsheet di-backup dulu (folder Backup DKPPKB Intelligence).</li><li>Setiap IK (IKM-xxx) ditambahkan ke sheet Indikator dengan ID yang sama.</li><li>Target per triwulan disalin ke sheet Target, realisasi ke sheet Isian.</li></ol>' +
           '<p class="muted sm">Sasaran, program, unit PIC, catatan, keterangan, dan bukti tidak berubah. Baris lama di sheet Monev tidak dihapus. Tampilan Monev Kinerja tetap sama.</p><div class="form-actions"><button type="button" class="btn btn-primary" data-act="kinerja-migrasi-ya">Ya, pindahkan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>');
@@ -2967,13 +2682,6 @@
       case 'dsb-filter': $$('.dsb-fb').forEach(function (b) { var on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); dsbSaring(); break;
       case 'dsb-buka': dsbBuka(el); break;
       case 'ssg-catatan': ssgCatatan(el); break;
-      case 'ssg-jg': ssgPop(el.closest('.ssg-ub'), 'j'); break;
-      case 'ssg-rw': ssgPop(el.closest('.ssg-ub'), 'r'); break;
-      case 'ssg-pop-tab': if (SSG_POP) ssgPop(SSG_POP.ub, el.getAttribute('data-v')); break;
-      case 'ssg-pop-x': ssgPopTutup(); break;
-      case 'ssg-jl-ok': ssgJlOk(); break;
-      case 'jg-benar': case 'jg-perbaiki': jgVerif(el, act); break;
-      case 'rw-unduh': if (RW) rwUnduh(); break;
       case 'ssg-tambah': ssgTambah(); break;
       case 'ssg-unduh': ssgUnduh(); break;
       case 'rv-unduh': rvUnduh(); break;
@@ -3031,12 +2739,6 @@
           .catch(function (e) { if (!e.handled) toast(e.message, 'err'); el.disabled = false; el.textContent = 'Pasang indikator'; });
         break;
       }
-      case 'kap-ukur': {
-        var kl = el.innerHTML; el.disabled = true; el.textContent = 'Mengukur…';
-        api('apiUkurKapasitas').then(function () { toast('Kapasitas data diukur ulang.', 'ok'); reload(); })
-          .catch(function (e) { if (!e.handled) toast(e.message, 'err'); el.disabled = false; el.innerHTML = kl; });
-        break;
-      }
       case 'bk-buat': {
         var bs = el.getAttribute('data-sheet') || 'semua', bl = el.innerHTML;
         el.disabled = true; el.textContent = 'Membuat backup…';
@@ -3084,16 +2786,10 @@
       case 'mvk-ik-x': mvkIkX(el); break;
       case 'mvk-hapus-baris': mvkHapusBaris(el); break;
       case 'mvk-tambah': mvkFormBaris(''); break;
-      case 'lx-buka': lxBuka(); break;
-      case 'lx-ubah': lxUbah(el); break;
-      case 'lx-ulang': lxUlang(el); break;
-      case 'lx-pdf': lxPdf(); break;
       case 'tarik-buka': tarikBuka(); break;
       case 'spbk-hapus': spbkHapus(el); break;
       case 'tarik2': tarikUnduh(el.getAttribute('data-format')); break;
-      case 'lx-tw': lxGanti(el); break;
       case 'td-tpl': case 'td-g': case 'td-tw': tdAksi(el, act); break;
-      case 'tg-buka': case 'tg-tutup': $$('#app-container details.tg-grp').forEach(function (d) { d.open = el.getAttribute('data-act') === 'tg-buka'; }); break;
       case 'mvk-ubah': mvkFormBaris(el.getAttribute('data-id')); break;
       case 'mvk-ik-tambah': { var fb = el.closest('form'), w = $('.mvk-iks', fb); w.insertAdjacentHTML('beforeend', mvkIkBaris(mvkMeta(), {}, w.children.length)); mvkIkTombol(fb); $('[name=ikn]', w.lastElementChild).focus(); break; }
       case 'mvk-ik-hapus': { var fh = el.closest('form'); el.closest('.mvk-ikr').remove(); fh.removeAttribute('data-yakin'); mvkIkTombol(fh); break; }
@@ -3147,7 +2843,6 @@
         break;
       }
       case 'im-layout': { var lv = el.getAttribute('data-v'); try { localStorage.setItem('dkppkb_im_layout', lv); } catch (e) { } applyImLayout(lv); break; }
-      case 'remind-open': openRemind(); break;
       case 'bukti': openBukti(el.getAttribute('data-id'), el.getAttribute('data-nama')); break;
       case 'bukti-unduh': {
         var lb = el.textContent; el.disabled = true; el.textContent = 'Menyiapkan…';
@@ -3268,12 +2963,6 @@
       case 'ia-pakai': { var fk = el.closest('form'); fk.elements.akumulasi.value = el.getAttribute('data-v'); fk._iaManual = true; iaSync(fk); break; }
       case 'ia-info': { var w = el.closest('.ia-tipe-w'); w.classList.toggle('tahan'); el.classList.toggle('on'); break; }
       case 'edit-ind': { var di = JSON.parse(el.getAttribute('data-json') || '{}'); fillForm('form-indikator', di); var fe = $('#form-indikator'); if (fe) { fe._iaManual = !!di.id; iaSync(fe); iaPanel(fe, di.id ? '' : 'id'); } if ($('#form-indikator')) filterBidangOpts($('#form-indikator').elements.program, $('#form-indikator').elements.bidang.value); var fi = $('#form-indikator'); if (fi && fi.id) fi.elements.id.readOnly = !!di.id; if (fi && !di.id) { fi.elements.satuan.value = '%'; fi.elements.id.readOnly = false; } break; }
-      case 'verif':
-        el.disabled = true;
-        api('apiVerifikasi', [{ indikatorId: el.dataset.id, bulan: Number(el.dataset.bulan), tahun: periode().tahun, setuju: el.dataset.setuju === '1' }])
-          .then(function () { toast(el.dataset.setuju === '1' ? 'Isian disetujui.' : 'Isian dikembalikan.', 'ok'); reload(); refreshBadge(); })
-          .catch(function (e) { if (!e.handled) toast(e.message, 'err'); el.disabled = false; });
-        break;
       case 'masalah-status':
         el.disabled = true;
         api('apiUbahStatusMasalah', [el.dataset.id, el.dataset.status]).then(function () { toast('Status diperbarui.', 'ok'); reload(); })
@@ -3314,7 +3003,6 @@
     if (t.id === 'scrim') { closeDrawer(); return; }
     if (!(t.closest && t.closest('.tn-group')) || (t.closest && t.closest('.tn-sub'))) closeTopMenus();
     if (!(t.closest && t.closest('#notif-panel'))) closeNotif();
-    if (SSG_POP && t.closest && !t.closest('#ssg-pop') && !t.closest('.ssg-jgb') && !t.closest('.ssg-rwb')) ssgPopTutup();
     var nk = t.closest && t.closest('[data-nk]'); if (nk) notifBaca(nk.getAttribute('data-nk'));   // pemberitahuan yang diklik dianggap sudah dibaca
     var nav = t.closest && t.closest('[data-nav]');
     if (nav && t.closest('#profil-laci')) profilTutup();
@@ -3326,8 +3014,6 @@
       navigateTo(nav.getAttribute('data-nav'), params);
       return;
     }
-    var cg = t.closest && t.closest('summary .chk');   // centang kelompok Tunggakan Mendesak: pilih semua tanpa membuka/menutup kelompok
-    if (cg) { ev.preventDefault(); var kg = $('.chk-grp', cg); kg.checked = !kg.checked; $$('.chk-remind', cg.closest('details')).forEach(function (x) { x.checked = kg.checked; }); return; }
     var mk = t.closest && t.closest('[data-mk]');
     if (mk && MVK) { MVK.det = mk.getAttribute('data-mk'); mvkGambar(); var dt = $('#mvk-det'); if (dt) dt.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); return; }
     var a = t.closest && t.closest('[data-act]');
@@ -3436,8 +3122,6 @@
     if (ev.target && ev.target.classList && ev.target.classList.contains('td-cari')) { tdUbah(ev.target); return; }
     if (ev.target && ev.target.classList && ev.target.classList.contains('md-cari')) { MD.q = ev.target.value; var pos = ev.target.selectionStart; mdTabel(); var c = $('#md .md-cari'); if (c) { c.focus(); try { c.setSelectionRange(pos, pos); } catch (e) { } } return; }
     if (ev.target && ev.target.getAttribute && ev.target.getAttribute('data-md') === 'c') { mdUbah(ev.target); return; }
-    if (RW && ev.target && ev.target.getAttribute && ev.target.getAttribute('data-rw') === 'q') { RW.q = ev.target.value; rwGambar(); return; }
-    if (ev.target && ev.target.id === 'is-real' && ev.target.form) cekIsian(ev.target.form);
     if (ev.target && ev.target.classList && ev.target.classList.contains('ssg-in')) { ssgCekBaris(ev.target); ssgStatus(); }
     if (ev.target && ev.target.classList && ev.target.classList.contains('lbr-in')) { lbrCek(ev.target); lbrStatus(); if (ev.target.tagName === 'TEXTAREA' && ev.target.closest('.mvk-t')) mvkPas(ev.target); }
     var t = ev.target;
@@ -3462,7 +3146,7 @@
     if (t.id === 'mvk-tw' || t.id === 'mvk-unit') { if (MVK) { MVK.det = null; mvkGambar(); } return; }
     if (t.id === 'mvk-jenis' && t.form) { var fm = t.form; fm.elements.induk.innerHTML = mvkIndukOpsi(mvkMeta(), t.value, fm.elements.induk.value, fm.getAttribute('data-id')); return; }
     if (t.classList && (t.classList.contains('per-jn') || t.classList.contains('per-no'))) { perGanti(t); return; }
-    if (t.form && t.form.getAttribute('id') === 'form-isian' && t.name === 'keterangan') { sinkIsian(t.form); cekIsian(t.form); return; }
+    if (t.form && t.form.getAttribute('id') === 'form-isian' && t.name === 'keterangan') { sinkIsian(t.form); return; }
     if (t.form && t.form.id === 'form-user-modal' && (t.name === 'role' || t.name === 'modeSandi' || t.name === 'bidang')) { syncUserForm(t.form); return; }
     if (t.form && t.form.getAttribute('id') === 'form-user-modal' && (t.name === 'ik' || t.name === 'program')) { syncIk(t.form); return; }
     if (t.form && t.form.classList.contains('ia-form')) { if (t.name === 'akumulasi') t.form._iaManual = true; if (t.form.id === 'form-ind-baru' && t.name === 'bidang') syncIndBaru(t.form); iaSync(t.form); return; }
@@ -3472,7 +3156,6 @@
     if (tdUbah(t)) return;
     if (mdUbah(t)) return;
     if (t.id === 'profil-file' && t.files && t.files[0]) { profilFile(t.files[0]); t.value = ''; return; }
-    if (RW && t.getAttribute && t.getAttribute('data-rw')) { RW[t.getAttribute('data-rw')] = t.value; rwGambar(); return; }
     if (t.id === 'logo-file' && t.files && t.files[0]) {
       var info = $('#logo-info'), fcfg = $('#form-config');
       if (info) info.textContent = 'Memproses gambar…';
@@ -3509,7 +3192,6 @@
     if (fid === 'form-ssg-cat') return submitSsgCat(f);
     if (fid === 'form-ssg-ind') return submitSsgInd(f);
     if (fid === 'form-tl') return submitTl(f);
-    if (fid === 'form-remind') return submitRemind(f);
     if (fid === 'form-user-modal') return submitUserForm(f);
     if (fid === 'form-rv-cetak') return rvCetakKirim(f);
     if (fid === 'form-program-modal') return submitProgramForm(f);
@@ -3521,7 +3203,6 @@
     if (fid === 'form-galeri') return submitGaleri(f);
     if (fid === 'form-tarik') return;
     if (fid === 'form-md-ajukan') return submitMdAjukan(f);
-    if (fid === 'form-jg') return submitJg(f);
     if (f.getAttribute('data-api')) return submitGeneric(f);
   });
 
