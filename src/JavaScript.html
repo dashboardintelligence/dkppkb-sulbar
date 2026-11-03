@@ -110,7 +110,7 @@
     return pr;
   }
   /** Panggil API ber-token. Mengembalikan data atau melempar Error; sesi habis -> kembali ke login. */
-  var PCACHE = {}, READ_API = { apiPratinjauImporAkun: 1, apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiLaporanTw: 1 };
+  var PCACHE = {}, READ_API = { apiCatatTarik: 1, apiPratinjauImporAkun: 1, apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiLaporanTw: 1 };
   function api(fn, args) {
     if (!READ_API[fn]) pcBasi();   // ada perubahan data: tandai cache halaman basi
     args = [AppState.sessionToken].concat(args || []);
@@ -1930,6 +1930,8 @@
   function tarikBuka() {
     var T = tarikIsi(), td = $('#tarik-data'); if (!T || !td) return;
     TD = { kode: td.getAttribute('data-kode'), T: T, tpl: 'semua', g: '', q: '', sembunyi: {}, pilih: {} };
+    var rv = $$('#app-container tr.dsb-row'), tampil = rv.filter(function (tr) { return !tr.hidden; });
+    if (tampil.length && tampil.length < rv.length) tampil.forEach(function (tr) { TD.pilih[tr.getAttribute('data-id')] = true; });   // ikut saringan Review (kelompok, bidang, tim kerja, cari)
     openModal('Tarik Data · ' + lxMeta().menu, '<div class="td-lay"><aside class="td-kiri"></aside><section class="td-kanan"><div class="td-top"><b id="td-n"></b><span class="muted sm" id="td-lbl"></span></div><div class="td-prev"></div></section></div>' +
       '<div class="td-aksi"><span class="muted sm">Centang baris di pratinjau untuk mengunduh sebagian saja.</span><span class="td-btn"><button type="button" class="btn btn-ghost btn-sm" data-act="tarik2" data-format="pdf"><span class="ic" aria-hidden="true">picture_as_pdf</span>PDF</button>' +
       '<button type="button" class="btn btn-primary btn-sm" data-act="tarik2" data-format="csv"><span class="ic" aria-hidden="true">download</span>Unduh Excel</button></span></div>', true);
@@ -2002,6 +2004,7 @@
     if (!TD) return;
     var H = tdHasil(); if (!H.baris.length) { toast('Tidak ada baris yang dipilih.', 'err'); return; }
     var nama = 'Tarik Data ' + H.judul;
+    api('apiCatatTarik', [{ format: fmt, judul: H.judul, jumlah: H.baris.length }]).catch(function () { });   // catatan Log Aktivitas; unduhan tetap jalan bila gagal
     if (fmt === 'csv') {
       var q = function (s) { s = String(s == null ? '' : s); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
       var isi = '﻿sep=;\n' + [H.kolom].concat(H.baris.map(function (b) { return b.sel; })).map(function (r) { return r.map(q).join(';'); }).join('\n');
@@ -2491,10 +2494,12 @@
   /* ---------- Review: saring, cari, dan buka rincian tanpa memuat ulang ---------- */
   function dsbSaring() {
     var root = $('#app-container'); if (!$('tr.dsb-row', root) || !$('.dsb-kosong', root)) return;   // hanya tabel capaian Review (bukan tabel kelengkapan)
-    var jn = ($('.dsb-sel[data-k=jenis]', root) || {}).value || '', bd = ($('.dsb-sel[data-k=bidang]', root) || {}).value || '';
+    var jn = ($('.dsb-sel[data-k=jenis]', root) || {}).value || '', bd = ($('.dsb-sel[data-k=bidang]', root) || {}).value || '', ts = $('.dsb-sel[data-k=tim]', root);
+    if (ts) { $$('option[data-bid]', ts).forEach(function (o) { o.hidden = o.disabled = !!bd && o.getAttribute('data-bid') !== bd; }); if (ts.selectedOptions[0] && ts.selectedOptions[0].disabled) ts.value = ''; }   // tim kerja mengikuti bidang
+    var tm = ts ? ts.value : '';
     var q = String(($('.dsb-cari', root) || {}).value || '').trim().toLowerCase(), z = 0;
     $$('tr.dsb-row', root).forEach(function (tr) {
-      var cocok = (!jn || tr.getAttribute('data-jenis') === jn) && (!bd || tr.getAttribute('data-bidang') === bd) && (!q || tr.getAttribute('data-q').indexOf(q) >= 0);
+      var cocok = (!jn || tr.getAttribute('data-jenis') === jn) && (!bd || tr.getAttribute('data-bidang') === bd) && (!tm || tr.getAttribute('data-tim') === tm) && (!q || tr.getAttribute('data-q').indexOf(q) >= 0);
       var tampil = cocok, det = tr.nextElementSibling;
       tr.hidden = !tampil; tr.classList.toggle('dsb-z', tampil && (z++ % 2 === 1));
       if (det && det.classList.contains('dsb-det') && !tampil) { det.hidden = true; tr.classList.remove('on'); $('.dsb-nm', tr).setAttribute('aria-expanded', 'false'); }
