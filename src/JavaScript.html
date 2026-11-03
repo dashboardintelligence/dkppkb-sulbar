@@ -15,6 +15,7 @@
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard', group: 'Utama' },
     { id: 'review', label: 'Review', icon: 'fact_check', group: 'Utama' },
     { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'admindata', 'pic'] },
+    { id: 'indikatorsaya', label: 'Indikator Saya', icon: 'tune', group: 'Utama', roles: ['pic'] },
     { id: 'laporan', label: 'Minta Data', icon: 'description', group: 'Utama' },
     // Menu induk (id diawali _) membuka sub-menu Isi Data dan Review; bila hanya satu sub-menu yang boleh, tampil sebagai satu menu biasa
     { id: '_spbe', label: 'SPBE', icon: 'lan', group: 'Monev', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
@@ -30,7 +31,7 @@
   ];
   // Ikon bilah samping: Phosphor Thin (garis tipis, gaya Apple)
   var IKON_SIDE = { dashboard: 'squares-four', review: 'clipboard-text', inputdata: 'pencil-simple-line', laporan: 'file-text', _spbe: 'cpu', _monev: 'chart-line-up', pengaturan: 'gear-six',
-    tambahindikator: 'target', pengguna: 'users', panduan: 'book-open' };
+    tambahindikator: 'target', pengguna: 'users', panduan: 'book-open', indikatorsaya: 'sliders-horizontal' };
   var BOTTOM = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
     { id: 'review', label: 'Review', icon: 'fact_check' },
@@ -43,6 +44,7 @@
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'review', label: 'Review' },
     { id: 'inputdata', label: 'Isi Data' },
+    { id: 'indikatorsaya', label: 'Indikator Saya' },
     { id: 'laporan', label: 'Minta Data' },
     { label: 'SPBE', children: ['spbeisi', 'spbe'] },
     { label: 'Monev Kinerja', children: ['monevisi', 'monev'] },
@@ -391,7 +393,7 @@
   }
   function tabelDari(el) { var bar = el.closest('.tbl-alat'); var n = bar && bar.nextElementSibling; return n ? (n.matches('table') ? n : n.querySelector('table')) : null; }
   function tabelAlat() {
-    if (AppState.page === 'tambahindikator') return;   // Kelola Indikator: tanpa bilah CSV · Excel · Cetak
+    if (AppState.page === 'tambahindikator' || AppState.page === 'indikatorsaya') return;   // Kelola Indikator & Indikator Saya: tanpa bilah CSV · Excel · Cetak
     $$('#app-container table.tbl').forEach(function (t) {
       if (t.getAttribute('data-alat') || !t.tBodies[0] || t.tBodies[0].rows.length < 2) return;
       t.setAttribute('data-alat', '1');
@@ -462,7 +464,7 @@
   /* Panduan singkat tiga langkah sesuai peran; muncul sekali saat pertama masuk, bisa dibuka lagi dari menu Panduan. */
   var PANDUAN = {
     isi: [['Buka Isi Data', 'Pilih periode (bulan, triwulan, atau semester). Angka diisi kumulatif sampai akhir periode.'], ['Ketik angka', 'Isi Sasaran dan Realisasi per kabupaten, atau unduh templat Excel, isi, lalu unggah kembali.'], ['Tekan Simpan', 'Kotak kuning berarti angka perlu diperiksa (melebihi sasaran atau turun dari periode lalu), tetapi tetap bisa disimpan.']],
-    admin: [['Pantau kelengkapan', 'Kartu Belum diisi dan Perlu perhatian di Dashboard menunjukkan isian yang belum masuk; Peringkat kabupaten ada di Dashboard.'], ['Atur indikator', 'Kelola Indikator dipisah per kelompok. Pilih cara akumulasi: persentase, angka, atau jumlah.'], ['Bagikan hasil', 'Dari Review: Tarik Data untuk Excel/PDF. Permintaan data masuk di menu Minta Data.']],
+    admin: [['Pantau kelengkapan', 'Kartu Belum diisi di Dashboard menunjukkan isian yang belum masuk per bidang; Peringkat kabupaten juga ada di Dashboard.'], ['Atur indikator', 'Kelola Indikator dipisah per kelompok. Pilih cara akumulasi: persentase, angka, atau jumlah.'], ['Bagikan hasil', 'Dari Review: Tarik Data untuk Excel/PDF. Permintaan data masuk di menu Minta Data.']],
     pimpinan: [['Baca Dashboard', 'Kalimat ringkasan di atas dan peta kabupaten memberi gambaran sekali pandang.'], ['Telusuri di Review', 'Pilih periode dan kabupaten; klik indikator untuk melihat angka per kabupaten dan tren.'], ['Tarik Data', 'Tombol Tarik Data di Review mengunduh angka indikator per triwulan sebagai Excel atau PDF.']]
   };
   function panduanSingkat(paksa) {
@@ -691,6 +693,7 @@
     }
     if ($('#ssg-fb')) ssgSaring();
     if ($('#form-tim-kelompok')) tkkSinkron();
+    if ($('#is-data')) isMuat();
     if ($('.mvk-t')) mvkSiap();
     mvkReview();
     cincinDb();
@@ -990,6 +993,87 @@
       if (ev === 'drop' && e.dataTransfer.files[0]) iaBaca(e.dataTransfer.files[0]);
     });
   });
+  /* ---------- Indikator Saya (PIC): target tahunan / triwulan / bulanan, ubah & tambah indikator milik akun ---------- */
+  var IS = null, IS_BL = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+  var IS_KOL = { th: [['TH', 'Target tahunan']], tw: [['TW1', 'TW I'], ['TW2', 'TW II'], ['TW3', 'TW III'], ['TW4', 'TW IV']], bl: IS_BL.map(function (b, k) { return ['B' + (k + 1), b]; }) };
+  var IS_INFO = { th: 'Satu angka untuk akhir tahun. Dipakai bila target triwulan atau bulan tidak diisi.', tw: 'Target akhir tiap triwulan (kumulatif). Kotak berwarna = belum disimpan.',
+    bl: 'Target akhir tiap bulan (kumulatif), opsional untuk indikator yang dipantau bulanan. Geser tabel ke samping untuk melihat semua bulan.' };
+  function isAngka(v) { var t = String(v == null ? '' : v).trim().replace(/\s/g, ''); if (!t) return ''; if (/^\d{1,3}(\.\d{3})+(,\d+)?$/.test(t)) t = t.replace(/\./g, ''); return t.replace(',', '.'); }
+  function isTampil(n) { return n === null || n === undefined || n === '' ? '' : String(n).replace('.', ','); }
+  function isMuat() {
+    var el = $('#is-data'); if (!el) return;
+    try { IS = JSON.parse(el.getAttribute('data-json')); } catch (e) { return; }
+    IS.mode = IS.mode || 'tw'; IS.ubah = {}; isGambar();
+  }
+  function isGambar() {
+    var t = $('.is-tbl'); if (!t || !IS) return;
+    var kol = IS_KOL[IS.mode], q = String(($('.is-cari') || {}).value || '').trim().toLowerCase();
+    $('thead', t).innerHTML = '<tr><th>Indikator</th><th>Satuan</th>' + kol.map(function (k, i) { return '<th class="c">' + (IS.mode === 'th' ? k[1] : (i ? '' : 'Target ') + k[1]) + '</th>'; }).join('') + '<th></th></tr>';
+    var g = '', h = '';
+    IS.ind.forEach(function (x) {
+      if (q && x.n.toLowerCase().indexOf(q) < 0) return;
+      if (x.g !== g) { g = x.g; h += '<tr class="tkk-bid"><td colspan="' + (kol.length + 3) + '">' + esc(g) + '</td></tr>'; }
+      var th = x.t.TH !== undefined ? x.t.TH : x.dasar;
+      h += '<tr data-is="' + esc(x.id) + '"><td>' + esc(x.n) + (x.arah === 'Turun' ? ' <span class="muted sm">↓</span>' : '') + '</td><td class="muted sm">' + esc(x.sat || '—') + '</td>' +
+        kol.map(function (k) { var u = IS.ubah[x.id + '|' + k[0]], v = u !== undefined ? u : isTampil(x.t[k[0]]);
+          return '<td class="c"><input class="input input-sm is-tg' + (u !== undefined ? ' ubah' : '') + '" data-k="' + k[0] + '" value="' + esc(v) + '" placeholder="' + (k[0] === 'TH' && x.dasar ? esc(isTampil(x.dasar)) : '—') + '" inputmode="decimal" aria-label="Target ' + esc(x.n + ' ' + k[1]) + '"></td>'; }).join('') +
+        '<td class="is-aksi">' + (IS.mode !== 'th' && th ? '<button type="button" class="btn btn-ghost btn-sm" data-act="is-isi" title="Isi kotak kosong dari target tahunan">Isi dari tahunan</button>' : '') +
+        '<button type="button" class="btn btn-ghost btn-sm" data-act="is-form" data-id="' + esc(x.id) + '">Ubah</button></td></tr>';
+    });
+    $('tbody', t).innerHTML = h || '<tr><td colspan="' + (kol.length + 3) + '" class="muted sm">Tidak ada indikator yang cocok.</td></tr>';
+    var info = $('.is-info'); if (info) info.textContent = IS_INFO[IS.mode];
+    $$('.is-mode .seg-btn').forEach(function (b) { b.classList.toggle('is-on', b.getAttribute('data-m') === IS.mode); });
+    isRing();
+  }
+  function isRing() {
+    var n = Object.keys(IS.ubah).length, r = $('.is-ring'), b = $('[data-act=is-simpan]');
+    if (r) r.textContent = n ? n + ' target berubah, belum disimpan.' : 'Belum ada perubahan.';
+    if (b) b.disabled = !n;
+  }
+  function isCatat(inp) {
+    var id = inp.closest('tr').getAttribute('data-is'), k = inp.getAttribute('data-k'), x = IS.ind.find(function (y) { return y.id === id; });
+    var asal = isTampil(x.t[k]), key = id + '|' + k;
+    if (inp.value.trim() === asal) delete IS.ubah[key]; else IS.ubah[key] = inp.value.trim();
+    inp.classList.toggle('ubah', IS.ubah[key] !== undefined); isRing();
+  }
+  function isIsiTahunan(tr) {
+    var id = tr.getAttribute('data-is'), x = IS.ind.find(function (y) { return y.id === id; }), th = x.t.TH !== undefined ? x.t.TH : x.dasar;
+    var ins = $$('.is-tg', tr), n = ins.length, bertahap = x.akum === 'jumlah';
+    ins.forEach(function (inp, k) { if (inp.value.trim()) return; inp.value = isTampil(bertahap ? Math.round(th * (k + 1) / n * 100) / 100 : th); isCatat(inp); });
+  }
+  function isSimpan() {
+    var items = [], salah = '';
+    Object.keys(IS.ubah).forEach(function (key) { var p = key.split('|'), v = isAngka(IS.ubah[key]); if (v !== '' && !isFinite(Number(v))) salah = salah || IS.ubah[key]; items.push({ id: p[0], periode: p[1], target: v === '' ? '' : Number(v) }); });
+    if (salah) { toast('Target "' + salah + '" bukan angka.', 'err'); return; }
+    var b = $('[data-act=is-simpan]'); b.disabled = true; b.textContent = 'Menyimpan…';
+    api('apiSimpanTarget', [{ tahun: IS.tahun, items: items }]).then(function (r) {
+      items.forEach(function (it) { var x = IS.ind.find(function (y) { return y.id === it.id; }); if (it.target === '') delete x.t[it.periode]; else x.t[it.periode] = it.target; });
+      IS.ubah = {}; isGambar(); toast(r.disimpan + ' target disimpan' + (r.dihapus ? ', ' + r.dihapus + ' dikosongkan' : '') + '.', 'ok'); b.textContent = 'Simpan target';
+    }).catch(function (e) { b.textContent = 'Simpan target'; isRing(); if (!e.handled) toast(e.message, 'err'); });
+  }
+  function isForm(id) {
+    var x = id ? IS.ind.find(function (y) { return y.id === id; }) : null, o = function (arr, v) { return arr.map(function (a) { var val = Array.isArray(a) ? a[0] : a, t = Array.isArray(a) ? a[1] : a; return '<option value="' + esc(val) + '"' + (val === v ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join(''); };
+    openModal(x ? 'Ubah indikator' : 'Tambah indikator', '<form id="form-is" novalidate data-id="' + esc(id || '') + '"><div class="form-grid">' +
+      '<div class="field full"><label for="is-n">Nama indikator *</label><input class="input" id="is-n" name="nama" maxlength="200" required value="' + esc(x ? x.n : '') + '"></div>' +
+      '<div class="field"><label>Bidang</label><input class="input" value="' + esc(IS.bidang) + '" disabled></div>' +
+      '<div class="field"><label>Tim kerja</label><input class="input" value="' + esc(IS.tim || 'seluruh bidang') + '" disabled></div>' +
+      '<div class="field"><label for="is-g">Kelompok</label><select class="input" id="is-g" name="grup">' + o(IS.grup, x ? x.g : IS.grup[0]) + '</select></div>' +
+      '<div class="field"><label for="is-s">Satuan</label><input class="input" id="is-s" name="satuan" maxlength="20" list="is-sat" value="' + esc(x ? x.sat : '%') + '"><datalist id="is-sat">' + o(['%'].concat(IS.satuan.filter(function (z) { return z !== '%'; })), '') + '</datalist></div>' +
+      '<div class="field"><label for="is-a">Cara menghitung</label><select class="input" id="is-a" name="akumulasi">' + o(IS.akum, x ? x.akum : 'persentase') + '</select></div>' +
+      '<div class="field"><label for="is-r">Arah</label><select class="input" id="is-r" name="arah">' + o([['Naik', '↑ Makin besar makin baik'], ['Turun', '↓ Makin kecil makin baik']], x ? x.arah : 'Naik') + '</select></div>' +
+      '<div class="field full"><label for="is-d">Definisi / cara ukur (opsional)</label><textarea class="input input-area" id="is-d" name="definisi" maxlength="600" rows="2">' + esc(x ? x.def : '') + '</textarea></div>' +
+      '</div><p class="muted sm" style="margin:6px 0 0">Target diisi di tabel Indikator Saya (tahunan, triwulan, atau bulanan) setelah indikator disimpan.</p>' +
+      '<div class="form-actions" style="justify-content:space-between">' + (x ? '<button type="button" class="btn btn-ghost btn-sm is-non" data-act="is-nonaktif">Nonaktifkan indikator</button>' : '<span></span>') +
+      '<span><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button> <button class="btn btn-primary" type="submit">Simpan indikator</button></span></div><p class="form-msg" role="alert"></p></form>', true);
+  }
+  function isSimpanInd(f, nonaktif) {
+    var msg = $('.form-msg', f), btn = $('button[type=submit]', f), id = f.getAttribute('data-id');
+    var o = { id: id, nama: f.elements.nama.value.trim(), grup: f.elements.grup.value, satuan: f.elements.satuan.value.trim(), akumulasi: f.elements.akumulasi.value, arah: f.elements.arah.value, definisi: f.elements.definisi.value.trim(), aktif: !nonaktif };
+    if (o.nama.length < 3) { msg.textContent = 'Nama indikator terlalu pendek.'; f.elements.nama.focus(); return; }
+    btn.disabled = true; btn.textContent = 'Menyimpan…'; msg.textContent = '';
+    api('apiSimpanIndikatorPic', [o]).then(function (r) { closeModal(); toast(nonaktif ? 'Indikator dinonaktifkan.' : r.hasil === 'insert' ? 'Indikator ' + r.id + ' ditambahkan. Isi targetnya di tabel.' : 'Indikator disimpan.', 'ok'); return reload(); })
+      .catch(function (e) { btn.disabled = false; btn.textContent = 'Simpan indikator'; if (!e.handled) msg.textContent = e.message; });
+  }
   /* ---------- kelola pengguna (admin) ---------- */
   function openUserForm(d) {
     var tpl = $('#tpl-user-form'); if (!tpl) return;
@@ -2478,17 +2562,14 @@
   /* ---------- Review: saring, cari, dan buka rincian tanpa memuat ulang ---------- */
   function dsbSaring() {
     var root = $('#app-container'); if (!$('tr.dsb-row', root) || !$('.dsb-kosong', root)) return;   // hanya tabel capaian Review (bukan tabel kelengkapan)
-    var fb = $('.dsb-fb.on', root), f = fb ? fb.getAttribute('data-f') : '';
     var jn = ($('.dsb-sel[data-k=jenis]', root) || {}).value || '', bd = ($('.dsb-sel[data-k=bidang]', root) || {}).value || '';
-    var q = String(($('.dsb-cari', root) || {}).value || '').trim().toLowerCase(), n = { '': 0, lo: 0, na: 0, ok: 0 }, z = 0;
+    var q = String(($('.dsb-cari', root) || {}).value || '').trim().toLowerCase(), z = 0;
     $$('tr.dsb-row', root).forEach(function (tr) {
       var cocok = (!jn || tr.getAttribute('data-jenis') === jn) && (!bd || tr.getAttribute('data-bidang') === bd) && (!q || tr.getAttribute('data-q').indexOf(q) >= 0);
-      var st = tr.getAttribute('data-st'); if (cocok) { n['']++; n[st]++; }
-      var tampil = cocok && (!f || st === f), det = tr.nextElementSibling;
+      var tampil = cocok, det = tr.nextElementSibling;
       tr.hidden = !tampil; tr.classList.toggle('dsb-z', tampil && (z++ % 2 === 1));
       if (det && det.classList.contains('dsb-det') && !tampil) { det.hidden = true; tr.classList.remove('on'); $('.dsb-nm', tr).setAttribute('aria-expanded', 'false'); }
     });
-    $$('.dsb-fb', root).forEach(function (b) { $('b', b).textContent = n[b.getAttribute('data-f')]; });
     $('.dsb-kosong', root).hidden = z > 0;
   }
   /* ---------- Review: pilihan kabupaten ---------- */
@@ -2536,7 +2617,6 @@
         }).catch(function (e) { if (e.handled) return; var mm = $('#modal-body .form-msg'); if (mm) mm.textContent = e.message; el.disabled = false; el.textContent = 'Ya, pindahkan'; });
         break;
       case 'ssg-batal': ssgBatal(); break;
-      case 'dsb-filter': $$('.dsb-fb').forEach(function (b) { var on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); dsbSaring(); break;
       case 'dsb-buka': dsbBuka(el); break;
       case 'ssg-reset': $('#ssg-q').value = ''; $('#ssg-fb').value = ''; $('#ssg-ft').value = ''; ssgSaring(); break;
       case 'ssg-catatan': ssgCatatan(el); break;
@@ -2746,6 +2826,12 @@
       case 'program-form': openProgramForm(JSON.parse(el.getAttribute('data-json') || '{}')); break;
       case 'user-form': openUserForm(JSON.parse(el.getAttribute('data-json') || '{}')); break;
       case 'impor-akun': iaBuka(); break;
+      case 'is-mode': if (Object.keys(IS.ubah).length && !confirm('Ada target yang belum disimpan. Pindah tampilan? Perubahan tetap diingat.')) break; IS.mode = el.getAttribute('data-m'); isGambar(); break;
+      case 'is-isi': isIsiTahunan(el.closest('tr')); break;
+      case 'is-simpan': isSimpan(); break;
+      case 'is-batal': IS.ubah = {}; isGambar(); break;
+      case 'is-form': isForm(el.getAttribute('data-id') || ''); break;
+      case 'is-nonaktif': if (confirm('Nonaktifkan indikator ini? Indikator hilang dari Isi Data, Review, dan Dashboard. Data lama tetap tersimpan dan admin bisa mengaktifkannya lagi.')) isSimpanInd(el.closest('form'), true); break;
       case 'ia-buat': iaBuat(); break;
       case 'ia-salin': salinTeks(IA.hasil.filter(function (x) { return x.password; }).map(function (x) { return x.nama + '\t' + x.username + '\t' + x.password; }).join('\n')); break;
       case 'ia-unduh': { var csv = '\ufeffsep=;\nUsername;Nama;Kata sandi sementara\n' + IA.hasil.filter(function (x) { return x.password; }).map(function (x) { return [x.username, x.nama, x.password].map(function (v) { return /[";]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"' : v; }).join(';'); }).join('\n');
@@ -2871,6 +2957,12 @@
    * Warna sama dengan server: persentase bertarget = capaian terhadap target; jumlah/angka/tanpa target = dibanding kabupaten
    * tertinggi; Indikator Negatif dibalik. Indikator tingkat provinsi tidak punya sebaran kabupaten. */
   var PETA_SK = ['#d6eef0', '#9fd6db', '#5bb3bc', '#1f8a95', '#0b5f68'];
+  /** Lebar pemilih di judul mengikuti nama indikator terpilih (bukan nama terpanjang di daftar). */
+  function petaIndLebar(sel) {
+    var cv = petaIndLebar.cv || (petaIndLebar.cv = document.createElement('canvas')), cx = cv.getContext('2d'), st = getComputedStyle(sel);
+    cx.font = st.fontWeight + ' ' + st.fontSize + ' ' + st.fontFamily;
+    var o = sel.options[sel.selectedIndex]; sel.style.width = Math.ceil(cx.measureText(o ? o.text : '').width + 30) + 'px';
+  }
   function petaInd(blok, awal) {
     var dEl = blok && $('.db-pind-data', blok), sel = blok && $('.db-pind', blok); if (!dEl || !sel) return;
     var data = []; try { data = JSON.parse(dEl.getAttribute('data-json')); } catch (e) { return; }
@@ -2898,10 +2990,10 @@
       var t = $('title', p); if (t) t.textContent = k + ': ' + fv(v);
       var tx = lbl[i]; if (tx) { var ts = $('tspan', tx); if (ts) ts.textContent = I.prov ? '' : fv(v); tx.style.fill = kl < 0 ? 'var(--tx)' : kl >= 3 ? '#fff' : '#1d1d1f'; tx.style.stroke = kl < 0 ? 'var(--card)' : kl >= 3 ? 'rgba(0,0,0,.25)' : 'rgba(255,255,255,.7)'; }
     });
-    $('.db-h2', blok).textContent = I.no + '. ' + I.n;
-    $('.db-hint', blok).textContent = I.prov ? 'Indikator tingkat provinsi: diisi satu angka untuk provinsi (' + fv(I.pv) + '), jadi tidak ada sebaran per kabupaten.'
-      : I.g + (I.b ? ' · ' + I.b : '') + (bertarget ? ' · target ' + (I.neg ? '≤ ' : '≥ ') + fv(I.tgt) : '') + ' · ' + (bertarget ? 'warna = capaian terhadap target' : 'warna = dibanding kabupaten tertinggi') + (I.neg ? ' (dibalik)' : '');
-    $('.db-pind-info', blok).innerHTML = (bertarget ? '' : I.akum === 'persentase' ? 'target belum diisi · ' : '') + esc(I.akum) + (I.neg ? ' · <b class="ssg-neg">Indikator Negatif</b>' : '') + (I.prov ? ' · tingkat provinsi' : '');
+    petaIndLebar(sel);
+    $('.db-hint', blok).innerHTML = I.prov ? esc('Indikator tingkat provinsi: diisi satu angka untuk provinsi (' + fv(I.pv) + '), jadi tidak ada sebaran per kabupaten.')
+      : esc(I.g + (I.b ? ' · ' + I.b : '') + ' · ' + I.akum + (bertarget ? ' · target ' + (I.neg ? '≤ ' : '≥ ') + fv(I.tgt) : I.akum === 'persentase' ? ' · target belum diisi' : '') + ' · ' + (bertarget ? 'warna = capaian terhadap target' : 'warna = dibanding kabupaten tertinggi') + (I.neg ? ' (dibalik)' : '')) +
+        (I.neg ? ' <b class="ssg-neg">Indikator Negatif</b>' : '');
     var urut = kabs.filter(function (k) { return true; }).sort(function (a, b) { var x = nilai(a), y = nilai(b); if (x === null) return 1; if (y === null) return -1; return I.neg ? x - y : y - x; });
     var lebar = function (v) { return v === null ? 0 : I.akum === 'persentase' ? Math.min(100, v) : (mx > 0 ? v / mx * 100 : 0); };
     $('.db-bars', blok).innerHTML = I.prov ? '<p class="muted sm">Pilih indikator lain untuk melihat sebaran per kabupaten.</p>' : urut.map(function (k) {
@@ -2934,6 +3026,8 @@
   document.addEventListener('input', function (ev) {
     if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
     if (ev.target && ev.target.id === 'ssg-q') { ssgSaring(); return; }
+    if (ev.target && ev.target.classList && ev.target.classList.contains('is-tg')) { isCatat(ev.target); return; }
+    if (ev.target && ev.target.classList && ev.target.classList.contains('is-cari')) { isGambar(); var c = $('.is-cari'); if (c) { c.focus(); } return; }
     if (ev.target && ev.target.hasAttribute && ev.target.hasAttribute('data-ia-u')) { var iu = IA.rows[+ev.target.getAttribute('data-ia-u')]; iu.username = ev.target.value.trim().toLowerCase(); if (iu.status === 'e' && /Username/.test(iu.pesan)) iu.pilih = true; var cb = $('[data-ia-pilih="' + ev.target.getAttribute('data-ia-u') + '"]'); if (cb) { cb.disabled = false; cb.checked = iu.pilih; } iaSinkron(); return; }
     if (ev.target && ev.target.classList && ev.target.classList.contains('td-cari')) { tdUbah(ev.target); return; }
     if (ev.target && ev.target.classList && ev.target.classList.contains('md-cari')) { MD.q = ev.target.value; var pos = ev.target.selectionStart; mdTabel(); var c = $('#md .md-cari'); if (c) { c.focus(); try { c.setSelectionRange(pos, pos); } catch (e) { } } return; }
@@ -3002,6 +3096,7 @@
     if (fid === 'form-lacak') return submitLacak(ev);
     if (fid === 'form-buka-kunci' || fid === 'form-minta-kunci') return submitKunci(f);
     if (fid === 'form-tim-kelompok') return submitTimKelompok(f);
+    if (fid === 'form-is') return isSimpanInd(f, false);
     if (fid === 'form-isian') return submitIsian(f);
     if (fid === 'form-ssg') return submitSsg(f);
     if (fid === 'form-lbr') return submitLembar(f);
