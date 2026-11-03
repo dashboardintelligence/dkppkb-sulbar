@@ -690,6 +690,7 @@
       dsbSaring();
     }
     if ($('#ssg-fb')) ssgSaring();
+    if ($('#form-tim-kelompok')) tkkSinkron();
     if ($('.mvk-t')) mvkSiap();
     mvkReview();
     cincinDb();
@@ -742,6 +743,22 @@
         '<p class="muted sm">Permintaan dikirim ke Administrator utama. Anda bisa mengisi ulang setelah kunci dibuka.</p>' +
         '<div class="form-actions"><button class="btn btn-primary" type="submit">Minta buka kunci</button><button class="btn btn-ghost" type="button" data-act="close-modal">Tutup</button></div><p class="form-msg" role="alert"></p></form>';
     openModal('Bulan terkunci', h);
+  }
+  /** Kelola Indikator › Tim kerja per kelompok: sorot pilihan yang berubah, lalu simpan sekaligus. */
+  function tkkSinkron() {
+    var f = $('#form-tim-kelompok'); if (!f) return;
+    var n = 0; $$('.tkk-sel', f).forEach(function (s) { var beda = !!s.value && s.value !== s.getAttribute('data-awal'); s.classList.toggle('ubah', beda); if (beda) n++; });
+    var b = $('#tkk-simpan'); b.disabled = !n; b.textContent = n ? 'Simpan ' + n + ' kelompok' : 'Tersimpan';
+  }
+  function submitTimKelompok(f) {
+    var msg = $('.form-msg', f), btn = $('#tkk-simpan');
+    var kel = $$('.tkk-sel', f).filter(function (s) { return s.value && s.value !== s.getAttribute('data-awal'); }).map(function (s) { return { grup: s.getAttribute('data-grup'), program: s.value, dari: s.getAttribute('data-awal') || '' }; });
+    if (!kel.length) return;
+    btn.disabled = true; btn.textContent = 'Menyimpan…'; msg.textContent = '';
+    api('apiTautkanTimKelompok', [{ kelompok: kel, timpa: f.elements.timpa.checked }]).then(function (r) {
+      toast(r.ditautkan + ' indikator ditautkan ke tim kerja' + (r.dilewati ? '; ' + r.dilewati + ' dilewati karena sudah punya tim lain.' : '.'), 'ok');
+      return reload();
+    }).catch(function (e) { if (e.handled) return; msg.textContent = e.message; tkkSinkron(); });
   }
   function submitKunci(f) {
     var msg = $('.form-msg', f), btn = $('button[type=submit]', f), lb = btn.innerHTML, buka = f.id === 'form-buka-kunci';
@@ -2833,6 +2850,7 @@
     var t = ev.target;
     if (t.classList && t.classList.contains('dsb-sel')) { dsbSaring(); return; }
     if (t.classList && t.classList.contains('ssg-fil')) { ssgSaring(); return; }
+    if (t.classList && t.classList.contains('tkk-sel')) { tkkSinkron(); return; }
     if (t.classList && t.classList.contains('db-pind')) { petaInd(t.closest('.db-pblok'), false); return; }
     if (t.classList && t.classList.contains('lbr-in')) { lbrCek(t); lbrStatus(); return; }
     if (t.classList && t.classList.contains('rv-kab')) { var rm = rvMeta(); navigateTo('review', Object.assign({ per: rm.per }, t.value ? { kab: t.value } : {})); return; }
@@ -2878,6 +2896,7 @@
     if (fid === 'form-minta') return submitMinta(ev);
     if (fid === 'form-lacak') return submitLacak(ev);
     if (fid === 'form-buka-kunci' || fid === 'form-minta-kunci') return submitKunci(f);
+    if (fid === 'form-tim-kelompok') return submitTimKelompok(f);
     if (fid === 'form-isian') return submitIsian(f);
     if (fid === 'form-ssg') return submitSsg(f);
     if (fid === 'form-lbr') return submitLembar(f);
