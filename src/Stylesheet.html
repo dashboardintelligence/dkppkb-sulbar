@@ -1515,7 +1515,7 @@ html.profil-buka .profil-tirai{opacity:1;pointer-events:auto}
 /* Lembar Isi Data SPBE / Monev Kinerja dan Review keduanya */
 .lbr-t td{vertical-align:middle}
 .lbr-t .input-sm{height:30px;font-size:12.5px;width:auto;min-width:0;padding:0 8px}
-.lbr-t select.lbr-in{min-width:150px}.lbr-t select.lbr-tg{min-width:64px}
+.lbr-t select.lbr-in{min-width:150px}
 .lbr-num{width:96px !important;text-align:right;font-variant-numeric:tabular-nums}
 .lbr-in.chg{background:#e8f4fc;border-color:var(--p-d)}
 .lbr-in.bad{box-shadow:inset 0 0 0 1.5px var(--crit);color:var(--crit-d)}
@@ -1523,7 +1523,26 @@ html.profil-buka .profil-tirai{opacity:1;pointer-events:auto}
 .lbr-det td{background:var(--rail)}
 .lbr-det .form-grid{margin:4px 0}
 .lbr-t .lbr-ib{width:30px;height:30px;min-height:0;padding:0;justify-content:center;color:var(--mute)}.lbr-t .lbr-ib.ada{color:var(--p-d)}.lbr-ib .ic{margin:0;font-size:18px}
-.lbr-tw{display:inline-flex;gap:4px}.lbr-tw span{min-width:22px;border-radius:5px;padding:1px 5px;background:var(--rail);font-size:11.5px;font-variant-numeric:tabular-nums}
+.lbr-t th.spt-now,.lbr-t td.spt-now{background:var(--ok-l)}
+.lbr-t th.spt-now{color:var(--ok-d)}
+.lbr-t select.spt-lv{width:66px;min-width:0}
+.spt-dua{display:grid;gap:14px;margin-bottom:14px;grid-template-columns:1fr}
+@media(min-width:900px){.spt-dua{grid-template-columns:1fr 1fr}}
+.spt-dua > .card{margin:0}
+.spt-bar{position:relative;height:200px;margin-top:10px;padding:0 0 24px 22px;display:flex;align-items:flex-end;justify-content:space-around}
+.spt-sb{position:absolute;left:0;right:0;top:0;bottom:24px;pointer-events:none}
+.spt-sb span{position:absolute;left:0;right:0;border-top:1px dashed var(--bd);line-height:0}
+.spt-sb b{position:absolute;left:0;font-size:10.5px;font-weight:400;color:var(--tx2)}
+.spt-k{position:relative;width:min(56px,18%);height:100%;display:flex;flex-direction:column;justify-content:flex-end;align-items:center}
+.spt-k i{display:block;width:100%;border-radius:8px 8px 4px 4px;background:color-mix(in srgb,var(--ok) 38%,var(--card));transform-origin:bottom;animation:spt-tumbuh .7s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i)*120ms)}
+.spt-k.now i{background:var(--ok)}
+.spt-v{font-weight:700;font-size:13.5px;margin-bottom:4px;animation:spt-muncul .3s both;animation-delay:calc(var(--i)*120ms + 300ms)}
+.spt-kosong{font-size:11.5px;color:var(--tx2);margin-bottom:6px}
+.spt-l{position:absolute;bottom:-22px;font-size:12px;font-weight:600;color:var(--tx2);white-space:nowrap}
+.spt-k.now .spt-l{color:var(--tx)}
+@keyframes spt-tumbuh{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@keyframes spt-muncul{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.spt-k i,.spt-v{animation:none}}
 .lbr-sub{display:block;font-size:11px}
 .lbr-no{width:44px}
 .lbr-now{font-weight:700;color:var(--p-d)}
@@ -1773,8 +1792,11 @@ svg.mvk-sb path{fill:none;stroke:var(--mute2);stroke-width:1.6}
 .spbk{margin-top:10px;display:flex;flex-direction:column;gap:6px}
 .spbk-lbl{font-size:12.5px;font-weight:600;color:var(--tx2)}
 .spbk .bk-list{margin:0}
-.spbk-unggah{display:flex;flex-direction:column;align-items:center;gap:2px;border:1.5px dashed var(--mute2);border-radius:12px;padding:10px;cursor:pointer;color:var(--p-d);font-weight:600;font-size:13px;text-align:center}
+.spbk-unggah{display:inline-flex;align-self:flex-start;flex-wrap:wrap;align-items:center;gap:4px 8px;min-height:32px;border:1.5px dashed var(--mute2);border-radius:8px;padding:4px 12px;cursor:pointer;color:var(--p-d);font-weight:600;font-size:12.5px}
+.spbk-unggah .ic{font-size:16px}
 .spbk-unggah:hover{border-color:var(--p)}.spbk-unggah small{font-weight:400;font-size:11.5px;color:var(--tx2)}
+.spbk-tautan{display:flex;gap:6px;align-items:center}.spbk-tautan .input{flex:1;min-width:0}.spbk-tautan .btn{flex:none}
+.spbk .bk-item{padding:6px 10px;border-radius:10px;gap:10px}.spbk .bk-ext{min-width:38px;padding:6px 4px}
 .spbk-unggah.is-busy{opacity:.6;pointer-events:none}
 .lbr-ib{position:relative}.spbk-n{position:absolute;top:-4px;right:-6px;background:var(--p-d);color:#fff;font-size:10px;font-weight:700;border-radius:99px;padding:0 5px;line-height:16px}
 .is-tbl th:first-child,.is-tbl td:first-child{min-width:260px}

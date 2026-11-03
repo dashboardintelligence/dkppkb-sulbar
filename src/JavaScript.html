@@ -697,6 +697,7 @@
     if ($('.mvk-t')) mvkSiap();
     mvkReview();
     cincinDb();
+    sptHitung();
     mdInit();
     window.scrollTo(0, keepY);
     if (!(opts && opts.keep)) { try { $('#main').focus({ preventScroll: true }); } catch (e) { } }
@@ -2018,8 +2019,9 @@
 
   /* ---------- bukti dukung SPBE: unggah dan hapus berkas tanpa memuat ulang lembar (isian yang belum disimpan tetap ada) ---------- */
   function spbkHitung(row) {
-    var n = $$('#form-lbr tr[data-det="' + row + '"] .bk-item').length, ib = $('#form-lbr tr:not([data-det]) .lbr-ib[aria-label="Bukti dukung"][data-row="' + row + '"]');
-    if (!ib) return; var s = $('.spbk-n', ib); s.textContent = n; s.hidden = !n; ib.classList.toggle('ada', !!n || !!($('#form-lbr tr[data-det="' + row + '"] input[type=url]') || {}).value);
+    var n = $$('#form-lbr tr[data-det="' + row + '"] .bk-item').length, ib = $('#form-lbr tr:not([data-det]) .lbr-ib[data-row="' + row + '"]');
+    if (!ib) return; var s = $('.spbk-n', ib), dt = '#form-lbr tr[data-det="' + row + '"] ';
+    s.textContent = n; s.hidden = !n; ib.classList.toggle('ada', !!n || !!($(dt + 'input[type=url]') || {}).value || !!($(dt + 'textarea') || {}).value);
   }
   function spbkUnggah(inp) {
     var file = inp.files && inp.files[0]; if (!file) return;
@@ -2370,6 +2372,21 @@
     $$('.lbr-in', f).forEach(function (i) { i.value = i.getAttribute('data-o') || ''; i.classList.remove('chg', 'bad'); });
     lbrStatus();
   }
+  /* Grafik batang Review SPBE: angka di atas batang berhitung naik bersamaan dengan batang tumbuh. */
+  function sptHitung() {
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    $$('.spt-bar .spt-v').forEach(function (el, k) {
+      var n = Number(el.getAttribute('data-n')), akhir = el.textContent, t0 = 0;
+      el.textContent = '0';
+      setTimeout(function () {
+        requestAnimationFrame(function step(t) {
+          if (!t0) t0 = t; var p = Math.min(1, (t - t0) / 700);
+          el.textContent = p < 1 ? (n * (1 - Math.pow(1 - p, 3))).toFixed(1).replace('.', ',') : akhir;
+          if (p < 1) requestAnimationFrame(step);
+        });
+      }, k * 120 + 300);
+    });
+  }
   function submitLembar(f) {
     if ($('.lbr-in.bad', f)) { toast('Perbaiki kotak bergaris merah dulu.', 'err'); return; }
     if (f.classList.contains('mvk-form') && !mvkCekSimpan(f)) return;
@@ -2421,15 +2438,6 @@
     btn.disabled = true;
     api('apiSimpanBidang', [{ lama: f.elements.lama.value, nama: f.elements.nama.value }]).then(function (r) { closeModal(); toast('Bidang ' + r.nama + ' disimpan.', 'ok'); reload(); })
       .catch(function (e) { btn.disabled = false; if (!e.handled) msg.textContent = e.message; });
-  }
-  /** Unduh tabel Review (table[data-unduh]) apa adanya sebagai CSV untuk Excel; baris judul kelompok ikut sebagai satu sel. */
-  function unduhTabel(nama) {
-    var t = $('#app-container table[data-unduh]'); if (!t) return;
-    var q = function (s) { s = String(s == null ? '' : s).replace(/\s+/g, ' ').trim(); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    var out = $$('tr', t).map(function (tr) { return $$('th,td', tr).map(function (x) { return q(x.innerText); }).join(';'); });
-    var blob = new Blob(['\ufeffsep=;\n' + out.join('\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = (nama || 'Review') + '.csv';
-    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   }
   function submitSsg(f) {
     if ($('.ssg-in.bad', f)) { toast('Perbaiki kotak bergaris merah dulu.', 'err'); return; }
@@ -2648,6 +2656,14 @@
       case 'mvk-tambah': mvkFormBaris(''); break;
       case 'tarik-buka': tarikBuka(); break;
       case 'spbk-hapus': spbkHapus(el); break;
+      case 'spbk-tautan-lihat': case 'spbk-tautan-hapus': {
+        var tin = $('#form-lbr tr[data-det="' + el.getAttribute('data-row') + '"] input[type=url]'); if (!tin) break;
+        var tv = tin.value.trim();
+        if (act === 'spbk-tautan-hapus') { tin.value = ''; lbrCek(tin); lbrStatus(); spbkHitung(el.getAttribute('data-row')); toast('Tautan dihapus. Tekan Simpan untuk menyimpan.', 'ok'); break; }
+        if (!/^https?:\/\/\S+$/i.test(tv)) { toast(tv ? 'Tautan harus diawali http:// atau https://' : 'Belum ada tautan bukti dukung.', 'err'); break; }
+        window.open(tv, '_blank', 'noopener');
+        break;
+      }
       case 'tarik2': tarikUnduh(el.getAttribute('data-format')); break;
       case 'td-tpl': case 'td-g': case 'td-tw': tdAksi(el, act); break;
       case 'mvk-ubah': mvkFormBaris(el.getAttribute('data-id')); break;
@@ -2668,7 +2684,6 @@
         if (md === 'ind') petaInd($('.db-pblok[data-mode=ind]', kp), true);
         break;
       }
-      case 'tbl-unduh': unduhTabel(el.getAttribute('data-nama')); break;
       case 'nav-induk': {
         var sub = $('.nav-subs', el.closest('.nav-grp')), bk = sub.hidden;
         sub.hidden = !bk; el.setAttribute('aria-expanded', String(bk));
