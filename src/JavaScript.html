@@ -17,9 +17,6 @@
     { id: 'inputdata', label: 'Isi Data', icon: 'edit_note', group: 'Utama', roles: ['admin', 'staf', 'admindata', 'pic'] },
     { id: 'laporan', label: 'Minta Data', icon: 'description', group: 'Utama' },
     // Menu induk (id diawali _) membuka sub-menu Isi Data dan Review; bila hanya satu sub-menu yang boleh, tampil sebagai satu menu biasa
-    { id: '_ss', label: 'Sulbar Sehat', icon: 'monitor_heart', group: 'Monev', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
-    { id: 'ssisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_ss', roles: ['admin', 'staf', 'admindata'] },
-    { id: 'ssreview', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_ss', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
     { id: '_spbe', label: 'SPBE', icon: 'lan', group: 'Monev', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
     { id: 'spbeisi', label: 'Isi Data', icon: 'edit_note', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf', 'adminspbe'] },
     { id: 'spbe', label: 'Review', icon: 'fact_check', group: 'Monev', induk: '_spbe', roles: ['admin', 'staf', 'admindata', 'adminspbe', 'adminmonev', 'pic', 'pimpinan'] },
@@ -32,7 +29,7 @@
     { id: 'panduan', label: 'Panduan Pengguna', icon: 'help', group: 'Pengaturan' }
   ];
   // Ikon bilah samping: Phosphor Thin (garis tipis, gaya Apple)
-  var IKON_SIDE = { dashboard: 'squares-four', review: 'clipboard-text', inputdata: 'pencil-simple-line', laporan: 'file-text', _ss: 'heartbeat', _spbe: 'cpu', _monev: 'chart-line-up', pengaturan: 'gear-six',
+  var IKON_SIDE = { dashboard: 'squares-four', review: 'clipboard-text', inputdata: 'pencil-simple-line', laporan: 'file-text', _spbe: 'cpu', _monev: 'chart-line-up', pengaturan: 'gear-six',
     tambahindikator: 'target', pengguna: 'users', panduan: 'book-open' };
   var BOTTOM = [
     { id: 'dashboard', label: 'Dashboard', icon: 'dashboard' },
@@ -41,13 +38,12 @@
     { id: 'laporan', label: 'Minta Data', icon: 'description' },
     { id: '_menu', label: 'Menu', icon: 'menu' }
   ];
-  /* Menu tab atas: Dashboard, Review, Isi Data, Laporan, Sulbar Sehat, SPBE, Monev Kinerja, Pengaturan. Tindak Lanjut dan Permintaan Data di Laporan. */
+  /* Menu tab atas: Dashboard, Review, Isi Data, Laporan, SPBE, Monev Kinerja, Pengaturan. Tindak Lanjut dan Permintaan Data di Laporan. */
   var TOP = [
     { id: 'dashboard', label: 'Dashboard' },
     { id: 'review', label: 'Review' },
     { id: 'inputdata', label: 'Isi Data' },
     { id: 'laporan', label: 'Minta Data' },
-    { label: 'Sulbar Sehat', children: ['ssisi', 'ssreview'] },
     { label: 'SPBE', children: ['spbeisi', 'spbe'] },
     { label: 'Monev Kinerja', children: ['monevisi', 'monev'] },
     { label: 'Pengaturan', children: ['pengaturan', 'tambahindikator', 'pengguna', 'panduan'] }
@@ -112,7 +108,7 @@
     return pr;
   }
   /** Panggil API ber-token. Mengembalikan data atau melempar Error; sesi habis -> kembali ke login. */
-  var PCACHE = {}, READ_API = { apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiFotoGaleriAdmin: 1, apiNotifikasi: 1, apiLaporanTw: 1 };
+  var PCACHE = {}, READ_API = { apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiLaporanTw: 1 };
   function api(fn, args) {
     if (!READ_API[fn]) pcBasi();   // ada perubahan data: tandai cache halaman basi
     args = [AppState.sessionToken].concat(args || []);
@@ -207,7 +203,7 @@
   /** Halaman tanpa menu sendiri disorot di menu induknya (Tindak Lanjut dan Permintaan Data di Laporan). */
   function menuInduk(page) {
     if (page === 'monev' && AppState.params && AppState.params.sasaran) return 'monevisi';   // rincian sasaran dibuka dari Isi Data Monev Kinerja
-    return { sulbarsehat: 'dashboard', permintaan: 'laporan' }[page] || page;
+    return { permintaan: 'laporan' }[page] || page;
   }
   function markMenu(page) {
     page = menuInduk(page);
@@ -258,76 +254,6 @@
   }
 
 
-  /* ---------- galeri halaman awal ---------- */
-  var GAL = { items: [], i: 0, img: {}, timer: null };
-  function galFoto(id) {
-    if (GAL.img[id]) return Promise.resolve(GAL.img[id]);
-    return call('apiFotoGaleri', [id]).then(function (r) {
-      if (!r || !r.success) throw new Error('foto');
-      GAL.img[id] = 'data:' + r.data.mime + ';base64,' + r.data.base64; return GAL.img[id];
-    });
-  }
-  function galTampil(n) {
-    var it = GAL.items[n]; if (!it) return;
-    GAL.i = n;
-    var im = $('#gal-img'); im.classList.add('is-load');
-    galFoto(it.id).then(function (src) {
-      if (GAL.items[GAL.i] !== it) return;
-      im.src = src; im.alt = it.judul || 'Foto kegiatan'; im.classList.remove('is-load');
-      var nx = GAL.items[(n + 1) % GAL.items.length]; if (nx && nx !== it) galFoto(nx.id).catch(function () { });
-    }).catch(function () { im.classList.remove('is-load'); });
-    $('#gal-cap').innerHTML = (it.judul ? '<b>' + esc(it.judul) + '</b>' : '') + (it.ket ? '<span>' + esc(it.ket) + '</span>' : '');
-    $('#gal-cap').hidden = !(it.judul || it.ket);
-    $$('#gal-dots button').forEach(function (b, k) { b.setAttribute('aria-selected', k === n ? 'true' : 'false'); });
-  }
-  function galGeser(d) { if (GAL.items.length) galTampil((GAL.i + d + GAL.items.length) % GAL.items.length); galJalan(); }
-  function galJalan() {
-    clearInterval(GAL.timer);
-    var diam = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (GAL.items.length > 1 && !diam) GAL.timer = setInterval(function () { if (!document.hidden && !$('#gal-card').matches(':hover') && !$('#gal-card').contains(document.activeElement)) galTampil((GAL.i + 1) % GAL.items.length); }, 6000);
-  }
-  function galMuat() {
-    var card = $('#gal-card'); if (!card || !API_URL) return;
-    call('apiGaleriPublik', []).then(function (r) {
-      if (!r || !r.success || !Array.isArray(r.data) || !r.data.length) return;
-      GAL.items = r.data; card.hidden = false;
-      $('#gal-dots').innerHTML = r.data.map(function (x, k) { return '<button type="button" role="tab" aria-label="Foto ' + (k + 1) + '" data-gal="' + k + '"></button>'; }).join('');
-      $('#gal-dots').hidden = r.data.length < 2; $('#gal-prev').hidden = $('#gal-next').hidden = r.data.length < 2;
-      galTampil(0); galJalan();
-    }).catch(function () { });
-  }
-  /** Perkecil foto di peramban (maks 1280 px, JPEG) sebelum diunggah. */
-  function kecilkanFoto(file) {
-    return new Promise(function (ok, gagal) {
-      var url = URL.createObjectURL(file), im = new Image();
-      im.onload = function () {
-        var s = Math.min(1, 1280 / Math.max(im.width, im.height)), cv = document.createElement('canvas');
-        cv.width = Math.round(im.width * s); cv.height = Math.round(im.height * s);
-        cv.getContext('2d').drawImage(im, 0, 0, cv.width, cv.height); URL.revokeObjectURL(url);
-        ok(cv.toDataURL('image/jpeg', 0.8).split(',')[1]);
-      };
-      im.onerror = function () { URL.revokeObjectURL(url); gagal(new Error('Berkas bukan gambar yang valid.')); };
-      im.src = url;
-    });
-  }
-  function submitGaleri(f) {
-    var msg = $('.form-msg', f), btn = $('button[type=submit]', f), file = $('#gl-file').files[0];
-    msg.className = 'form-msg'; msg.textContent = '';
-    if (!file) { msg.textContent = 'Pilih foto terlebih dahulu.'; return; }
-    if (file.size > 15 * 1048576) { msg.textContent = 'Foto terlalu besar (maks 15 MB sebelum diperkecil).'; return; }
-    var label = btn.innerHTML; btn.disabled = true; btn.textContent = 'Memproses…';
-    kecilkanFoto(file).then(function (b64) {
-      return api('apiUnggahFoto', [{ base64: b64, judul: f.elements.judul.value, ket: f.elements.ket.value }]);
-    }).then(function () { toast('Foto ditambahkan ke galeri.', 'ok'); f.reset(); return reload(); })
-      .catch(function (e) { if (e && e.handled) return; msg.textContent = e.message; btn.disabled = false; btn.innerHTML = label; });
-  }
-  function galThumbs() {
-    $$('[data-gal-thumb]').forEach(function (im) {
-      var id = im.getAttribute('data-gal-thumb');
-      if (GAL.img['a' + id]) { im.src = GAL.img['a' + id]; return; }
-      api('apiFotoGaleriAdmin', [id]).then(function (r) { GAL.img['a' + id] = 'data:' + r.mime + ';base64,' + r.base64; im.src = GAL.img['a' + id]; }).catch(function () { });
-    });
-  }
 
   /* ---------- login / sesi ---------- */
   function landShow(w) {
@@ -508,7 +434,7 @@
     call('doLogin', [u, p]).then(function (r) {
       if (!r || !r.success) throw new Error((r && r.message) || 'Gagal masuk.');
       AppState.sessionToken = r.data.token; simpanSesi(r.data.token);
-      return startApp(r.data.mulai).then(function () { sambutTampil(false); });
+      return startApp(r.data.mulai);
     }).catch(function (err) {
       msg.textContent = err.message;
     }).then(function () { btn.disabled = false; btn.textContent = 'Masuk'; });
@@ -536,7 +462,7 @@
   /* Panduan singkat tiga langkah sesuai peran; muncul sekali saat pertama masuk, bisa dibuka lagi dari menu Panduan. */
   var PANDUAN = {
     isi: [['Buka Isi Data', 'Pilih periode (bulan, triwulan, atau semester). Angka diisi kumulatif sampai akhir periode.'], ['Ketik angka', 'Isi Sasaran dan Realisasi per kabupaten, atau unduh templat Excel, isi, lalu unggah kembali.'], ['Tekan Simpan', 'Kotak kuning berarti angka perlu diperiksa (melebihi sasaran atau turun dari periode lalu), tetapi tetap bisa disimpan.']],
-    admin: [['Pantau kelengkapan', 'Peta Dashboard › Kelengkapan menunjukkan kabupaten yang belum mengisi; Peringkat kabupaten ada di Dashboard.'], ['Atur indikator', 'Kelola Indikator dipisah per kelompok. Pilih cara akumulasi: persentase, angka, atau jumlah.'], ['Bagikan hasil', 'Dari Review: Tarik Data untuk Excel/PDF dan Laporan Eksekutif per triwulan. Permintaan data masuk di menu Minta Data.']],
+    admin: [['Pantau kelengkapan', 'Kartu Belum diisi dan Perlu perhatian di Dashboard menunjukkan isian yang belum masuk; Peringkat kabupaten ada di Dashboard.'], ['Atur indikator', 'Kelola Indikator dipisah per kelompok. Pilih cara akumulasi: persentase, angka, atau jumlah.'], ['Bagikan hasil', 'Dari Review: Tarik Data untuk Excel/PDF. Permintaan data masuk di menu Minta Data.']],
     pimpinan: [['Baca Dashboard', 'Kalimat ringkasan di atas dan peta kabupaten memberi gambaran sekali pandang.'], ['Telusuri di Review', 'Pilih periode dan kabupaten; klik indikator untuk melihat angka per kabupaten dan tren.'], ['Tarik Data', 'Tombol Tarik Data di Review mengunduh angka indikator per triwulan sebagai Excel atau PDF.']]
   };
   function panduanSingkat(paksa) {
@@ -577,8 +503,7 @@
     var items = MENU.filter(function (m) { return !m.roles || m.roles.indexOf(u.role) >= 0; });
     var html = '', g = '';
     var tombol = function (m, ikon, label, cls) {
-      return '<button type="button" class="nav-item' + (cls || '') + '" data-nav="' + m.id + '" data-menu="' + m.id + '">' + (ikon ? '<i class="ph-thin ph-' + ikon + '" aria-hidden="true"></i>' : '') + '<span>' + esc(label) + '</span>' +
-        (m.badge ? '<span class="chip chip-warn nav-badge" id="nav-badge" hidden>0</span>' : '') + '</button>';
+      return '<button type="button" class="nav-item' + (cls || '') + '" data-nav="' + m.id + '" data-menu="' + m.id + '">' + (ikon ? '<i class="ph-thin ph-' + ikon + '" aria-hidden="true"></i>' : '') + '<span>' + esc(label) + '</span>' + '</button>';
     };
     items.forEach(function (m) {
       if (m.induk) return;
@@ -615,21 +540,10 @@
     $('#nav-bottom').innerHTML = BOTTOM.filter(function (b) { return b.id === '_menu' || boleh[b.id]; }).map(function (b) {
       return '<button type="button" class="bn" ' + (b.id === '_menu' ? 'data-act="open-drawer"' : 'data-nav="' + b.id + '" data-menu="' + b.id + '"') + '><span class="ic" aria-hidden="true">' + b.icon + '</span><span>' + b.label + '</span></button>';
     }).join('');
-    setBadge(d.badge);
     show($('#banner-pwd'), !!d.passwordDefault);
   }
-  /** Angka lonceng: hilang setelah panel pemberitahuan dibuka, muncul lagi bila jumlahnya bertambah (disimpan per pengguna di browser). */
-  function kunciLonceng() { return 'dkppkb_lonceng_' + ((AppState.user && AppState.user.username) || ''); }
-  function setBadge(n) {
-    n = Number(n) || 0; AppState.badge = n;
-    var lihat = 0; try { lihat = Number(localStorage.getItem(kunciLonceng()) || 0); if (n < lihat) { localStorage.setItem(kunciLonceng(), String(n)); lihat = n; } } catch (e) { }
-    var tampil = n > lihat ? n : 0, b = $('#notif-badge'), nb = $('#nav-badge');
-    b.textContent = tampil > 99 ? '99+' : tampil; b.hidden = !tampil;
-    if (nb) { nb.textContent = tampil; nb.hidden = !tampil; }
-  }
-  function loncengDibaca() { try { localStorage.setItem(kunciLonceng(), String(AppState.badge || 0)); } catch (e) { } setBadge(AppState.badge || 0); }
-  function refreshBadge() {
-    return api('apiBootstrap').then(function (d) { setBadge(d.badge); show($('#banner-pwd'), !!d.passwordDefault); }).catch(function () { });
+  function refreshBanner() {   // hanya memperbarui spanduk kata sandi bawaan
+    return api('apiBootstrap').then(function (d) { show($('#banner-pwd'), !!d.passwordDefault); }).catch(function () { });
   }
   function logout() {
     var t = AppState.sessionToken;
@@ -645,7 +559,7 @@
   /* ---------- pilihan periode (Dashboard, Review, Isi Data) ----------
    * per = b1–b12 | tw1–tw4 | s1–s2; angka kumulatif, jadi periode dibaca di bulan akhirnya. Pilihan diingat antarhalaman,
    * dan pemilih Bulan di bilah atas disembunyikan di halaman ini karena sudah digantikan. */
-  var PER_HAL = ['dashboard', 'review', 'inputdata', 'ssisi', 'ssreview'];
+  var PER_HAL = ['dashboard', 'review', 'inputdata'];
   function perSimpan(v) { try { if (v) localStorage.setItem('dkppkb_per', v); } catch (e) { } }
   function perIngat() { try { return localStorage.getItem('dkppkb_per') || ''; } catch (e) { return ''; } }
   function perAkhir(per) {
@@ -754,60 +668,7 @@
       '<p class="ab-sub">Dasbor eksekutif indikator kesehatan, pengendalian penduduk &amp; KB Provinsi Sulawesi Barat</p></div>';
   }
 
-  /* ---------- panel pemberitahuan (lonceng) ---------- */
-  var NOTIF_JENIS = { crit: 'Mendesak', warn: 'Perlu tindakan', info: 'Info' };
-  function posNotif() {
-    var p = $('#notif-panel'), b = $('#btn-notif').getBoundingClientRect();
-    var vw = document.documentElement.clientWidth, w = Math.min(380, vw - 24);
-    p.style.top = Math.round(b.bottom + 8) + 'px';
-    p.style.left = 'auto';
-    p.style.right = Math.max(12, Math.min(Math.round(vw - b.right - 8), vw - w - 12)) + 'px';   // tidak keluar layar di ponsel
-  }
-  function closeNotif() {
-    var p = $('#notif-panel'); if (!p || p.hidden) return;
-    p.hidden = true; $('#btn-notif').setAttribute('aria-expanded', 'false');
-  }
-  /** Pemberitahuan yang sudah diklik disembunyikan (disimpan per pengguna di browser); muncul lagi bila isinya berubah. */
-  function kunciNotifBaca() { return 'dkppkb_notif_dibaca_' + ((AppState.user && AppState.user.username) || ''); }
-  function notifDibaca() { try { return JSON.parse(localStorage.getItem(kunciNotifBaca()) || '[]'); } catch (e) { return []; } }
-  function notifKunci(it) { return [it.jenis, it.judul, it.isi || ''].join('|'); }
-  function notifBaca(kunci) {
-    var l = notifDibaca(); (Array.isArray(kunci) ? kunci : [kunci]).forEach(function (k) { if (l.indexOf(k) < 0) l.push(k); });
-    try { localStorage.setItem(kunciNotifBaca(), JSON.stringify(l.slice(-200))); } catch (e) { }
-  }
-  var NOTIF_TERAKHIR = null;
-  function renderNotif(d) {
-    NOTIF_TERAKHIR = d;
-    var baca = notifDibaca(), semua = (d && d.items) || [], items = semua.filter(function (it) { return baca.indexOf(notifKunci(it)) < 0; });
-    var html = '<div class="np-head"><b>Pemberitahuan</b>' + (items.length ? '<button type="button" class="btn btn-ghost btn-sm np-semua" data-act="notif-semua">Tandai semua dibaca</button>' : '') +
-      '<button type="button" class="icon-btn np-x" data-act="notif-close" aria-label="Tutup pemberitahuan"><span class="ic" aria-hidden="true">close</span></button></div>';
-    if (!items.length) html += '<div class="np-empty"><span class="ic" aria-hidden="true">notifications_off</span><p>' + (semua.length ? 'Semua pemberitahuan sudah dibaca.' : 'Tidak ada pemberitahuan. Semua isian tertib.') + '</p></div>';
-    else html += '<ul class="np-list">' + items.map(function (it) {
-      return '<li><button type="button" class="np-item np-' + esc(it.jenis) + '" data-nk="' + esc(notifKunci(it)) + '" data-nav="' + esc(it.nav || (AppState.user && AppState.user.role === 'pimpinan' ? 'review' : 'inputdata')) + '"><span class="np-ic"><span class="ic" aria-hidden="true">' + esc(it.ikon || 'info') + '</span></span>' +
-        '<span class="np-txt"><b>' + esc(it.judul) + '</b><span>' + esc(it.isi || '') + '</span></span><span class="sr">' + esc(NOTIF_JENIS[it.jenis] || '') + '</span></button></li>';
-    }).join('') + '</ul>';
-    if (d && d.lebih && items.length) html += '<p class="np-more">+' + d.lebih + ' indikator tertunggak lainnya</p>';
-    var isi = !(AppState.user && AppState.user.role === 'pimpinan');
-    html += '<div class="np-foot"><button type="button" class="btn btn-ghost btn-sm" data-nav="' + (isi ? 'inputdata' : 'review') + '">' + '<span class="ic" aria-hidden="true">' + (isi ? 'edit_note' : 'fact_check') + '</span>' + (isi ? 'Buka Isi Data' : 'Buka Review') + '</button></div>';
-    $('#notif-panel').innerHTML = html;
-  }
-  function toggleNotif() {
-    var p = $('#notif-panel');
-    if (!p.hidden) { closeNotif(); return; }
-    closeTopMenus();
-    posNotif(); p.hidden = false; $('#btn-notif').setAttribute('aria-expanded', 'true'); loncengDibaca();
-    p.innerHTML = '<div class="np-head"><b>Pemberitahuan</b></div><div class="np-empty"><span class="spin" aria-hidden="true"></span><p>Memuat…</p></div>';
-    api('apiNotifikasi').then(renderNotif).catch(function (e) {
-      if (e && e.handled) return;
-      // Server Apps Script lama belum punya apiNotifikasi: tampilkan ringkasan dari data yang sudah ada.
-      var n = AppState.badge || 0, it = [];
-      if (n) it.push({ jenis: 'warn', ikon: 'report', judul: n + ' indikator tertunggak', isi: 'Belum diisi untuk periode berjalan', nav: AppState.user && AppState.user.role === 'pimpinan' ? 'review' : 'inputdata' });
-      if (!$('#banner-pwd').hidden) it.push({ jenis: 'crit', ikon: 'key', judul: 'Kata sandi bawaan masih dipakai', isi: 'Segera ganti demi keamanan data', nav: 'pengaturan' });
-      renderNotif({ items: it });
-    });
-  }
 
-  window.addEventListener('resize', function () { var p = document.getElementById('notif-panel'); if (p && !p.hidden) posNotif(); });
 
   function injectPage(page, html, title, opts) {
     var keepY = opts && opts.keep ? window.scrollY : 0;
@@ -820,18 +681,15 @@
       if (hd) hd.outerHTML = '<h1 class="sr">' + esc(hd.textContent) + '</h1>' + bn; else $('#app-container').insertAdjacentHTML('afterbegin', bn);
     }
     $$('#app-container .a-banner').forEach(isiBanner);
-    closeNotif();
     $('#topbar-title').textContent = title || '';
     document.title = (title ? title + ' · ' : '') + (BRAND.full || 'DKPPKB Sulbar Intelligence');
     $$('[data-menu]').forEach(function (b) { var on = b.getAttribute('data-menu') === menuInduk(page); b.classList.toggle('active', on); if (on) b.setAttribute('aria-current', 'page'); else b.removeAttribute('aria-current'); });
     tandaiInduk();
     AppState.rendered = true; updBack();
-    if (page === 'review' || page === 'ssreview') {
+    if (page === 'review') {
       dsbSaring();
-      var job = null; try { job = JSON.parse(sessionStorage.getItem('dkppkb_cetak') || 'null'); sessionStorage.removeItem('dkppkb_cetak'); } catch (e) { }
-      if (job && $('#rv-cetak-meta')) setTimeout(function () { rvCetakJalan(job); }, 200);
     }
-    if ($('.ssg-prog')) ssgSaringProg();
+    if ($('#ssg-fb')) ssgSaring();
     if ($('.mvk-t')) mvkSiap();
     mvkReview();
     cincinDb();
@@ -841,7 +699,6 @@
     applyImLayout();
     if (opts && opts.keep) accPulih(); else ACC = {};
     var fib = $('#form-ind-baru'); if (fib) { syncIndBaru(fib); fib._iaManual = false; iaSync(fib); }
-    if ($('[data-gal-thumb]')) galThumbs();
     var ftk = $('#form-tarik'); if (ftk) syncTarik(ftk);
     tabelAlat();
     if (page === 'pengguna' && AppState.params && AppState.params.tambah) { delete AppState.params.tambah; openUserForm({}); }
@@ -928,7 +785,7 @@
       .then(function (r) {
         closeModal(true);
         toast(r.status === 'Lengkap' ? 'Data tersimpan.' : r.status === 'Menunggu Verifikasi' ? 'Tersimpan, menunggu verifikasi admin.' : 'Tersimpan sebagai belum lengkap.', 'ok');
-        reload(); refreshBadge();
+        reload(); refreshBanner();
       }).catch(function (e) { if (e.handled) return; msg.className = 'form-msg'; msg.textContent = e.message; btn.disabled = false; btn.textContent = 'Simpan'; });
   }
 
@@ -961,7 +818,7 @@
       form.reset();
       var m = {
         apiSimpanConfig: function () { return startApp(); }, // muat ulang periode & menu
-        apiUbahPassword: function () { return refreshBadge(); }
+        apiUbahPassword: function () { return refreshBanner(); }
       }[fn];
       if (fn === 'apiSimpanConfig') { return refreshPeriod(); }
       if (m) m();
@@ -1099,7 +956,7 @@
   var PRATINJAU_ = { pdf: 1, jpg: 1, jpeg: 1, png: 1, webp: 1, txt: 1, csv: 1 };
   /* ---------- Riwayat Perubahan (halaman) ---------- */
 
-  /* ---------- Profil: foto, nama tampil (laci dari ikon akun) dan layar sambutan saat masuk ---------- */
+  /* ---------- Profil: foto, nama tampil (laci dari ikon akun) ---------- */
   function avatarIsi(el, besar) {
     if (!el) return; var u = AppState.user || {}, f = AppState.foto;
     var ini = String(u.nama || '?').trim().split(/\s+/).map(function (x) { return x.charAt(0); }).slice(0, besar ? 2 : 1).join('').toUpperCase();
@@ -1162,30 +1019,6 @@
     var u = AppState.user, ket = $('#profil-laci .pl-ket'); if (ket) ket.textContent = data ? 'Mengunggah foto…' : 'Menghapus foto…';
     api('apiSimpanProfil', [{ nama: u.nama, foto: data }]).then(function (r) { profilSegar(r); toast(data ? 'Foto profil diperbarui.' : 'Foto profil dihapus.', 'ok'); profilBuka(); })
       .catch(function (e) { if (ket) ket.textContent = 'Klik foto untuk mengganti'; if (!e.handled) toast(e.message, 'err'); });
-  }
-  /** Layar sambutan penuh setelah masuk (warna langit sesuai waktu, kartu pengguna, ringkasan tugas). */
-  function sambutKunci() { var d = new Date(); return 'dkppkb_sambut_' + ((AppState.user || {}).username || '') + '_' + d.getFullYear() + (d.getMonth() + 1) + d.getDate(); }
-  function sambutTampil(paksa) {
-    var u = AppState.user; if (!u) return;
-    try { if (!paksa && localStorage.getItem(sambutKunci())) return; } catch (e) { }
-    var sp = AppState.sapaan || { items: [], nav: 'dashboard', tombol: 'Lihat Dashboard' }, w = salamWaktu(), el = $('#sambut');
-    if (!el) { document.body.insertAdjacentHTML('beforeend', '<div class="sambut" id="sambut" role="dialog" aria-modal="true" aria-label="Sambutan" hidden></div>'); el = $('#sambut'); }
-    var peran = (sp.jabatan || ROLE_LABEL[u.role] || u.role) + (sp.tim ? ' · ' + sp.tim.replace(/^Tim Kerja /, 'Tim Kerja ') : '');
-    el.className = 'sambut sb-' + w[1];
-    el.innerHTML = '<span class="sb-mat" aria-hidden="true"></span><div class="sb-isi"><span class="sb-av av-fill" data-pav></span><h2>' + esc(w[0] + ', ' + namaDepan()) + '!</h2>' +
-      '<p class="sb-tgl">' + esc(['Minggu', 'Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu'][new Date().getDay()] + ', ' + tglPanjang(new Date())) + ' · semoga harimu lancar</p>' +
-      '<div class="sb-kartu"><span class="sb-kl" aria-hidden="true">' + EMBLEM_SVG + '</span><div><small>KARTU PENGGUNA</small><b>' + esc(u.nama) + '</b><span>' + esc(peran) + (u.bidang && !sp.tim ? ' · ' + esc(u.bidang) : '') + '</span></div></div>' +
-      ((sp.items || []).length ? '<ul class="sb-tugas">' + sp.items.map(function (x) { return '<li><b>' + x.n + '</b>' + esc(x.t) + '</li>'; }).join('') + '</ul>' : '<p class="sb-kosong">Tidak ada tugas yang tertunda. Selamat bekerja!</p>') +
-      '<button type="button" class="sb-btn" data-act="sambut-mulai" data-tuju="' + esc(sp.nav) + '">' + esc(sp.tombol) + ' →</button>' +
-      '<label class="sb-lagi"><input type="checkbox" id="sambut-lagi"> Jangan tampilkan lagi hari ini</label>' +
-      '<button type="button" class="sb-x" data-act="sambut-tutup" aria-label="Tutup sambutan">✕</button></div>';
-    $$('[data-pav]', el).forEach(function (a) { avatarIsi(a, true); });
-    el.hidden = false; requestAnimationFrame(function () { el.classList.add('on'); var b = $('.sb-btn', el); if (b) b.focus(); });
-  }
-  function sambutTutup() {
-    var el = $('#sambut'); if (!el || el.hidden) return;
-    try { if ($('#sambut-lagi') && $('#sambut-lagi').checked) localStorage.setItem(sambutKunci(), '1'); } catch (e) { }
-    el.classList.remove('on'); setTimeout(function () { el.hidden = true; }, 350);
   }
 
   /* ---------- Minta Data (gaya kartu toska): tabel -> rincian dengan pratinjau Surat / Lembar disposisi ----------
@@ -1622,7 +1455,6 @@
   /* ---------- Monev Kinerja: lembar resmi (Isi Data) dan Review ---------- */
   var MVK_JENIS = [{ v: 'tujuan', t: 'Tujuan' }, { v: 'sasaran', t: 'Sasaran' }, { v: 'program', t: 'Program' }, { v: 'turunan', t: 'Program turunan' }], MVK_ROM = ['I', 'II', 'III', 'IV'];
   function mvkMeta() { var el = $('#mvk-meta'); if (!el) return {}; try { return JSON.parse(el.getAttribute('data-json') || '{}'); } catch (e) { return {}; } }
-  function mvkBaca(s) { s = angkaId(s); return s === '' || isNaN(Number(s)) ? null : Number(s); }
   function mvkPersen(v) { return v === null ? '—' : v.toFixed(1).replace('.', ',') + '%'; }
   function mvkSiap() { $$('.mvk-t textarea').forEach(mvkPas); }
   /** Kotak tulisan lembar Monev setinggi isinya, jadi tidak ada gulir di dalam sel. */
@@ -1842,7 +1674,6 @@
   var MVK = null;
   function mvkCap(k, q) { if (q < 1) return null; var r = k.re[q - 1], t = k.tg[q - 1]; return r === null || !t ? null : r / t * 100; }
   function mvkKl(c) { return c === null ? -1 : c < 80 ? 0 : c < 90 ? 1 : c < 100 ? 2 : c <= 100.0001 ? 3 : 4; }
-  function mvkSt(c) { return c === null ? 'na' : c >= 100 ? 'ok' : c >= 90 ? 'warn' : 'krit'; }
   function mvkFv(v, s) { return v === null || v === undefined ? '—' : String(v).replace('.', ',') + (s === '%' ? '%' : ' ' + s); }
   function mvkNamaJ(j) { return (MVK_JENIS.filter(function (x) { return x.v === j; })[0] || {}).t || j; }
   function mvkReview() {
@@ -2339,11 +2170,23 @@
     baris.forEach(function (l, i) { var row = rows[r0 + i]; if (!row) return; l.split('\t').forEach(function (v, k) { isi(row[c0 + k], v); }); });
     return n;
   }
-  /** Saring baris lembar isian menurut program (Indikator Kesehatan, SPM, IKU, Sulbar Sehat). */
-  function ssgSaringProg() {
-    var sel = $('.ssg-prog'); if (!sel) return;
-    var v = sel.value;
-    $$('form.ssg-form tbody tr[data-prog]').forEach(function (tr) { tr.hidden = !!v && tr.getAttribute('data-prog') !== v; });
+  /** Cari & saring baris lembar isian menurut nama, bidang, dan tim kerja (daftar tim mengikuti bidang). Angka yang sedang diketik tidak hilang. */
+  function ssgSaring() {
+    var fb = $('#ssg-fb'), ft = $('#ssg-ft'); if (!fb || !ft) return;
+    var q = ($('#ssg-q').value || '').trim().toLowerCase(), b = fb.value;
+    $$('option[data-bid]', ft).forEach(function (o) { o.hidden = o.disabled = !!b && o.getAttribute('data-bid') !== b; });
+    if (ft.selectedOptions[0] && ft.selectedOptions[0].disabled) ft.value = '';
+    var t = ft.value, n = 0, tot = 0, g = null, gAda = false;
+    $$('form.ssg-form tbody tr[data-prog]').forEach(function (tr) {
+      if (tr.classList.contains('ssg-g')) { if (g) g.hidden = !gAda; g = tr; gAda = false; return; }
+      tot++;
+      var ok = (!q || (tr.getAttribute('data-q') || '').indexOf(q) >= 0) && (!b || tr.getAttribute('data-bid') === b) && (!t || tr.getAttribute('data-tim') === t);
+      tr.hidden = !ok; if (ok) { n++; gAda = true; }
+    });
+    if (g) g.hidden = !gAda;
+    var aktif = !!(q || b || t), nf = $('.ssg-nf');
+    if (nf) { nf.hidden = !aktif; nf.textContent = n ? n + ' dari ' + tot + ' indikator ditampilkan' : 'Tidak ada indikator yang cocok'; }
+    show($('.ssg-reset'), aktif);
   }
   /** Templat Excel (CSV ber-pemisah titik koma): satu baris per indikator, kolom Sasaran & Realisasi per kabupaten, berisi angka saat ini. */
   function ssgUnduh() {
@@ -2495,7 +2338,7 @@
   function ssgTambah() {
     if (ssgKotor()) { toast('Simpan atau batalkan perubahan angka dulu.', 'err'); return; }
     var mt = ssgMeta() || {}, opt = function (a, v) { return a.map(function (x) { return '<option' + (x === v ? ' selected' : '') + '>' + esc(x) + '</option>'; }).join(''); };
-    openModal(mt.dp ? 'Tambah indikator Data Program' : 'Tambah indikator Sulbar Sehat', '<form id="form-ssg-ind" novalidate><p class="muted sm" style="margin:0 0 10px">Indikator baru langsung muncul sebagai baris di tabel dan siap diisi per kabupaten.</p>' +
+    openModal('Tambah indikator Data Program', '<form id="form-ssg-ind" novalidate><p class="muted sm" style="margin:0 0 10px">Indikator baru langsung muncul sebagai baris di tabel dan siap diisi per kabupaten.</p>' +
       '<div class="field"><label for="ssgi-nama">Nama indikator</label><input class="input" id="ssgi-nama" name="nama" maxlength="200" required placeholder="mis. Remaja putri mendapat edukasi gizi"></div>' +
       '<div class="form-grid"><div class="field"><label for="ssgi-grup">Kelompok</label><select class="input" id="ssgi-grup" name="grup">' + opt(mt.grup || [], '') + (mt.dp ? '' : '<option>Lainnya</option>') + '</select></div>' +
       '<div class="field"><label for="ssgi-bid">Bidang</label><select class="input" id="ssgi-bid" name="bidang">' + opt(mt.bidang || [], '') + '</select></div>' +
@@ -2511,12 +2354,10 @@
     if (String(o.nama || '').trim().length < 3) { msg.textContent = 'Tulis nama indikator.'; f.elements.nama.focus(); return; }
     var tgt = angkaKab(o.target); if (tgt === null || isNaN(tgt)) { msg.textContent = 'Target harus berupa angka.'; return; }
     btn.disabled = true;
-    var dp = !!(ssgMeta() || {}).dp && o.grup !== 'Sulbar Sehat';
     // Satuan target Persentase/Jumlah/Angka sekaligus menentukan cara rekap kabupaten → provinsi (akumulasi)
     var akum = { persentase: 'persentase', jumlah: 'jumlah', angka: 'angka', orang: 'jumlah', desa: 'jumlah' }[o.satuan] || 'persentase';
     var sat = o.satuan === 'persentase' ? '%' : (o.satuan === 'jumlah' || o.satuan === 'angka') ? '' : o.satuan;
-    api('apiSimpanIndikator', [dp ? { baru: true, nama: o.nama, bidang: o.bidang, satuan: sat, akumulasi: akum, target: tgt, arah: o.arah, jenis: 'Kesehatan', grup: o.grup, frekuensi: 'Triwulan' }
-      : { baru: true, nama: o.nama, grup: o.grup === 'Sulbar Sehat' ? 'Lainnya' : o.grup, bidang: o.bidang, satuan: o.satuan, target: tgt, arah: o.arah, jenis: 'Sulbar Sehat', frekuensi: 'Triwulan' }])
+    api('apiSimpanIndikator', [{ baru: true, nama: o.nama, bidang: o.bidang, satuan: sat, akumulasi: akum, target: tgt, arah: o.arah, jenis: 'Kesehatan', grup: o.grup, frekuensi: 'Triwulan' }])
       .then(function (r) { closeModal(); toast('Indikator ' + r.id + ' ditambahkan.', 'ok'); reload(); })
       .catch(function (e) { btn.disabled = false; if (!e.handled) msg.textContent = e.message; });
   }
@@ -2538,103 +2379,13 @@
     $$('.dsb-fb', root).forEach(function (b) { $('b', b).textContent = n[b.getAttribute('data-f')]; });
     $('.dsb-kosong', root).hidden = z > 0;
   }
-  /* ---------- Review: pilihan kabupaten, unduh Excel, cetak terpilih ---------- */
+  /* ---------- Review: pilihan kabupaten ---------- */
   function rvMeta() { try { return JSON.parse(($('#rv-cetak-meta') || {}).getAttribute('data-json') || '{}'); } catch (e) { return {}; } }
-  function rvBarisTampil() { return $$('#app-container tr.dsb-row').filter(function (tr) { return !tr.hidden; }); }
-  /** Tabel rincian per kabupaten sebuah baris (bukan tabel riwayat bulanan). */
-  function rvTabelKab(tr) {
-    var det = tr.nextElementSibling; if (!det) return null;
-    return $$('table.dsb-kt', det).filter(function (t) { var th = $('thead th', t); return th && th.textContent.trim() === 'Kabupaten'; })[0] || null;
-  }
-  /** Angka per kabupaten dari tabel rincian sebuah baris: [{kab, nilai}] (kolom terakhir = capaian/nilai). */
-  function rvKabNilai(tr) {
-    var t = rvTabelKab(tr); if (!t) return [];
-    return $$('tbody tr', t).filter(function (r) { return !r.classList.contains('dsb-kt-pv') && $$('td', r).length >= 2; }).map(function (r) { var td = $$('td', r); return { kab: td[0].textContent.trim(), nilai: td[td.length - 1].textContent.trim() }; });
-  }
-  function rvUnduh() {
-    var mt = rvMeta(), rows = rvBarisTampil(), kabs = [];
-    rows.forEach(function (tr) { rvKabNilai(tr).forEach(function (x) { if (kabs.indexOf(x.kab) < 0) kabs.push(x.kab); }); });
-    var q = function (s) { s = String(s == null ? '' : s); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; };
-    var out = [['Indikator', 'Jenis', 'Target', mt.kab ? 'Capaian ' + mt.kab : 'Capaian provinsi'].concat(kabs).map(q).join(';')];
-    rows.forEach(function (tr) {
-      var td = $$(':scope > td', tr), per = {}; rvKabNilai(tr).forEach(function (x) { per[x.kab] = x.nilai; });
-      out.push([$('.dsb-nm', tr).childNodes[1] ? $('.dsb-nm', tr).childNodes[1].textContent.trim() : $('.dsb-nm', tr).textContent.trim(), td[1].textContent.trim(), td[2].textContent.trim(), td[3].textContent.trim()]
-        .concat(kabs.map(function (k) { return per[k] || ''; })).map(q).join(';'));
-    });
-    var blob = new Blob(['\ufeffsep=;\n' + out.join('\n')], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a');
-    a.href = URL.createObjectURL(blob); a.download = 'Review ' + (mt.label || '') + (mt.kab ? ' ' + mt.kab : '') + '.csv';
-    document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-  }
-  var RV_PERIODE = (function () { var o = []; ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'].forEach(function (b, i) { o.push(['b' + (i + 1), b, 'Bulan']); });
-    ['I', 'II', 'III', 'IV'].forEach(function (r, i) { o.push(['tw' + (i + 1), 'TW ' + r, 'Triwulan']); }); o.push(['s1', 'Semester 1', 'Semester'], ['s2', 'Semester 2', 'Semester']); return o; })();
-  function rvCetakDialog() {
-    var mt = rvMeta(), rows = $$('#app-container tr.dsb-row'), prog = [];
-    rows.forEach(function (tr) { var p = tr.getAttribute('data-prog'); if (prog.indexOf(p) < 0) prog.push(p); });
-    var grp = ''; var opsi = RV_PERIODE.map(function (o) { var s = (o[2] !== grp ? (grp ? '</optgroup>' : '') + '<optgroup label="' + o[2] + '">' : ''); grp = o[2]; return s + '<option value="' + o[0] + '"' + (o[0] === mt.per ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</optgroup>';
-    openModal('Cetak Review', '<form id="form-rv-cetak" novalidate><div class="form-grid"><div class="field"><label for="rvc-per">Periode</label><select class="input" id="rvc-per" name="per">' + opsi + '</select></div>' +
-      '<div class="field"><label>Jenis indikator</label><details class="rvc-buka"><summary><span id="rvc-jn"></span><span class="ic" aria-hidden="true">expand_more</span></summary><div class="rvc-jenis">' + prog.map(function (p) { return '<label class="rvc-pil"><input type="checkbox" name="prog" value="' + esc(p) + '" checked><span>' + esc(p) + '</span></label>'; }).join('') + '</div></details></div></div>' +
-      '<div class="field"><label>Indikator yang dicetak <span class="muted sm" id="rvc-n"></span></label><div class="ik-tools"><button type="button" class="btn btn-ghost btn-sm" data-act="rvc-semua" data-v="1">Pilih semua</button><button type="button" class="btn btn-ghost btn-sm" data-act="rvc-semua" data-v="0">Kosongkan</button></div>' +
-      '<div class="ik-box">' + rows.map(function (tr) { var nm = $('.dsb-nm', tr).textContent.replace(/angka provinsi$/, '').trim(); return '<label class="ik-item" data-prog="' + esc(tr.getAttribute('data-prog')) + '"><input type="checkbox" name="ind" value="' + esc(tr.getAttribute('data-id')) + '" checked><span>' + esc(nm) + ' <em>' + esc(tr.getAttribute('data-prog')) + '</em></span></label>'; }).join('') + '</div></div>' +
-      '<label class="rvc-cek"><input type="checkbox" name="rinci" checked> Sertakan angka per kabupaten</label>' +
-      '<div class="form-actions"><button class="btn btn-primary" type="submit">' + '<span class="ic" aria-hidden="true">print</span>Cetak</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div></form>');
-    rvcSync();
-  }
-  function rvcSync() {
-    var f = $('#form-rv-cetak'); if (!f) return;
-    var on = $$('input[name=prog]', f).filter(function (x) { return x.checked; }).map(function (x) { return x.value; });
-    $$('.ik-item', f).forEach(function (l) { l.hidden = on.indexOf(l.getAttribute('data-prog')) < 0; });
-    var semua = $$('input[name=prog]', f).length;
-    $('#rvc-jn').textContent = on.length === semua ? 'Semua jenis (' + semua + ')' : on.length ? on.length + ' dari ' + semua + ' jenis dipilih' : 'Belum ada jenis dipilih';
-    $('#rvc-n').textContent = '(' + $$('.ik-item', f).filter(function (l) { return !l.hidden && $('input', l).checked; }).length + ' dipilih)';
-  }
-  function rvCetakKirim(f) {
-    var ids = $$('.ik-item', f).filter(function (l) { return !l.hidden && $('input', l).checked; }).map(function (l) { return $('input', l).value; });
-    if (!ids.length) { toast('Pilih minimal satu indikator.', 'err'); return; }
-    var job = { ids: ids, rinci: f.elements.rinci.checked }, mt = rvMeta(), per = f.elements.per.value;
-    closeModal();
-    if (per !== mt.per) {   // periode lain: muat Review periode itu dulu, lalu cetak
-      try { sessionStorage.setItem('dkppkb_cetak', JSON.stringify(job)); } catch (e) { }
-      perSimpan(per); navigateTo(AppState.page === 'ssreview' ? 'ssreview' : 'review', Object.assign({ per: per }, mt.kab ? { kab: mt.kab } : {}));
-      return;
-    }
-    rvCetakJalan(job);
-  }
-  function rvCetakJalan(job) {
-    var mt = rvMeta(), pilih = {}; job.ids.forEach(function (x) { pilih[x] = 1; });
-    var rows = $$('#app-container tr.dsb-row').filter(function (tr) { return pilih[tr.getAttribute('data-id')]; });
-    var tb = '<table class="pr-t"><thead><tr><th>No</th><th>Indikator</th><th>Jenis</th><th>Target</th><th>' + (mt.kab ? 'Capaian ' + esc(mt.kab) : 'Capaian provinsi') + '</th></tr></thead><tbody>' +
-      rows.map(function (tr, n) { var td = $$(':scope > td', tr); return '<tr><td>' + (n + 1) + '</td><td>' + esc($('.dsb-nm', tr).textContent.replace(/angka provinsi$/, '').trim()) + '</td><td>' + esc(td[1].textContent) + '</td><td>' + esc(td[2].textContent) + '</td><td>' + esc(td[3].textContent) + '</td></tr>'; }).join('') + '</tbody></table>';
-    var rinci = job.rinci ? rows.map(function (tr) { var t = rvTabelKab(tr); return t ? '<h3 class="pr-h3">' + esc($('.dsb-nm', tr).textContent.replace(/angka provinsi$/, '').trim()) + '</h3>' + t.outerHTML : ''; }).join('') : '';
-    cetakHtml(kopHtml() + '<h1>REVIEW CAPAIAN INDIKATOR</h1><div class="sub">Periode ' + esc(mt.label || '') + (mt.kab ? ' · ' + esc(mt.kab) : ' · rekap provinsi') + ' · ' + rows.length + ' indikator · dicetak ' + esc(tglPanjang(new Date())) + '</div>' + tb + rinci);
-  }
   function dsbBuka(tr) {
     var det = tr.nextElementSibling, buka = det.hidden;
     det.hidden = !buka; tr.classList.toggle('on', buka); $('.dsb-nm', tr).setAttribute('aria-expanded', String(buka));
   }
 
-  /* ---------- Review Sulbar Sehat: catatan tindak lanjut ---------- */
-  function rvTlBaru(el) {
-    var mt = {}; try { mt = JSON.parse(($('#rv-meta') || {}).getAttribute('data-json') || '{}'); } catch (e) { }
-    var ind = el.getAttribute('data-ind') || '', kab = el.getAttribute('data-kab') || '', tw = el.getAttribute('data-tw') || '';
-    var opt = function (arr, v, kosong) { return (kosong ? '<option value="">' + esc(kosong) + '</option>' : '') + arr.map(function (x) { var id = x.id || x, t = x.nama || x; return '<option value="' + esc(id) + '"' + (String(id) === String(v) ? ' selected' : '') + '>' + esc(t) + '</option>'; }).join(''); };
-    openModal('Catatan tindak lanjut', '<form id="form-tl" novalidate data-tw="' + esc(tw) + '"><div class="form-grid">' +
-      '<div class="field"><label for="tl-ind">Indikator</label><select class="input" id="tl-ind" name="indikatorId">' + opt(mt.ind || [], ind, '') + '</select></div>' +
-      '<div class="field"><label for="tl-kab">Kabupaten</label><select class="input" id="tl-kab" name="kabupaten">' + opt(mt.kab || [], kab, 'Provinsi (semua kabupaten)') + '</select></div></div>' +
-      '<div class="field"><label for="tl-tm">Temuan / permasalahan</label><textarea class="input" id="tl-tm" name="permasalahan" rows="2" maxlength="1000" required placeholder="mis. Distribusi TTD ke puskesmas terlambat"></textarea></div>' +
-      '<div class="field"><label for="tl-rk">Rencana tindak lanjut</label><textarea class="input" id="tl-rk" name="rekomendasi" rows="2" maxlength="1000" placeholder="mis. Koordinasi dengan Farmalkes untuk percepatan distribusi"></textarea></div>' +
-      '<div class="form-grid"><div class="field"><label for="tl-pj">Penanggung jawab</label><input class="input" id="tl-pj" name="penanggung" maxlength="80"></div>' +
-      '<div class="field"><label for="tl-tg">Tenggat</label><input class="input" id="tl-tg" name="tenggat" type="date"></div>' +
-      '<div class="field"><label for="tl-pr">Prioritas</label><select class="input" id="tl-pr" name="prioritas"><option>Tinggi</option><option selected>Sedang</option><option>Rendah</option></select></div></div>' +
-      '<div class="form-actions"><button class="btn btn-primary" type="submit">Simpan catatan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>', true);
-  }
-  function submitTl(f) {
-    var msg = $('.form-msg', f), btn = $('button[type=submit]', f), o = formData(f);
-    o.tw = Number(f.getAttribute('data-tw')) || '';
-    if (String(o.permasalahan || '').trim().length < 5) { msg.textContent = 'Uraikan temuan minimal beberapa kata.'; f.permasalahan.focus(); return; }
-    btn.disabled = true; btn.textContent = 'Menyimpan…';
-    api('apiSimpanMasalah', [o]).then(function () { closeModal(); toast('Catatan tindak lanjut disimpan.', 'ok'); reload(); })
-      .catch(function (e) { if (e.handled) return; msg.textContent = e.message; btn.disabled = false; btn.textContent = 'Simpan catatan'; });
-  }
 
   function onAction(el, ev) {
     var act = el.getAttribute('data-act');
@@ -2650,12 +2401,6 @@
       case 'minta-lacak': landShow('lacak'); if (MINTA_D) { $('#lk-id').value = MINTA_D.id; $('#lk-kontak').value = MINTA_D.kontak; } break;
       case 'pmt-cetak': if (PMT_D) cetakHtml(htmlFormulir(PMT_D)); break;
       case 'tbl-csv': case 'tbl-xls': case 'tbl-cetak': tabelAksi(act, el); break;
-      case 'hitung-ulang': {
-        var lh = el.innerHTML; el.disabled = true; el.textContent = 'Menghitung…';
-        api('apiHitungUlang').then(function (r) { toast('Ringkasan dihitung ulang' + (r.pemicu ? '.' : '; pemicu tiap jam belum bisa dipasang.'), r.pemicu ? 'ok' : ''); reload(); })
-          .catch(function (e) { if (!e.handled) toast(e.message, 'err'); el.disabled = false; el.innerHTML = lh; });
-        break;
-      }
       case 'kinerja-migrasi':
         openModal('Pindahkan Monev Kinerja ke master indikator', '<ol class="langkah"><li>Seluruh spreadsheet di-backup dulu (folder Backup DKPPKB Intelligence).</li><li>Setiap IK (IKM-xxx) ditambahkan ke sheet Indikator dengan ID yang sama.</li><li>Target per triwulan disalin ke sheet Target, realisasi ke sheet Isian.</li></ol>' +
           '<p class="muted sm">Sasaran, program, unit PIC, catatan, keterangan, dan bukti tidak berubah. Baris lama di sheet Monev tidak dihapus. Tampilan Monev Kinerja tetap sama.</p><div class="form-actions"><button type="button" class="btn btn-primary" data-act="kinerja-migrasi-ya">Ya, pindahkan</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p>');
@@ -2681,15 +2426,12 @@
       case 'ssg-batal': ssgBatal(); break;
       case 'dsb-filter': $$('.dsb-fb').forEach(function (b) { var on = b === el; b.classList.toggle('on', on); b.setAttribute('aria-pressed', String(on)); }); dsbSaring(); break;
       case 'dsb-buka': dsbBuka(el); break;
+      case 'ssg-reset': $('#ssg-q').value = ''; $('#ssg-fb').value = ''; $('#ssg-ft').value = ''; ssgSaring(); break;
       case 'ssg-catatan': ssgCatatan(el); break;
       case 'ssg-tambah': ssgTambah(); break;
       case 'ssg-unduh': ssgUnduh(); break;
-      case 'rv-unduh': rvUnduh(); break;
       case 'panduan-singkat': panduanSingkat(true); break;
-      case 'rv-cetak': rvCetakDialog(); break;
-      case 'rvc-semua': $$('#form-rv-cetak .ik-item').forEach(function (l) { if (!l.hidden) $('input', l).checked = el.getAttribute('data-v') === '1'; }); rvcSync(); break;
       case 'ssg-unggah': if (ssgKotor() && !confirm('Ada angka yang belum disimpan. Lanjut mengisi dari templat?')) break; $('#ssg-file').click(); break;
-      case 'ss-tl-baru': rvTlBaru(el); break;
       case 'tim-pasang': {
         el.disabled = true;
         api('apiPasangTimKerja', []).then(function (r) { toast(r.ditambah + ' Tim Kerja dipasang.', 'ok'); reload(); })
@@ -2733,12 +2475,6 @@
           '<div class="form-actions"><button class="btn btn-primary" type="submit">' + (bpakai ? 'Pindahkan &amp; hapus' : 'Hapus bidang') + '</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div><p class="form-msg" role="alert"></p></form>');
         break;
       }
-      case 'ss-pasang': {
-        el.disabled = true; el.textContent = 'Memasang…';
-        api('apiPasangSulbarSehat').then(function (r) { toast(r.ditambah + ' indikator Sulbar Sehat dipasang.', 'ok'); reload(); })
-          .catch(function (e) { if (!e.handled) toast(e.message, 'err'); el.disabled = false; el.textContent = 'Pasang indikator'; });
-        break;
-      }
       case 'bk-buat': {
         var bs = el.getAttribute('data-sheet') || 'semua', bl = el.innerHTML;
         el.disabled = true; el.textContent = 'Membuat backup…';
@@ -2777,8 +2513,6 @@
         break;
       }
       case 'open-drawer': openDrawer(); break;
-      case 'notif-close': closeNotif(); $('#btn-notif').focus(); break;
-      case 'notif-semua': if (NOTIF_TERAKHIR) { notifBaca(((NOTIF_TERAKHIR.items) || []).map(notifKunci)); renderNotif(NOTIF_TERAKHIR); } break;
       case 'lbr-det': { var dt = $('#form-lbr tr[data-det="' + el.getAttribute('data-row') + '"]'); if (dt) { dt.hidden = !dt.hidden; if (!dt.hidden) { var ta = $('textarea', dt); if (ta) ta.focus(); } } break; }
       case 'lbr-batal': if ($('.mvk-t tr.mvk-baru')) { reload(); break; } lbrBatal(); $$('.mvk-t tr.mvk-dihapus').forEach(function (tr) { tr.classList.remove('mvk-dihapus'); }); $$('[data-act=mvk-hapus-baris]').forEach(function (b) { b.textContent = 'Hapus baris'; }); mvkSiap(); break;
       case 'mvk-ik-baru': mvkIkBaru(el.getAttribute('data-node')); break;
@@ -2806,12 +2540,6 @@
         $$('.db-pseg .seg-btn', kp).forEach(function (b) { b.classList.toggle('is-on', b === el); });
         $$('.db-pblok', kp).forEach(function (b) { b.hidden = b.getAttribute('data-mode') !== md; });
         if (md === 'ind') petaInd($('.db-pblok[data-mode=ind]', kp), true);
-        break;
-      }
-      case 'rk-mode': {
-        var rkc = el.closest('.db-rk'), rkm = el.getAttribute('data-v');
-        $$('.seg-btn', rkc).forEach(function (b) { b.classList.toggle('is-on', b === el); });
-        $$('.db-rk-b', rkc).forEach(function (b) { b.hidden = b.getAttribute('data-mode') !== rkm; });
         break;
       }
       case 'tbl-unduh': unduhTabel(el.getAttribute('data-nama')); break;
@@ -2932,32 +2660,6 @@
         AppState.pending = apply; navigateTo('inputdata', { q: d.id });
         break;
       }
-      case 'edit-keg': { var dk = {}; try { dk = JSON.parse(el.getAttribute('data-json') || '{}'); } catch (e) { } dk.publik = dk.publik ? 'Ya' : 'Tidak'; fillForm('form-kegiatan', dk); break; }
-      case 'gal-geser': { el.disabled = true; api('apiGeserFoto', [el.getAttribute('data-id'), el.getAttribute('data-arah')]).then(function () { return reload(); }).catch(function (e) { el.disabled = false; if (!e.handled) toast(e.message, 'err'); }); break; }
-      case 'gal-simpan': {
-        var row = el.closest('.gal-row'); el.disabled = true;
-        api('apiUbahFoto', [{ id: el.getAttribute('data-id'), judul: $('[data-f=judul]', row).value, ket: $('[data-f=ket]', row).value, tampil: el.getAttribute('data-tampil') }])
-          .then(function () { toast('Foto diperbarui.', 'ok'); return reload(); }).catch(function (e) { el.disabled = false; if (!e.handled) toast(e.message, 'err'); });
-        break;
-      }
-      case 'gal-hapus': {
-        var gid = el.getAttribute('data-id');
-        openModal('Hapus foto?', '<p>Foto <b>' + esc(el.getAttribute('data-judul') || '') + '</b> akan dihapus dari galeri dan Google Drive.</p><div class="form-actions"><button type="button" class="btn btn-primary" id="gal-ya">Ya, hapus</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div>');
-        var gy = $('#gal-ya'); if (gy) gy.addEventListener('click', function () {
-          gy.disabled = true; gy.textContent = 'Menghapus…';
-          api('apiHapusFoto', [gid]).then(function () { closeModal(); toast('Foto dihapus.', 'ok'); return reload(); }).catch(function (e) { gy.disabled = false; gy.textContent = 'Ya, hapus'; if (!e.handled) toast(e.message, 'err'); });
-        });
-        break;
-      }
-      case 'hapus-keg': {
-        var kid = el.getAttribute('data-id');
-        openModal('Hapus kegiatan?', '<p>Kegiatan <b>' + esc(el.getAttribute('data-judul') || '') + '</b> akan dihapus dari kalender.</p><div class="form-actions"><button type="button" class="btn btn-primary" id="keg-ya">Ya, hapus</button><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button></div>');
-        var ya = $('#keg-ya'); if (ya) ya.addEventListener('click', function () {
-          ya.disabled = true; ya.textContent = 'Menghapus…';
-          api('apiHapusKegiatan', [kid]).then(function () { closeModal(); toast('Kegiatan dihapus.', 'ok'); return reload(); }).catch(function (e) { ya.disabled = false; ya.textContent = 'Ya, hapus'; if (!e.handled) toast(e.message, 'err'); });
-        });
-        break;
-      }
       case 'ia-panel': { var pn = el.closest('.ia-pn'), on = !pn.classList.contains('buka'); pn.classList.toggle('buka', on); el.setAttribute('aria-expanded', on ? 'true' : 'false'); break; }
       case 'ia-pilih': { var fp = el.closest('form'); fp.elements[el.getAttribute('data-n')].value = el.getAttribute('data-v'); iaSync(fp); break; }
       case 'ia-pakai': { var fk = el.closest('form'); fk.elements.akumulasi.value = el.getAttribute('data-v'); fk._iaManual = true; iaSync(fk); break; }
@@ -2985,8 +2687,6 @@
       case 'profil-tutup': profilTutup(); break;
       case 'profil-simpan': profilSimpan(el); break;
       case 'profil-hapus-foto': profilFoto(''); break;
-      case 'sambut-tutup': sambutTutup(); break;
-      case 'sambut-mulai': sambutTutup(); if (el.getAttribute('data-tuju') !== AppState.page) navigateTo(el.getAttribute('data-tuju') || 'dashboard', {}); break;
     }
   }
 
@@ -3002,8 +2702,6 @@
     if (t.id === 'modal-back') { closeModal(); return; }
     if (t.id === 'scrim') { closeDrawer(); return; }
     if (!(t.closest && t.closest('.tn-group')) || (t.closest && t.closest('.tn-sub'))) closeTopMenus();
-    if (!(t.closest && t.closest('#notif-panel'))) closeNotif();
-    var nk = t.closest && t.closest('[data-nk]'); if (nk) notifBaca(nk.getAttribute('data-nk'));   // pemberitahuan yang diklik dianggap sudah dibaca
     var nav = t.closest && t.closest('[data-nav]');
     if (nav && t.closest('#profil-laci')) profilTutup();
     if (nav) {
@@ -3025,9 +2723,7 @@
   });
   document.addEventListener('keydown', function (ev) {
     if (ev.key === 'Escape') {
-      if ($('#sambut') && !$('#sambut').hidden) { sambutTutup(); return; }
       if ($('#profil-laci.on')) { profilTutup(); $('#btn-user').focus(); return; }
-      if (!$('#notif-panel').hidden) { closeNotif(); $('#btn-notif').focus(); return; }
       var openG = $$('.tn-group').filter(function (g) { return !$('.tn-menu', g).hidden; })[0];
       if (openG) { closeTopMenus(); $('.tn-item', openG).focus(); return; }
       if ($('#modal-root').firstChild) closeModal(); else closeDrawer(); return;
@@ -3119,6 +2815,7 @@
   });
   document.addEventListener('input', function (ev) {
     if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
+    if (ev.target && ev.target.id === 'ssg-q') { ssgSaring(); return; }
     if (ev.target && ev.target.classList && ev.target.classList.contains('td-cari')) { tdUbah(ev.target); return; }
     if (ev.target && ev.target.classList && ev.target.classList.contains('md-cari')) { MD.q = ev.target.value; var pos = ev.target.selectionStart; mdTabel(); var c = $('#md .md-cari'); if (c) { c.focus(); try { c.setSelectionRange(pos, pos); } catch (e) { } } return; }
     if (ev.target && ev.target.getAttribute && ev.target.getAttribute('data-md') === 'c') { mdUbah(ev.target); return; }
@@ -3135,11 +2832,10 @@
   document.addEventListener('change', function (ev) {
     var t = ev.target;
     if (t.classList && t.classList.contains('dsb-sel')) { dsbSaring(); return; }
-    if (t.classList && t.classList.contains('ssg-prog')) { ssgSaringProg(); return; }
+    if (t.classList && t.classList.contains('ssg-fil')) { ssgSaring(); return; }
     if (t.classList && t.classList.contains('db-pind')) { petaInd(t.closest('.db-pblok'), false); return; }
     if (t.classList && t.classList.contains('lbr-in')) { lbrCek(t); lbrStatus(); return; }
-    if (t.classList && t.classList.contains('rv-kab')) { var rm = rvMeta(); navigateTo(AppState.page === 'ssreview' ? 'ssreview' : 'review', Object.assign({ per: rm.per }, t.value ? { kab: t.value } : {})); return; }
-    if (t.form && t.form.id === 'form-rv-cetak') { rvcSync(); return; }
+    if (t.classList && t.classList.contains('rv-kab')) { var rm = rvMeta(); navigateTo('review', Object.assign({ per: rm.per }, t.value ? { kab: t.value } : {})); return; }
     if (t.id === 'ssg-file' && t.files && t.files[0]) { ssgUnggah(t.files[0]); t.value = ''; return; }
     if (t.id === 'mvk-file' && t.files && t.files[0]) { mvkUnggah(t.files[0]); t.value = ''; return; }
     if (t.classList && t.classList.contains('spbk-file')) { spbkUnggah(t); return; }
@@ -3191,16 +2887,13 @@
     if (fid === 'form-hapus-bidang') return submitHapusBidang(f);
     if (fid === 'form-ssg-cat') return submitSsgCat(f);
     if (fid === 'form-ssg-ind') return submitSsgInd(f);
-    if (fid === 'form-tl') return submitTl(f);
     if (fid === 'form-user-modal') return submitUserForm(f);
-    if (fid === 'form-rv-cetak') return rvCetakKirim(f);
     if (fid === 'form-program-modal') return submitProgramForm(f);
     if (fid === 'form-target') return submitTarget(f);
     if (fid === 'form-bukti') return submitBukti(f);
     if (fid === 'form-monev') return submitMonev(f);
     if (fid === 'form-mvk-baris') return submitMvkBaris(f);
     if (fid === 'form-mbukti') return submitMonevBukti(f);
-    if (fid === 'form-galeri') return submitGaleri(f);
     if (fid === 'form-tarik') return;
     if (fid === 'form-md-ajukan') return submitMdAjukan(f);
     if (f.getAttribute('data-api')) return submitGeneric(f);
@@ -3227,16 +2920,12 @@
     applyFavicon(document.documentElement.getAttribute('data-logo'));
     applyLogo(document.documentElement.getAttribute('data-logo'));
     $('#btn-menu').addEventListener('click', openDrawer);
-    $('#btn-notif').addEventListener('click', function (ev) { ev.stopPropagation(); toggleNotif(); });
     $('#btn-user').addEventListener('click', function () { profilBuka(); });
-    $('#sel-bulan').addEventListener('change', function () { navigateTo(AppState.page, AppState.params).then(function () { prefetchTabs(); prefetchMenu(); }); refreshBadgeForPeriod(); });
+    $('#sel-bulan').addEventListener('change', function () { navigateTo(AppState.page, AppState.params).then(function () { prefetchTabs(); prefetchMenu(); }); });
     $('#sel-tahun').addEventListener('change', function () { navigateTo(AppState.page, AppState.params).then(function () { prefetchTabs(); prefetchMenu(); }); });
     $('#skip-link').addEventListener('click', function (e) { e.preventDefault(); $('#main').focus(); });
     showLogin('');
-    $('#gal-prev').addEventListener('click', function () { galGeser(-1); }); $('#gal-next').addEventListener('click', function () { galGeser(1); });
-    $('#gal-dots').addEventListener('click', function (ev) { var b = ev.target.closest && ev.target.closest('[data-gal]'); if (b) { galTampil(Number(b.getAttribute('data-gal'))); galJalan(); } });
     if (API_URL) {
-      galMuat();
       try { var cm = JSON.parse(localStorage.getItem('dkppkb_merek') || 'null'); if (cm) { applyBrand(cm.nama, cm.sub); applyLogo(cm.logo); applyFavicon(cm.logo); } } catch (e) { }
       call('apiMerek', []).then(function (r) {
         if (!r || !r.success) return;
@@ -3260,7 +2949,6 @@
       showLogin('Koneksi ke server lambat atau terputus. Muat ulang halaman, sesi Anda masih tersimpan.');
     });
   }
-  function refreshBadgeForPeriod() { /* lencana mengikuti bulan aktif konfigurasi; tidak berubah saat pratinjau periode */ }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init); else init();
   window.AppState = AppState; window.navigateTo = navigateTo;
