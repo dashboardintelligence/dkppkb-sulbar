@@ -1298,14 +1298,6 @@ textarea.md-inp{min-height:70px;resize:vertical}
 .md-st-ditolak{color:var(--mute)}
 .md-dua{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:16px;align-items:start}
 .md-kol{display:flex;flex-direction:column;gap:16px;min-width:0}
-.md-ind{border:1px solid var(--bd);border-radius:12px;overflow:hidden}
-.md-ind .md-ih,.md-ind label{display:grid;grid-template-columns:24px minmax(0,1fr) 64px;gap:8px;align-items:center;padding:8px 12px}
-.md-ind .md-ih{background:var(--rail);font-size:11.5px;color:var(--tx2)}
-.md-ind label{border-top:1px solid var(--bd);font-size:12.5px;cursor:pointer}
-.md-ind label:hover{background:var(--md-al)}
-.md-ind input{accent-color:var(--md-a);width:15px;height:15px;margin:0}
-.md-ind small,.md-ih span:last-child{text-align:right;color:var(--mute)}
-.md-ind-k{padding:12px;color:var(--mute);font-size:12px;border-top:1px solid var(--bd)}
 .md-tuj{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
 .md-tuj-c{margin-top:4px;border-left:2px solid var(--bd);padding-left:10px;color:var(--tx2)}
 .md-tuj .md-btn{margin-top:8px}
@@ -1325,10 +1317,6 @@ textarea.md-inp{min-height:70px;resize:vertical}
 .md-riw small{color:var(--mute);white-space:nowrap}
 .md-msg:empty{display:none}
 .md-pv .md-kh{padding:9px 2px}
-.md-pv-alat{display:flex;gap:8px;align-items:center}
-.md-pv-tab{display:flex;gap:3px;background:var(--rail);border-radius:10px;padding:3px}
-.md-pv-tab button{border:0;background:none;border-radius:8px;padding:5px 11px;font-size:12px;cursor:pointer;color:var(--tx2);font-weight:500;font-family:inherit}
-.md-pv-tab button.on{background:var(--card);color:var(--md-a);box-shadow:0 1px 2px rgba(0,0,0,.08)}
 .md-pv-bg{background:var(--md-pv);border-radius:14px;padding:22px 20px;min-height:520px}
 .md-pv-kaki{display:flex;justify-content:flex-end;margin-top:12px}
 .md-fileb{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px;font-size:12px;color:var(--tx2);flex-wrap:wrap}
@@ -1337,25 +1325,9 @@ textarea.md-inp{min-height:70px;resize:vertical}
 .md-surat{padding:10px;min-height:420px}
 .md-surat iframe{width:100%;height:560px;border:0;display:block}
 .md-surat img{max-width:100%;display:block;margin:0 auto}
-.md-kop{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px}
-.md-kop-lg.emblem{width:34px;height:34px;border-radius:10px;box-shadow:none}
-.md-kop>div{text-align:right}.md-kop b{display:block;font-size:12px;letter-spacing:.06em}.md-kop small{color:#9a9ea8;font-size:10px}
-.md-m3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
-.md-m3 small,.md-blok small{display:block;color:#9a9ea8;font-size:10px;margin-bottom:1px}
-.md-blok{margin-bottom:12px}.md-blok b{display:block;font-weight:600;font-size:11.5px}.md-blok span{color:#5b5f6b;font-size:10.5px}.md-blok .md-tx{font-size:11px;color:#3f434c}
-.md-dt{width:100%;border-collapse:collapse;margin:4px 0 12px;font-size:10.5px}
-.md-dt th{background:#e6f3f4;font-weight:500;color:#3f434c;text-align:left;padding:7px 8px}
-.md-dt td{padding:8px;border-bottom:1px solid #e7e8ec;vertical-align:top}
-.md-ttd{display:flex;justify-content:flex-end;margin-top:14px;text-align:center;color:#5b5f6b}.md-ttd div{width:180px}
 @media (max-width:1100px){.md-dua{grid-template-columns:1fr}}
 @media (max-width:640px){.md-h1{font-size:26px}.md-g3{grid-template-columns:1fr 1fr}.md-hp{display:none}.md-cari{width:100%}.md-hd .md-act-r{width:100%;justify-content:stretch}.md-hd .md-act-r .md-btn{flex:1;justify-content:center}.md-pv-bg{padding:14px 10px;min-height:0}.md-kertas{padding:18px 14px}}
 
-/* Persetujuan disposisi */
-.md-st-menunggu{background:var(--md-al,#e6f3f4);color:#086570}.md-st-menunggu::before{background:#0a7f8c}
-.md-stempel{display:grid;grid-template-columns:36px 1fr;gap:8px;align-items:center;text-align:left;border:1.5px solid #0a7f8c;border-radius:12px;padding:7px 9px;margin-top:6px;background:#e6f3f4;color:#086570}
-.md-stempel b{display:block;font-size:10.5px}.md-stempel small{display:block;font-size:9.5px;color:#5b5f6b}
-.md-qr{width:36px;height:36px;border-radius:4px;border:2px solid #fff;outline:1px solid #0a7f8c;background:conic-gradient(from 90deg at 30% 30%,#0b5f68 25%,transparent 0) 0 0/9px 9px,#fff}
-.md-ttd>div{width:230px}
 /* ---------- Profil: foto avatar, laci profil ---------- */
 .avatar.av-foto,.av-fill.av-foto{background-size:cover!important;background-position:center!important;color:transparent!important}
 .user-pill .avatar.av-foto{background-color:#e6f3f4}
