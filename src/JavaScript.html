@@ -108,7 +108,7 @@
     return pr;
   }
   /** Panggil API ber-token. Mengembalikan data atau melempar Error; sesi habis -> kembali ke login. */
-  var PCACHE = {}, READ_API = { apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiLaporanTw: 1 };
+  var PCACHE = {}, READ_API = { apiPratinjauImporAkun: 1, apiBootstrap: 1, apiMulai: 1, apiUnduhLampiranPermintaan: 1, apiAmbilIsian: 1, apiDaftarBukti: 1, apiUnduhBukti: 1, apiTarikData: 1, apiUnduhBuktiMonev: 1, apiLaporanTw: 1 };
   function api(fn, args) {
     if (!READ_API[fn]) pcBasi();   // ada perubahan data: tandai cache halaman basi
     args = [AppState.sessionToken].concat(args || []);
@@ -898,6 +898,98 @@
   /** Buka semua panel (Tambah) atau tutup kecuali yang diminta (Ubah: semua tertutup dengan ringkasan). */
   function iaPanel(f, buka) { $$('.ia-pn', f).forEach(function (p) { var on = buka === true || p.getAttribute('data-pn') === buka; p.classList.toggle('buka', on); $('.ia-pn-h', p).setAttribute('aria-expanded', on ? 'true' : 'false'); }); }
 
+  /* ---------- impor akun PIC dari Lembar Akun PIC (CSV), khusus Administrator utama ---------- */
+  var IA = null;
+  /** CSV ber-pemisah ; atau , (baris "sep=;" diabaikan), mendukung tanda kutip. */
+  function uraiCsv(teks) {
+    teks = String(teks || '').replace(/^﻿/, '').replace(/^sep=.\r?\n/i, '');
+    var sep = (teks.split('\n')[0].match(/;/g) || []).length >= (teks.split('\n')[0].match(/,/g) || []).length ? ';' : ',';
+    var out = [], row = [], cell = '', q = false;
+    for (var i = 0; i < teks.length; i++) {
+      var c = teks.charAt(i);
+      if (q) { if (c === '"' && teks.charAt(i + 1) === '"') { cell += '"'; i++; } else if (c === '"') q = false; else cell += c; }
+      else if (c === '"') q = true;
+      else if (c === sep) { row.push(cell); cell = ''; }
+      else if (c === '\n' || c === '\r') { if (c === '\r' && teks.charAt(i + 1) === '\n') i++; row.push(cell); out.push(row); row = []; cell = ''; }
+      else cell += c;
+    }
+    if (cell || row.length) { row.push(cell); out.push(row); }
+    return out.filter(function (r) { return r.some(function (x) { return String(x).trim(); }); });
+  }
+  function iaBuka() {
+    IA = { rows: [] };
+    openModal('Impor akun PIC', '<p class="muted sm" style="margin:0 0 12px">Unggah berkas <b>Akun PIC Tim Kerja.csv</b> dari tombol "Unduh Excel (CSV)" di Lembar Akun PIC. Kolom yang dibaca: Username, Nama (PIC), Bidang, Tim Kerja, Email, Telepon, Batasi indikator. Belum ada akun yang dibuat sebelum Anda menekan Buat.</p>' +
+      '<label class="ia-drop"><input type="file" id="ia-file" accept=".csv,text/csv" hidden><span class="ic" aria-hidden="true">upload_file</span><b>Pilih berkas CSV</b><span class="muted sm">atau seret ke sini</span></label><p class="form-msg" id="ia-msg" role="alert"></p>', true);
+    var m = $('#modal-root .modal'); if (m) m.style.maxWidth = '1040px';
+  }
+  function iaBaca(file) {
+    var fr = new FileReader();
+    fr.onload = function () {
+      var t = uraiCsv(fr.result), msg = $('#ia-msg');
+      if (t.length < 2) { msg.textContent = 'Berkas kosong atau bukan CSV lembar akun.'; return; }
+      var h = t[0].map(function (x) { return String(x).trim().toLowerCase(); }), kol = function () { var a = arguments; for (var i = 0; i < h.length; i++) for (var j = 0; j < a.length; j++) if (h[i].indexOf(a[j]) === 0) return i; return -1; };
+      var k = { u: kol('username'), n: kol('nama'), b: kol('bidang'), t: kol('tim kerja'), e: kol('email'), p: kol('telepon'), i: kol('batasi') };
+      if (k.u < 0 || k.n < 0 || k.b < 0 || k.t < 0) { msg.textContent = 'Kolom Username, Nama, Bidang, dan Tim Kerja wajib ada.'; return; }
+      var g = function (r, i) { return i < 0 ? '' : String(r[i] == null ? '' : r[i]).trim(); };
+      var rows = t.slice(1).map(function (r) { return { username: g(r, k.u).toLowerCase(), nama: g(r, k.n), bidang: g(r, k.b), tim: g(r, k.t), email: g(r, k.e), telepon: g(r, k.p), batas: g(r, k.i) }; })
+        .filter(function (r) { return r.username || r.nama; });
+      msg.textContent = 'Memeriksa ' + rows.length + ' baris…';
+      api('apiPratinjauImporAkun', [rows]).then(function (d) { IA.rows = d.map(function (o) { o.pilih = o.status !== 'e'; o.ik = o.indikator.map(function (x) { return x.id; }); return o; }); iaPeriksa(); })
+        .catch(function (e) { if (!e.handled) msg.textContent = e.message; });
+    };
+    fr.readAsText(file, 'utf-8');
+  }
+  function iaPeriksa() {
+    var n = { ok: 0, w: 0, e: 0 }; IA.rows.forEach(function (o) { n[o.status]++; });
+    var h = '<div class="ia-chip"><span class="chip chip-ok">' + n.ok + ' siap dibuat</span>' + (n.w ? '<span class="chip chip-warn">' + n.w + ' tanpa batasan indikator</span>' : '') + (n.e ? '<span class="chip chip-crit">' + n.e + ' tidak bisa dibuat</span>' : '') + '</div>' +
+      '<div class="tbl-wrap ia-tbl"><table class="tbl"><thead><tr><th></th><th>Username (bisa diubah)</th><th>Nama</th><th>Bidang · Tim Kerja</th><th>Batasi indikator</th><th>Status</th></tr></thead><tbody>' +
+      IA.rows.map(function (o, i) {
+        var ik = !o.batas || /^semua indikator/i.test(o.batas) ? '<span class="muted sm">semua indikator tim</span>' : '<b class="ia-bt">' + esc(o.batas) + '</b>' +
+          (o.indikator.length ? '<details class="ia-ik"><summary>' + o.ik.length + ' dari ' + o.indikator.length + ' indikator dipilih</summary>' + o.indikator.map(function (x) { return '<label><input type="checkbox" data-ia-ik="' + i + '" value="' + esc(x.id) + '"' + (o.ik.indexOf(x.id) >= 0 ? ' checked' : '') + '> ' + esc(x.nama) + '</label>'; }).join('') + '</details>' : '<span class="muted sm blok">tidak ada indikator yang cocok</span>');
+        return '<tr class="' + (o.status === 'e' ? 'ia-lewat' : '') + '"><td><input type="checkbox" data-ia-pilih="' + i + '"' + (o.pilih ? ' checked' : '') + (o.status === 'e' && !/Username/.test(o.pesan) ? ' disabled' : '') + ' aria-label="Buat akun ini"></td>' +
+          '<td><input class="input input-sm ia-u" data-ia-u="' + i + '" value="' + esc(o.username) + '" autocomplete="off" autocapitalize="none" aria-label="Username"></td><td>' + esc(o.nama) + '</td>' +
+          '<td>' + esc(o.bidang) + '<small class="muted blok">' + esc(o.programNama || o.tim) + '</small></td><td>' + ik + '</td>' +
+          '<td><span class="ia-st ia-' + o.status + '">' + (o.status === 'e' ? 'Tidak bisa dibuat' : o.status === 'w' ? 'Perlu diatur' : 'Siap') + '</span>' + (o.pesan ? '<small class="muted blok">' + esc(o.pesan) + '</small>' : '') + '</td></tr>';
+      }).join('') + '</tbody></table></div>' +
+      '<div class="ia-aksi"><span class="muted sm" id="ia-ringkas"></span><span><button type="button" class="btn btn-ghost" data-act="close-modal">Batal</button> <button type="button" class="btn btn-primary" id="ia-buat" data-act="ia-buat">Buat akun</button></span></div><p class="form-msg" id="ia-msg" role="alert"></p>';
+    $('#modal-body').innerHTML = h; iaSinkron();
+  }
+  function iaSinkron() {
+    var dipakai = {}, n = 0;
+    IA.rows.forEach(function (o, i) {
+      var el = $('[data-ia-u="' + i + '"]'); if (!el) return;
+      var bad = !/^[a-z0-9._\-]{3,40}$/.test(o.username) || dipakai[o.username];
+      dipakai[o.username] = 1; el.classList.toggle('invalid', !!bad);
+      if (o.pilih && !bad) n++;
+    });
+    var b = $('#ia-buat'); if (b) { b.disabled = !n; b.textContent = 'Buat ' + n + ' akun'; }
+    var r = $('#ia-ringkas'); if (r) r.textContent = n + ' dicentang · username yang sudah dipakai akan dilewati, tidak ditimpa';
+  }
+  function iaBuat() {
+    var kirim = IA.rows.filter(function (o) { return o.pilih && /^[a-z0-9._\-]{3,40}$/.test(o.username); }).map(function (o) { return { username: o.username, nama: o.nama, bidang: o.bidang, tim: o.tim, email: o.email, telepon: o.telepon, batas: o.batas, indikator: o.ik }; });
+    if (!kirim.length) return;
+    var b = $('#ia-buat'); b.disabled = true; b.textContent = 'Membuat ' + kirim.length + ' akun…';
+    api('apiImporAkun', [kirim]).then(function (h) { IA.hasil = h; iaHasil(); reload(); })
+      .catch(function (e) { if (e.handled) return; $('#ia-msg').textContent = e.message; iaSinkron(); });
+  }
+  function iaTeks(x) { return 'Akses aplikasi ' + (BRAND.full || 'DKPPKB Sulbar Intelligence') + '\nNama pengguna: ' + x.username + '\nKata sandi sementara: ' + x.password + '\nSegera ganti kata sandi setelah masuk.'; }
+  function iaHasil() {
+    var ok = IA.hasil.filter(function (x) { return x.password; }), gagal = IA.hasil.filter(function (x) { return x.gagal; });
+    $('#modal-title').textContent = ok.length + ' akun dibuat';
+    $('#modal-body').innerHTML = '<div data-tahan class="ia-pr"><b>Salin atau unduh sekarang.</b> Setelah jendela ini ditutup, kata sandi sementara tidak bisa dilihat lagi; yang lupa diatur ulang lewat "Atur ulang kata sandi".</div>' +
+      '<div class="tbl-wrap ia-tbl"><table class="tbl"><thead><tr><th>Username</th><th>Nama</th><th>Kata sandi sementara</th><th>Kirim</th></tr></thead><tbody>' +
+      ok.map(function (x) { var d = String(x.telepon || '').replace(/[^0-9]/g, ''); if (d.charAt(0) === '0') d = '62' + d.slice(1);
+        return '<tr><td><code>' + esc(x.username) + '</code></td><td>' + esc(x.nama) + '</td><td><code class="ia-pw">' + esc(x.password) + '</code></td><td>' + (d ? '<a class="btn btn-ghost btn-sm" target="_blank" rel="noopener" href="https://wa.me/' + d + '?text=' + encodeURIComponent(iaTeks(x)) + '">WhatsApp</a>' : '<span class="muted sm">tanpa nomor</span>') + '</td></tr>'; }).join('') +
+      gagal.map(function (x) { return '<tr class="ia-lewat"><td><code>' + esc(x.username) + '</code></td><td>' + esc(x.nama) + '</td><td colspan="2"><span class="ia-st ia-e">Gagal</span> <span class="muted sm">' + esc(x.gagal) + '</span></td></tr>'; }).join('') + '</tbody></table></div>' +
+      '<div class="ia-aksi"><span class="muted sm">PIC diminta mengganti kata sandi setelah masuk.</span><span><button type="button" class="btn btn-ghost" data-act="ia-salin">Salin semua</button> <button type="button" class="btn btn-ghost" data-act="ia-unduh">Unduh daftar kata sandi</button> <button type="button" class="btn btn-primary" data-act="ia-selesai">Selesai</button></span></div>';
+  }
+  ['dragover', 'dragleave', 'drop'].forEach(function (ev) {   // seret berkas CSV ke kotak unggah impor akun
+    document.addEventListener(ev, function (e) {
+      var z = e.target.closest && e.target.closest('.ia-drop'); if (!z) return;
+      e.preventDefault(); z.classList.toggle('on', ev === 'dragover');
+      if (ev === 'drop' && e.dataTransfer.files[0]) iaBaca(e.dataTransfer.files[0]);
+    });
+  });
   /* ---------- kelola pengguna (admin) ---------- */
   function openUserForm(d) {
     var tpl = $('#tpl-user-form'); if (!tpl) return;
@@ -911,7 +1003,8 @@
     if (edit) {
       ['nama', 'username', 'role', 'bidang', 'email', 'telepon'].forEach(function (k) { if (f.elements[k]) f.elements[k].value = d[k] == null ? '' : d[k]; });
       f.elements.aktif.value = String(d.aktif !== false);
-      f.elements.username.readOnly = true;
+      f.setAttribute('data-lama', d.username);
+      f.elements.username.readOnly = !(AppState.user && AppState.user.role === 'admin');   // hanya Administrator utama yang boleh mengganti username
     } else {
       ['role', 'bidang'].forEach(function (k) { if (d[k] && f.elements[k]) f.elements[k].value = d[k]; });
     }
@@ -2022,6 +2115,7 @@
       aktif: f.elements.aktif.value !== 'false', modeSandi: f.elements.modeSandi.value,
       password: baru ? f.elements.password.value : f.elements.passwordUbah.value
     };
+    if (!baru) o.usernameLama = f.getAttribute('data-lama') || o.username;
     msg.className = 'form-msg'; msg.textContent = '';
     $$('.invalid', f).forEach(function (el) { el.classList.remove('invalid'); });
     function bad(el, t) { if (el) el.classList.add('invalid'); msg.textContent = t; if (el) el.focus(); }
@@ -2036,7 +2130,8 @@
       reload();
       if (r.password) showCredential(r, 'Pengguna berhasil dibuat');
       else if (baru) { showCredential(r, 'Pengguna berhasil dibuat'); }
-      else { closeModal(); toast('Perubahan disimpan.', 'ok'); }
+      else if (r.diri) { closeModal(); forceLogout('Username Anda diganti menjadi ' + r.username + '. Silakan masuk lagi.'); }
+      else { closeModal(); toast(r.diganti ? 'Username diganti menjadi ' + r.username + '. Pengguna masuk lagi dengan username baru.' : 'Perubahan disimpan.', 'ok'); }
     }).catch(function (e) { if (e.handled) return; msg.textContent = e.message; btn.disabled = false; btn.textContent = 'Simpan Pengguna'; });
   }
   function showCredential(r, judul) {
@@ -2451,7 +2546,7 @@
       case 'ssg-unggah': if (ssgKotor() && !confirm('Ada angka yang belum disimpan. Lanjut mengisi dari templat?')) break; $('#ssg-file').click(); break;
       case 'tim-pasang': {
         el.disabled = true;
-        api('apiPasangTimKerja', []).then(function (r) { toast(r.ditambah + ' Tim Kerja dipasang.', 'ok'); reload(); })
+        api('apiPasangTimKerja', []).then(function (r) { toast('Tim Kerja disamakan dengan SK: ' + r.diganti + ' ganti nama, ' + r.digabung + ' digabung, ' + r.ditambah + ' ditambah.', 'ok'); reload(); })
           .catch(function (e) { el.disabled = false; if (!e.handled) toast(e.message, 'err'); });
         break;
       }
@@ -2650,6 +2745,12 @@
       case 'ind-baru-reset': { var fb = $('#form-ind-baru'); if (fb) { fb.reset(); fb._iaManual = false; syncIndBaru(fb); iaSync(fb); iaPanel(fb, 'id'); } break; }
       case 'program-form': openProgramForm(JSON.parse(el.getAttribute('data-json') || '{}')); break;
       case 'user-form': openUserForm(JSON.parse(el.getAttribute('data-json') || '{}')); break;
+      case 'impor-akun': iaBuka(); break;
+      case 'ia-buat': iaBuat(); break;
+      case 'ia-salin': salinTeks(IA.hasil.filter(function (x) { return x.password; }).map(function (x) { return x.nama + '\t' + x.username + '\t' + x.password; }).join('\n')); break;
+      case 'ia-unduh': { var csv = '\ufeffsep=;\nUsername;Nama;Kata sandi sementara\n' + IA.hasil.filter(function (x) { return x.password; }).map(function (x) { return [x.username, x.nama, x.password].map(function (v) { return /[";]/.test(v) ? '"' + String(v).replace(/"/g, '""') + '"' : v; }).join(';'); }).join('\n');
+        var bl = new Blob([csv], { type: 'text/csv;charset=utf-8' }), a = document.createElement('a'); a.href = URL.createObjectURL(bl); a.download = 'Kata sandi sementara PIC.csv'; document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500); break; }
+      case 'ia-selesai': if (confirm('Tutup? Kata sandi sementara tidak bisa dilihat lagi setelah ini.')) closeModal(); break;
       case 'user-reset': confirmUser('Reset kata sandi', 'Buat kata sandi sementara baru untuk <b>' + esc(el.dataset.nama) + '</b>? Kata sandi lama tidak berlaku lagi dan sesi aktifnya diakhiri.', 'user-reset-go', el.dataset.username, 'Buat kata sandi baru'); break;
       case 'user-reset-go': doUserReset(el.dataset.username); break;
       case 'user-status':
@@ -2716,7 +2817,7 @@
   });
   document.addEventListener('click', function (ev) {
     var t = ev.target;
-    if (t.id === 'modal-back') { closeModal(); return; }
+    if (t.id === 'modal-back') { if (!$('#modal-root [data-tahan]')) closeModal(); return; }   // jendela kata sandi impor tidak tertutup tak sengaja
     if (t.id === 'scrim') { closeDrawer(); return; }
     if (!(t.closest && t.closest('.tn-group')) || (t.closest && t.closest('.tn-sub'))) closeTopMenus();
     var nav = t.closest && t.closest('[data-nav]');
@@ -2833,6 +2934,7 @@
   document.addEventListener('input', function (ev) {
     if (ev.target && ev.target.classList && ev.target.classList.contains('dsb-cari')) { dsbSaring(); return; }
     if (ev.target && ev.target.id === 'ssg-q') { ssgSaring(); return; }
+    if (ev.target && ev.target.hasAttribute && ev.target.hasAttribute('data-ia-u')) { var iu = IA.rows[+ev.target.getAttribute('data-ia-u')]; iu.username = ev.target.value.trim().toLowerCase(); if (iu.status === 'e' && /Username/.test(iu.pesan)) iu.pilih = true; var cb = $('[data-ia-pilih="' + ev.target.getAttribute('data-ia-u') + '"]'); if (cb) { cb.disabled = false; cb.checked = iu.pilih; } iaSinkron(); return; }
     if (ev.target && ev.target.classList && ev.target.classList.contains('td-cari')) { tdUbah(ev.target); return; }
     if (ev.target && ev.target.classList && ev.target.classList.contains('md-cari')) { MD.q = ev.target.value; var pos = ev.target.selectionStart; mdTabel(); var c = $('#md .md-cari'); if (c) { c.focus(); try { c.setSelectionRange(pos, pos); } catch (e) { } } return; }
     if (ev.target && ev.target.getAttribute && ev.target.getAttribute('data-md') === 'c') { mdUbah(ev.target); return; }
@@ -2851,6 +2953,9 @@
     if (t.classList && t.classList.contains('dsb-sel')) { dsbSaring(); return; }
     if (t.classList && t.classList.contains('ssg-fil')) { ssgSaring(); return; }
     if (t.classList && t.classList.contains('tkk-sel')) { tkkSinkron(); return; }
+    if (t.id === 'ia-file' && t.files && t.files[0]) { iaBaca(t.files[0]); return; }
+    if (t.hasAttribute && t.hasAttribute('data-ia-pilih')) { IA.rows[+t.getAttribute('data-ia-pilih')].pilih = t.checked; iaSinkron(); return; }
+    if (t.hasAttribute && t.hasAttribute('data-ia-ik')) { var io = IA.rows[+t.getAttribute('data-ia-ik')]; io.ik = $$('[data-ia-ik="' + t.getAttribute('data-ia-ik') + '"]').filter(function (c) { return c.checked; }).map(function (c) { return c.value; }); var sm = t.closest('details').querySelector('summary'); if (sm) sm.textContent = io.ik.length + ' dari ' + io.indikator.length + ' indikator dipilih'; return; }
     if (t.classList && t.classList.contains('db-pind')) { petaInd(t.closest('.db-pblok'), false); return; }
     if (t.classList && t.classList.contains('lbr-in')) { lbrCek(t); lbrStatus(); return; }
     if (t.classList && t.classList.contains('rv-kab')) { var rm = rvMeta(); navigateTo('review', Object.assign({ per: rm.per }, t.value ? { kab: t.value } : {})); return; }
