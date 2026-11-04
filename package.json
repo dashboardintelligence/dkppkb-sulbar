@@ -1,0 +1,8 @@
+{
+  "name": "dkppkb-sulbar-tampilan",
+  "private": true,
+  "description": "Hanya untuk memperkecil JS dan CSS saat build Vercel (web/build.js).",
+  "devDependencies": {
+    "esbuild": "0.24.0"
+  }
+}

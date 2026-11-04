@@ -11,8 +11,8 @@ Data dan logika tetap di Google Apps Script (repo private `akun-dkppkb-intellige
    (biasanya `https://<akun>.github.io/<nama-repo>/`).
 
 ## Memperbarui tampilan
-Berkas di `src/` (`Index.html`, `Stylesheet.html`, `GambarHeader.html`, `JavaScript.html`) adalah salinan dari repo private.
-Setelah tampilan diubah di repo private, salin keempat berkas itu ke sini lalu push.
+Berkas di `src/` (`Index.html`, `Stylesheet.html`, `JavaScript.html`) adalah salinan dari repo private.
+Setelah tampilan diubah di repo private, salin ketiga berkas itu ke sini lalu push.
 **Jangan** salin `Kode.gs`/`Halaman.gs` atau berkas `.gs` lain — `.gitignore` menolak `*.gs` agar kode server tidak ikut terbit.
 
 ## Uji lokal
