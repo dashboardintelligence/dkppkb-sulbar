@@ -801,6 +801,7 @@
     if ($('.kig')) kigPulihkan();
     mvkReview();
     cincinDb();
+    dbGrafik();
     sptHitung();
     mdInit();
     window.scrollTo(0, keepY);
@@ -1897,9 +1898,95 @@
     }).join('');
   }
 
+  /* Dashboard: grafik SPBE dan Monev bergerak saat mulai terlihat; angka berhitung naik. Grafik Monev berubah bentuk saat sasaran diganti. */
+  var DBF = null, DB_TAYANG = null;
+  /** Gerak tiap grafik hanya diputar sekali per sesi browser; sesudah itu grafik langsung tampil utuh. */
+  function dbSudahTayang(id) {
+    if (!DB_TAYANG) { try { DB_TAYANG = JSON.parse(sessionStorage.getItem('dkppkb_db_tayang') || '{}'); } catch (e) { DB_TAYANG = {}; } }
+    return !!DB_TAYANG[id];
+  }
+  function dbTandaiTayang(id) {
+    dbSudahTayang(id); DB_TAYANG[id] = 1;
+    try { sessionStorage.setItem('dkppkb_db_tayang', JSON.stringify(DB_TAYANG)); } catch (e) { }
+  }
+  function dbFokusUtuh() {
+    if (!DBF) return;
+    var target = DBF.g[DBF.i].c, ke = target.map(function (v) { return v === null ? DBF.mn : v; });
+    DBF.kini = ke; dbFokusGambar(ke, target);
+  }
+  function dbGrafik() {
+    var kartu = $$('.db-gr'); DBF = null; if (!kartu.length) return;
+    var svg = $('.db-fo-g');
+    if (svg) { try { DBF = JSON.parse(svg.getAttribute('data-json')); DBF.i = 0; DBF.kini = null; DBF.ik = false; dbFokusTeks(0); } catch (e) { DBF = null; } }
+    var hemat = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    var diam = function (el) {
+      el.classList.add('db-diam', 'jalan');
+      if (DBF && el.id === 'db-gr-monev') dbFokusUtuh();
+    };
+    var putar = function (el) {
+      dbTandaiTayang(el.id);
+      el.classList.add('jalan');
+      if (DBF && el.id === 'db-gr-monev') dbFokusKe(0, true);
+      if (hemat) return;
+      var angka = $$('[data-n]', el).map(function (x) { return { x: x, n: Number(x.getAttribute('data-n')), dp: Number(x.getAttribute('data-dp')), suf: x.getAttribute('data-suf') }; }), t0 = 0;
+      requestAnimationFrame(function jalan(t) {
+        if (!t0) t0 = t;
+        var p = Math.min(1, (t - t0) / 1500), e = 1 - Math.pow(1 - p, 3);
+        angka.forEach(function (a) { if (a.x.isConnected) a.x.textContent = (a.n * e).toLocaleString('id-ID', { minimumFractionDigits: a.dp, maximumFractionDigits: a.dp }) + a.suf; });
+        if (p < 1) requestAnimationFrame(jalan);
+      });
+    };
+    if (DBF) dbFokusGambar(DBF.g[0].c.map(function () { return DBF.mn; }), DBF.g[0].c);
+    var baru = kartu.filter(function (k) { if (dbSudahTayang(k.id)) { diam(k); return false; } return true; });
+    if (!baru.length) return;
+    if (hemat || !window.IntersectionObserver) { baru.forEach(putar); return; }
+    var io = new IntersectionObserver(function (ent) { ent.forEach(function (x) { if (x.isIntersecting) { io.unobserve(x.target); putar(x.target); } }); }, { threshold: 0.15 });
+    baru.forEach(function (k) { io.observe(k); });
+  }
+  function dbFokusTeks(i) {
+    var g = DBF.g[i], kp = $('#db-gr-monev'), j = $('.db-fo-j', kp), ik = $('.db-fo-ik', kp);
+    j.textContent = g.n;
+    ik.textContent = (DBF.ik ? 'Tutup daftar ' : 'Lihat ') + g.k + ' IK';
+    ik.setAttribute('aria-expanded', DBF.ik);
+    $$('.db-fo-b', kp).forEach(function (b, n) { b.classList.toggle('on', n === i); b.setAttribute('aria-pressed', n === i); });
+    $$('.db-mv-r', kp).forEach(function (r) { r.hidden = !(DBF.ik && Number(r.getAttribute('data-r')) === i); });
+  }
+  /** Gambar garis: nilai tiap triwulan = nilai (posisi sedang berjalan), target = angka sebenarnya (kosong tidak digambar). */
+  function dbFokusGambar(nilai, target) {
+    var svg = $('.db-fo-g'); if (!svg || !DBF) return;
+    var W = 420, H = 190, kiri = 42, kanan = 22, atas = 18, bawah = 26, mn = DBF.mn, mx = DBF.mx, R = ['I', 'II', 'III', 'IV'];
+    var fx = function (q) { return kiri + q * (W - kiri - kanan) / 3; }, fy = function (v) { return atas + (mx - Math.max(mn, Math.min(mx, v))) / (mx - mn) * (H - atas - bawah); };
+    var dasar = H - bawah, P = [], s = '';
+    [0, 1, 2, 3].forEach(function (q) { if (target[q] !== null) P.push({ x: fx(q), y: fy(nilai[q]), t: target[q] }); });
+    var langkah = (mx - mn) > 50 ? 25 : 20;
+    for (var v = Math.ceil(mn / langkah) * langkah; v < 100; v += langkah) s += '<line class="db-fo-gl" x1="' + kiri + '" x2="' + (W - kanan) + '" y1="' + fy(v) + '" y2="' + fy(v) + '"/><text class="db-fo-ax" x="' + (kiri - 6) + '" y="' + (fy(v) + 4) + '" text-anchor="end">' + v + '%</text>';
+    s += '<line class="db-sa" x1="' + kiri + '" x2="' + (W - kanan) + '" y1="' + fy(100) + '" y2="' + fy(100) + '"/><text class="db-fo-ax" x="' + (kiri - 6) + '" y="' + (fy(100) + 4) + '" text-anchor="end">100%</text>';
+    R.forEach(function (r, q) { s += '<text class="db-fo-ax" x="' + fx(q) + '" y="' + (H - 7) + '" text-anchor="middle">TW ' + r + '</text>'; });
+    var titik = P.map(function (p) { return p.x.toFixed(1) + ',' + p.y.toFixed(1); });
+    if (P.length > 1) s += '<path class="db-fo-a" d="M' + titik.join(' L') + ' L' + P[P.length - 1].x.toFixed(1) + ',' + dasar + ' L' + P[0].x.toFixed(1) + ',' + dasar + 'Z"/><polyline class="db-fo-l" points="' + titik.join(' ') + '"/>';
+    P.forEach(function (p) { s += '<circle class="db-fo-t" r="4.5" cx="' + p.x.toFixed(1) + '" cy="' + p.y.toFixed(1) + '"/><text class="db-fo-v" x="' + p.x.toFixed(1) + '" y="' + (p.y - 11).toFixed(1) + '" text-anchor="middle">' + p.t.toLocaleString('id-ID', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) + '%</text>'; });
+    if (!P.length) s += '<text class="db-fo-ax" x="' + (W / 2) + '" y="' + (H / 2) + '" text-anchor="middle">Belum ada angka untuk sasaran ini</text>';
+    svg.innerHTML = s;
+  }
+  function dbFokusKe(i, awal) {
+    if (!DBF) return;
+    DBF.i = i; dbFokusTeks(i);
+    var target = DBF.g[i].c, ke = target.map(function (v) { return v === null ? DBF.mn : v; }), dari = (awal || !DBF.kini) ? ke.map(function () { return DBF.mn; }) : DBF.kini.slice(), id = (DBF.anim = (DBF.anim || 0) + 1);
+    if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) { DBF.kini = ke; dbFokusGambar(ke, target); return; }
+    var dur = awal ? 1300 : 650, t0 = 0;
+    requestAnimationFrame(function jalan(t) {
+      if (!DBF || DBF.anim !== id) return;
+      if (!t0) t0 = t;
+      var p = Math.min(1, (t - t0) / dur), e = p < 0.5 ? 4 * p * p * p : 1 - Math.pow(-2 * p + 2, 3) / 2;
+      DBF.kini = ke.map(function (v, k) { return dari[k] + (v - dari[k]) * e; });
+      dbFokusGambar(DBF.kini, target);
+      if (p < 1) requestAnimationFrame(jalan);
+    });
+  }
+
   /* Review Monev Kinerja: digambar dari #mvk-data; triwulan dan unit dipilih tanpa memuat ulang halaman. */
   var MVK = null;
-  function mvkCap(k, q) { if (q < 1) return null; var r = k.re[q - 1], t = k.tg[q - 1]; return r === null || !t ? null : r / t * 100; }
+  function mvkCap(k, q) { if (q < 1) return null; var r = k.re[q - 1], t = k.tg[q - 1]; if (r === null || !t) return null; return k.turun ? (r > 0 ? t / r * 100 : 100) : r / t * 100; }   // IK Turun: makin kecil makin baik
   function mvkFv(v, s) { return v === null || v === undefined ? '—' : String(v).replace('.', ',') + (s === '%' ? '%' : ' ' + s); }
   function mvkNamaJ(j) { return (MVK_JENIS.filter(function (x) { return x.v === j; })[0] || {}).t || j; }
   function mvkReview() {
@@ -1929,7 +2016,7 @@
       t += '<tr class="g"><td colspan="5">' + esc(mvkNamaJ(p.j)) + ' · ' + esc(p.t) + '</td></tr>';
       di.forEach(function (k) {
         var c = mvkCap(k, q), buka = MVK.det === k.key, w = c === null ? 0 : Math.min(100, c), unit = (MVK.unit || {})[k.u] || ''; n++;
-        t += '<tr class="b' + (buka ? ' on' : '') + '" data-mk="' + esc(k.key) + '"><td class="nm"><button type="button" aria-expanded="' + buka + '">' + esc(k.n) + '</button>' + (unit ? '<small>' + esc(unit) + '</small>' : '') + '</td>' +
+        t += '<tr class="b' + (buka ? ' on' : '') + '" data-mk="' + esc(k.key) + '"><td class="nm"><button type="button" aria-expanded="' + buka + '">' + esc(k.n) + '</button>' + (unit || k.turun ? '<small>' + esc(unit) + (unit && k.turun ? ' · ' : '') + (k.turun ? 'makin kecil makin baik' : '') + '</small>' : '') + '</td>' +
           '<td class="r">' + esc(mvkFv(k.tg[q - 1], k.sat)) + '</td><td class="r">' + esc(mvkFv(k.re[q - 1], k.sat)) + '</td>' +
           '<td class="cp"><span class="bk-t"><i style="--w:' + w.toFixed(1) + '%;--d:' + Math.min(n, 12) * 40 + 'ms"></i></span><b>' + mvkPersen(c) + '</b></td><td>' + st(c) + '</td></tr>';
         if (buka) t += '<tr class="rd"><td colspan="5"><div class="mvk-tws">' + R.map(function (r, i) { var x = mvkCap(k, i + 1); return '<div' + (i + 1 === q ? ' class="now"' : '') + '><span>TW ' + r + '</span><b>' + mvkPersen(x) + '</b><span>Sasaran ' + esc(mvkFv(k.tg[i], k.sat)) + ' · Realisasi ' + esc(mvkFv(k.re[i], k.sat)) + '</span></div>'; }).join('') + '</div>' +
@@ -2738,6 +2825,8 @@
       }
       case 'cin-bid': if (CIN) { CIN.bid = el.getAttribute('data-k'); CIN.sorot = ''; cincinGambar(true); } break;
       case 'cin-sorot': if (CIN) { CIN.sorot = CIN.sorot === el.getAttribute('data-k') ? '' : el.getAttribute('data-k'); cincinGambar(false); } break;
+      case 'db-mv': dbFokusKe(Number(el.getAttribute('data-i'))); break;
+      case 'db-mv-ik': if (DBF) { DBF.ik = !DBF.ik; dbFokusTeks(DBF.i); } break;
       case 'pind-buka': pindBuka(el); break;
       case 'pind-pilih': pindPilih(el); break;
       case 'peta-mode': {
